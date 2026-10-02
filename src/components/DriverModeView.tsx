@@ -34,28 +34,20 @@ export const DriverModeView: React.FC = () => {
   const [activeDriverTrip, setActiveDriverTrip] = useState<any | null>(null);
   const [tripStage, setTripStage] = useState<'to_pickup' | 'arrived' | 'delivering' | 'done'>('to_pickup');
 
-  // Feature 2: 15-second countdown timer for incoming orders
   const [orderTimer, setOrderTimer] = useState<number>(15);
   const [timerAlert, setTimerAlert] = useState<string | null>(null);
-
-  // Feature 4: SOS Modal State
   const [isSosOpen, setIsSosOpen] = useState<boolean>(false);
-
-  // Feature 1: Navigation Modal State
   const [navTarget, setNavTarget] = useState<{ name: string; address: string } | null>(null);
-
-  // Feature 5: Internet Connection Status
   const [networkStatus, setNetworkStatus] = useState<'strong' | 'weak' | 'offline'>('strong');
   const [pingMs, setPingMs] = useState<number>(24);
   const [isCheckingPing, setIsCheckingPing] = useState<boolean>(false);
 
-  // Incoming order generator when online
   useEffect(() => {
     if (!isOnline || activeDriverTrip || incomingOrder || networkStatus === 'offline') return;
 
     const timer = setTimeout(() => {
-      const pickupLoc = BANJARMASIN_LOCATIONS[0]; // Duta Mall
-      const destLoc = BANJARMASIN_LOCATIONS[1]; // Siring
+      const pickupLoc = BANJARMASIN_LOCATIONS[0];
+      const destLoc = BANJARMASIN_LOCATIONS[1];
       setIncomingOrder({
         id: `drv-order-${Date.now()}`,
         service: 'ride',
@@ -72,12 +64,10 @@ export const DriverModeView: React.FC = () => {
     return () => clearTimeout(timer);
   }, [isOnline, activeDriverTrip, incomingOrder, networkStatus]);
 
-  // Countdown timer effect
   useEffect(() => {
     if (!incomingOrder || activeDriverTrip) return;
 
     if (orderTimer <= 0) {
-      // Order automatically re-routed to another driver!
       setIncomingOrder(null);
       setTimerAlert('Waktu menerima habis (15 dtk). Orderan otomatis dialihkan ke driver lain.');
       const alertTimeout = setTimeout(() => setTimerAlert(null), 4000);
@@ -131,7 +121,6 @@ export const DriverModeView: React.FC = () => {
     }, 800);
   };
 
-  // Launch Google Maps navigation
   const openDirectGoogleMaps = (locationName: string, locationAddress: string) => {
     setNavTarget({ name: locationName, address: locationAddress });
   };
@@ -177,7 +166,6 @@ export const DriverModeView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Feature 4: SOS Emergency Panic Button */}
             <button
               type="button"
               onClick={() => setIsSosOpen(true)}
@@ -188,7 +176,6 @@ export const DriverModeView: React.FC = () => {
               <span>SOS</span>
             </button>
 
-            {/* Online / Offline switch */}
             <button
               type="button"
               onClick={() => setIsOnline(!isOnline)}
@@ -204,7 +191,6 @@ export const DriverModeView: React.FC = () => {
           </div>
         </div>
 
-        {/* Feature 5: Internet Connection & Signal Status Bar */}
         <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
@@ -216,7 +202,6 @@ export const DriverModeView: React.FC = () => {
               Jaringan:
             </span>
 
-            {/* Signal Badge */}
             <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded text-[11px] font-mono">
               <span
                 className={`w-2 h-2 rounded-full ${
@@ -244,7 +229,6 @@ export const DriverModeView: React.FC = () => {
               </span>
             </div>
 
-            {/* Ping Refresh Button */}
             <button
               type="button"
               onClick={handleTestPing}
@@ -257,7 +241,6 @@ export const DriverModeView: React.FC = () => {
             </button>
           </div>
 
-          {/* Network Switcher for Testing */}
           <div className="flex items-center gap-1 text-[10px]">
             <span className="text-slate-500">Uji Jaringan:</span>
             <button
@@ -290,7 +273,6 @@ export const DriverModeView: React.FC = () => {
           </div>
         </div>
 
-        {/* Warning if network is weak or offline */}
         {networkStatus !== 'strong' && (
           <div
             className={`p-2 rounded-xl text-xs flex items-center gap-2 ${
@@ -309,7 +291,6 @@ export const DriverModeView: React.FC = () => {
         )}
       </div>
 
-      {/* Timer alert banner (if expired) */}
       {timerAlert && (
         <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded-xl text-xs flex items-center justify-between shadow-sm animate-in slide-in-from-top-1">
           <div className="flex items-center gap-2">
@@ -349,10 +330,9 @@ export const DriverModeView: React.FC = () => {
         </div>
       </div>
 
-      {/* Incoming Order Alert Drawer (with Features 1, 2, and 3!) */}
+      {/* Incoming Order Alert Drawer */}
       {incomingOrder && !activeDriverTrip && (
         <div className="bg-white p-4 rounded-2xl border-2 border-red-500 shadow-2xl space-y-3 relative overflow-hidden">
-          {/* Header with Circular Countdown Timer */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
@@ -366,7 +346,6 @@ export const DriverModeView: React.FC = () => {
               </div>
             </div>
 
-            {/* Feature 2: Visual Countdown Timer */}
             <div className="flex items-center gap-2">
               <div
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-black border transition-colors ${
@@ -386,7 +365,6 @@ export const DriverModeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Feature 2: Visual Progress Bar */}
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-1000 ease-linear rounded-full ${
@@ -396,7 +374,7 @@ export const DriverModeView: React.FC = () => {
             />
           </div>
 
-          {/* Feature 3: Integrated Mini-Map Preview */}
+          {/* Mini-Map Preview */}
           <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-inner">
             <svg
               className="w-full h-full"
@@ -404,13 +382,11 @@ export const DriverModeView: React.FC = () => {
               preserveAspectRatio="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              {/* City blocks */}
               <rect x="5" y="5" width="35" height="22" rx="2" fill="#e2edf5" />
               <rect x="45" y="8" width="50" height="20" rx="2" fill="#d9e9f5" />
               <rect x="8" y="32" width="40" height="24" rx="2" fill="#e0ecf7" />
               <rect x="52" y="32" width="42" height="24" rx="2" fill="#dbeef8" />
 
-              {/* River curve */}
               <path
                 d="M 20 0 Q 30 25, 42 35 T 35 60"
                 fill="none"
@@ -418,11 +394,9 @@ export const DriverModeView: React.FC = () => {
                 strokeWidth="4"
               />
 
-              {/* Main Arterial Avenue */}
               <line x1="0" y1="34" x2="100" y2="42" stroke="#ffffff" strokeWidth="2.5" />
               <line x1="0" y1="34" x2="100" y2="42" stroke="#f1c40f" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
 
-              {/* Route line connecting pickup (48, 28) and destination (38, 22) */}
               <path
                 d="M 48 30 Q 42 22, 38 20"
                 fill="none"
@@ -431,13 +405,10 @@ export const DriverModeView: React.FC = () => {
                 strokeDasharray="2,1"
               />
 
-              {/* Pickup Pin Green */}
               <circle cx="48" cy="30" r="3.2" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
-              {/* Destination Pin Red */}
               <circle cx="38" cy="20" r="3.2" fill="#ef4444" stroke="#ffffff" strokeWidth="1" />
             </svg>
 
-            {/* Floating Mini-Map Badge Labels */}
             <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded shadow">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span className="font-semibold">{incomingOrder.pickup.name}</span>
@@ -451,14 +422,12 @@ export const DriverModeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Order Details & Feature 1: Direct Navigation Buttons */}
           <div className="bg-slate-50 p-3 rounded-xl text-xs space-y-2.5">
             <div className="flex items-center justify-between font-semibold text-slate-900">
               <span>Penumpang: {incomingOrder.passengerName}</span>
               <span className="text-slate-500">{incomingOrder.distanceKm} km perjalanan</span>
             </div>
 
-            {/* Pickup with Direct Navigation Button */}
             <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
               <div className="flex items-start gap-1.5 flex-1 min-w-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
@@ -468,14 +437,12 @@ export const DriverModeView: React.FC = () => {
                   <span className="text-[10px] text-slate-400 truncate block">{incomingOrder.pickup.address}</span>
                 </div>
               </div>
-              {/* Feature 1: Google Maps Direct Navigation Button */}
               <button
                 type="button"
                 onClick={() => openDirectGoogleMaps(incomingOrder.pickup.name, incomingOrder.pickup.address)}
                 className="px-2 py-1.5 rounded-lg bg-[#4285F4]/10 hover:bg-[#4285F4]/20 text-[#1a73e8] text-[11px] font-bold flex items-center gap-1 shrink-0 border border-[#4285F4]/30 transition-colors"
                 title="Buka Navigasi Google Maps Langsung"
               >
-                {/* Google Maps Pin Icon */}
                 <svg className="w-3.5 h-3.5 fill-[#1a73e8]" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                 </svg>
@@ -483,7 +450,6 @@ export const DriverModeView: React.FC = () => {
               </button>
             </div>
 
-            {/* Destination with Direct Navigation Button */}
             <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
               <div className="flex items-start gap-1.5 flex-1 min-w-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 mt-1 shrink-0" />
@@ -493,7 +459,6 @@ export const DriverModeView: React.FC = () => {
                   <span className="text-[10px] text-slate-400 truncate block">{incomingOrder.destination.address}</span>
                 </div>
               </div>
-              {/* Feature 1: Google Maps Direct Navigation Button */}
               <button
                 type="button"
                 onClick={() => openDirectGoogleMaps(incomingOrder.destination.name, incomingOrder.destination.address)}
@@ -514,7 +479,6 @@ export const DriverModeView: React.FC = () => {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               type="button"
@@ -555,7 +519,6 @@ export const DriverModeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Current Target with Feature 1: Direct Google Maps Navigation Button */}
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5 text-xs">
@@ -579,7 +542,6 @@ export const DriverModeView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Feature 1: Prominent Navigation Button in Active Trip */}
               <button
                 type="button"
                 onClick={() =>
@@ -602,7 +564,6 @@ export const DriverModeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Driver Next Action Button */}
           <button
             type="button"
             onClick={advanceTripStage}
@@ -616,7 +577,6 @@ export const DriverModeView: React.FC = () => {
         </div>
       )}
 
-      {/* Driver Tips & Info */}
       {!incomingOrder && !activeDriverTrip && isOnline && networkStatus !== 'offline' && (
         <div className="bg-sky-50/80 p-4 rounded-2xl border border-sky-200 text-center space-y-2">
           <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center mx-auto">
@@ -629,7 +589,6 @@ export const DriverModeView: React.FC = () => {
         </div>
       )}
 
-      {/* Feature 4: SOS Emergency Modal */}
       <SosModal
         isOpen={isSosOpen}
         onClose={() => setIsSosOpen(false)}
@@ -639,7 +598,6 @@ export const DriverModeView: React.FC = () => {
         }
       />
 
-      {/* Feature 1: Turn-by-Turn GPS & Google Maps Launcher Modal */}
       {navTarget && (
         <NavigationModal
           isOpen={!!navTarget}

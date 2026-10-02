@@ -30,7 +30,6 @@ export const PromoModal: React.FC<PromoModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
-        {/* Header */}
         <div className="p-4 bg-gradient-to-r from-red-600 to-rose-700 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-300" />
@@ -48,7 +47,6 @@ export const PromoModal: React.FC<PromoModalProps> = ({
           </button>
         </div>
 
-        {/* Voucher List */}
         <div className="p-4 space-y-3 overflow-y-auto">
           {PROMO_VOUCHERS.map((voucher) => (
             <div

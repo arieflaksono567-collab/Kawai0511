@@ -34,7 +34,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-        {/* Header */}
         <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center">
@@ -55,7 +54,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto">
-          {/* Current Balance Card */}
           <div className="bg-gradient-to-br from-sky-600 to-blue-700 text-white p-4 rounded-2xl shadow-md">
             <span className="text-[11px] text-sky-100 uppercase tracking-wider font-semibold">
               Saldo Aktif
@@ -81,7 +79,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
             </div>
           ) : (
             <>
-              {/* Presets */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-800">Pilih Nominal Top-Up</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -102,7 +99,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                 </div>
               </div>
 
-              {/* Payment Method */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-800">Metode Pengisian</label>
                 <select
@@ -119,7 +115,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                 </select>
               </div>
 
-              {/* Confirm Top Up */}
               <button
                 type="button"
                 onClick={handleTopUpConfirm}
@@ -130,7 +125,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
             </>
           )}
 
-          {/* Recent Wallet History */}
           <div className="pt-2 border-t border-slate-100">
             <h4 className="text-xs font-bold text-slate-800 mb-2">Riwayat Transaksi Terakhir</h4>
             <div className="space-y-2 text-xs">

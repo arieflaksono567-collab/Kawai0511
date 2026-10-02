@@ -28,19 +28,16 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
   const [needExtraHelmet, setNeedExtraHelmet] = useState<boolean>(false);
   const [tripNotes, setTripNotes] = useState<string>('');
 
-  // Calculate approximate distance from coordinate percentage deltas
   const dx = pickup.x - destination.x;
   const dy = pickup.y - destination.y;
-  const rawDist = Math.sqrt(dx * dx + dy * dy) * 0.18; // scaled to realistic Banjarmasin km
+  const rawDist = Math.sqrt(dx * dx + dy * dy) * 0.18;
   const distanceKm = Math.max(1.2, parseFloat(rawDist.toFixed(1)));
   const estimatedMins = Math.max(6, Math.round(distanceKm * (vehicleType === 'motor' ? 2.5 : 3.8)));
 
-  // Calculate fare in Rupiah
   const baseRate = vehicleType === 'motor' ? 9000 : 18000;
   const perKmRate = vehicleType === 'motor' ? 2500 : 4500;
   const baseFare = Math.round(baseRate + Math.max(0, distanceKm - 2) * perKmRate);
 
-  // Discount
   const promoObj = PROMO_VOUCHERS.find((p) => p.code === appliedPromo);
   const discount = promoObj && baseFare >= promoObj.minSpend ? promoObj.discountAmount : 0;
   const totalPay = Math.max(2000, baseFare - discount);
@@ -137,7 +134,6 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           <p className="text-[10px] text-slate-400 mt-1 truncate">{pickup.address}</p>
         </div>
 
-        {/* Divider */}
         <div className="border-t border-slate-100 relative">
           <div className="absolute left-3 -top-2.5 bg-white px-1 text-[10px] text-slate-400">
             menuju ke
@@ -215,7 +211,6 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
 
       {/* Payment & Promo */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        {/* Payment Method Selector */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-800">Metode Pembayaran</span>
           <div className="flex items-center gap-2">
@@ -244,7 +239,6 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           </div>
         </div>
 
-        {/* Promo Code Input */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
           <div className="flex items-center gap-1.5 text-slate-700">
             <Tag className="w-3.5 h-3.5 text-red-600" />
@@ -264,7 +258,6 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           </select>
         </div>
 
-        {/* Fare Breakdown */}
         <div className="pt-2 border-t border-slate-100 space-y-1 text-xs">
           <div className="flex justify-between text-slate-500">
             <span>Tarif Perjalanan ({distanceKm} km)</span>

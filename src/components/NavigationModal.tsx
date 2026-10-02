@@ -25,7 +25,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Simulate odometer fluctuation
     const interval = setInterval(() => {
       setSpeed((s) => Math.max(25, Math.min(48, Math.round(s + (Math.random() - 0.5) * 6))));
     }, 2000);
@@ -46,7 +45,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-slate-900 text-white w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col border border-slate-700">
-        {/* Top Turn Maneuver Header (Standard Google Maps Style) */}
+        {/* Top Turn Maneuver Header */}
         <div className="bg-emerald-600 p-4 text-white flex items-start justify-between shadow-md">
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 border border-white/30">
@@ -71,14 +70,10 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
 
         {/* Live GPS Visual Canvas */}
         <div className="relative h-64 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-          {/* Animated Road Lines */}
           <div className="absolute inset-0 flex justify-center">
-            {/* 3D Perspective Road */}
             <div className="w-48 h-full bg-[#1e293b] relative border-x-4 border-slate-700">
-              {/* Center dashed road strip */}
               <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1.5 border-r-4 border-dashed border-amber-400 opacity-80" />
 
-              {/* Pulsing Target Ring */}
               <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
                 <div className="w-10 h-10 rounded-full bg-red-600/30 animate-ping absolute" />
                 <div className="w-8 h-8 rounded-full bg-red-600 border-2 border-white flex items-center justify-center text-white shadow-lg z-10">
@@ -89,7 +84,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
                 </span>
               </div>
 
-              {/* Moving Driver Arrow Marker */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse">
                   <div className="w-9 h-9 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-xl shadow-emerald-500/50">
@@ -100,14 +94,12 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
             </div>
           </div>
 
-          {/* Floating Speedometer & Compass */}
           <div className="absolute top-3 left-3 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-700 text-center">
             <span className="text-[10px] text-slate-400 uppercase font-bold">Kecepatan</span>
             <p className="text-xl font-black font-mono text-emerald-400">{speed}</p>
             <span className="text-[9px] text-slate-400">km/jam</span>
           </div>
 
-          {/* Voice Sound Toggle */}
           <button
             type="button"
             onClick={() => setIsVoiceActive(!isVoiceActive)}
@@ -122,7 +114,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
           </button>
         </div>
 
-        {/* Bottom Destination Card & Quick Google Maps Launcher */}
         <div className="p-4 bg-slate-900 space-y-3">
           <div className="flex items-center justify-between text-xs">
             <div>
@@ -140,13 +131,11 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({
             </div>
           </div>
 
-          {/* Direct External Google Maps Button */}
           <button
             type="button"
             onClick={handleOpenGoogleMaps}
             className="w-full h-12 rounded-xl bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-colors"
           >
-            {/* Google Maps Icon Graphic */}
             <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
             </svg>

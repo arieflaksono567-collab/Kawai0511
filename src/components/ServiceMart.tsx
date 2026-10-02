@@ -68,7 +68,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Kawai Belanja 0511</h2>
@@ -80,7 +79,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
         </div>
       </div>
 
-      {/* Select Store / Market */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
         <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
           <Store className="w-3.5 h-3.5 text-red-600" />
@@ -108,7 +106,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
         </div>
       </div>
 
-      {/* Shopping List Builder */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -118,7 +115,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
           <span className="text-[11px] text-slate-400 font-mono">{customList.length} item</span>
         </div>
 
-        {/* Input box */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -138,7 +134,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
           </button>
         </div>
 
-        {/* Items List */}
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
           {customList.map((item, idx) => (
             <div
@@ -163,7 +158,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
           ))}
         </div>
 
-        {/* Estimated Budget */}
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
           <div>
             <span className="font-semibold text-slate-800">Perkiraan Dana Belanja:</span>
@@ -182,7 +176,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
         </div>
       </div>
 
-      {/* Cost & Booking */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-slate-800">Metode Penggantian:</span>
@@ -236,7 +229,6 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
         </div>
       </div>
 
-      {/* Button */}
       <button
         type="button"
         onClick={handleBook}

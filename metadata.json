@@ -1,6 +1,6 @@
 {
   "name": "Kawai 0511 - Kurir Instant & Ojek Online",
-  "description": "Layanan Ojek Online, Kurir Kilat, Pesan Makanan, dan Titip Belanja praktis dan terpercaya untuk Banjarmasin dan sekitarnya.",
+  "description": "Layanan Ojek Online, Kurir Kilat, Pesan Makanan Kuliner Banjar, dan Titip Belanja praktis dan terpercaya untuk Banjarmasin dan sekitarnya.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

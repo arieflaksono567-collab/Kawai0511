@@ -126,7 +126,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col text-slate-800 antialiased font-sans">
-      {/* Top Bar Contract (Wordmark - Nav - Actions) */}
+      {/* Top Bar Contract */}
       <KawaiHeader
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -141,7 +141,7 @@ export default function App() {
         activeOrderCount={activeOrders.length}
       />
 
-      {/* Main Container Wrapper (Can be full responsive or simulated phone frame) */}
+      {/* Main Container Wrapper */}
       <main className="flex-1 flex justify-center py-4 px-2 sm:px-6">
         <div
           className={`w-full transition-all duration-300 ${
@@ -150,7 +150,7 @@ export default function App() {
               : 'max-w-7xl'
           }`}
         >
-          {/* Sub-Hero Banner (Original Kawai 0511 Style) */}
+          {/* Sub-Hero Banner */}
           {activeTab !== 'driver_mode' && activeOrders.length === 0 && (
             <div className="mb-4 relative rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-white">
               <div className="relative h-36 sm:h-44 w-full bg-slate-900">
@@ -178,7 +178,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Service Selector Tabs (The 4 Pillars from the User's Image) */}
+          {/* Service Selector Tabs (The 4 Pillars) */}
           {activeTab !== 'driver_mode' && (
             <section className="mb-4">
               <div className="grid grid-cols-4 gap-2 sm:gap-3 bg-white p-2.5 sm:p-3.5 rounded-2xl border border-slate-200 shadow-sm">
@@ -261,7 +261,7 @@ export default function App() {
             </section>
           )}
 
-          {/* Active Orders Banner / Alert if any ongoing */}
+          {/* Active Orders Banner */}
           {activeOrders.length > 0 && activeTab !== 'orders' && (
             <div
               onClick={() => setActiveTab('orders')}
@@ -282,9 +282,9 @@ export default function App() {
             </div>
           )}
 
-          {/* Layout Content: Split View on Desktop (Map on Right/Top, Forms on Left) */}
+          {/* Layout Content: Split View on Desktop */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left Column: Active Service Booking or Driver View or Order History */}
+            {/* Left Column */}
             <div
               className={`${
                 activeTab === 'driver_mode' || activeTab === 'orders'
@@ -356,7 +356,6 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Active Orders Tracker Cards */}
                   {activeOrders.map((ord) => (
                     <ActiveOrderTracker
                       key={ord.id}
@@ -367,7 +366,6 @@ export default function App() {
                     />
                   ))}
 
-                  {/* Past Orders List */}
                   <div className="space-y-2 pt-2">
                     <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                       <History className="w-3.5 h-3.5 text-slate-500" />
@@ -410,7 +408,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Right Column: Live Banjarmasin Map Simulator */}
+            {/* Right Column: Live Map Simulator */}
             {activeTab !== 'driver_mode' && (
               <div className="lg:col-span-7 flex flex-col space-y-2">
                 <div className="flex items-center justify-between">
@@ -448,7 +446,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Floating Kawai Helpline & Trust Footer */}
       <footer className="mt-8 bg-white border-t border-slate-200 py-6 px-4 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -471,7 +468,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Wallet Top-Up Modal */}
       <WalletModal
         isOpen={isWalletOpen}
         onClose={() => setIsWalletOpen(false)}
@@ -479,13 +475,10 @@ export default function App() {
         onTopUp={handleTopUpWallet}
       />
 
-      {/* Promo Vouchers Modal */}
       <PromoModal
         isOpen={isPromoOpen}
         onClose={() => setIsPromoOpen(false)}
-        onApplyCode={(code) => {
-          // Promo copied/applied
-        }}
+        onApplyCode={(code) => {}}
       />
     </div>
   );

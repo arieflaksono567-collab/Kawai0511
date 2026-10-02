@@ -173,7 +173,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* SOS Help Trigger */}
           {order.status !== 'completed' && order.status !== 'searching' && (
             <button
               type="button"
@@ -186,7 +185,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             </button>
           )}
 
-          {/* Quick Stepper Status Badge */}
           <span className="text-[10px] font-mono uppercase bg-white/20 px-2 py-0.5 rounded text-white font-semibold">
             {order.status.replace(/_/g, ' ')}
           </span>
@@ -194,7 +192,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Driver Profile Card */}
         {order.driver && order.status !== 'searching' && (
           <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -225,7 +222,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
               </div>
             </div>
 
-            {/* Contact Driver Actions */}
             {order.status !== 'completed' && (
               <div className="flex items-center gap-2">
                 <button
@@ -249,9 +245,7 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           </div>
         )}
 
-        {/* Route Details with Direct Navigation Buttons */}
         <div className="space-y-2 text-xs">
-          {/* Pickup row */}
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
             <div className="flex items-start gap-2.5 flex-1 min-w-0 pr-2">
               <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -266,7 +260,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
               </div>
             </div>
 
-            {/* Google Maps direct button */}
             <button
               type="button"
               onClick={() => setNavTarget({ name: order.pickup.name, address: order.pickup.address })}
@@ -280,7 +273,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             </button>
           </div>
 
-          {/* Destination row */}
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
             <div className="flex items-start gap-2.5 flex-1 min-w-0 pr-2">
               <div className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5">
@@ -294,7 +286,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
               </div>
             </div>
 
-            {/* Google Maps direct button */}
             <button
               type="button"
               onClick={() =>
@@ -311,7 +302,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           </div>
         </div>
 
-        {/* Service Details */}
         {order.packageDetails && (
           <div className="bg-sky-50 p-2.5 rounded-lg border border-sky-100 text-xs text-sky-900">
             <p className="font-semibold">
@@ -353,7 +343,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           </div>
         )}
 
-        {/* Payment Summary */}
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
           <div>
             <span className="text-slate-500">Metode Bayar:</span>
@@ -369,7 +358,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           </div>
         </div>
 
-        {/* Action Controls */}
         <div className="pt-2">
           {order.status === 'searching' && (
             <button
@@ -400,7 +388,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             </div>
           )}
 
-          {/* Review & Tip when completed */}
           {order.status === 'completed' && !isRatingSubmitted && (
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
               <div className="text-center">
@@ -408,7 +395,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
                 <p className="text-[11px] text-slate-500">Bagaimana pelayanan Pak {order.driver?.name}?</p>
               </div>
 
-              {/* Star Rating */}
               <div className="flex items-center justify-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -428,7 +414,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
                 ))}
               </div>
 
-              {/* Tip Selection */}
               <div className="space-y-1">
                 <span className="text-[11px] font-semibold text-slate-700">Kirim Tip Driver (Opsional):</span>
                 <div className="grid grid-cols-4 gap-1.5 text-xs font-mono">
@@ -471,7 +456,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
         </div>
       </div>
 
-      {/* In-App Live Chat Modal */}
       {isChatOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl h-[480px] flex flex-col overflow-hidden shadow-2xl">
@@ -556,7 +540,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
         </div>
       )}
 
-      {/* SOS Modal */}
       <SosModal
         isOpen={isSosOpen}
         onClose={() => setIsSosOpen(false)}
@@ -564,7 +547,6 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
         currentLocationName={order.pickup.name}
       />
 
-      {/* Navigation Modal */}
       {navTarget && (
         <NavigationModal
           isOpen={!!navTarget}

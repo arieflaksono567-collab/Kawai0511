@@ -25,7 +25,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [simulatedDrivers, setSimulatedDrivers] = useState<Driver[]>(drivers);
-  const [trafficDensity, setTrafficDensity] = useState<'normal' | 'lancar'>('lancar');
 
   // Slight gentle movement simulation for surrounding drivers
   useEffect(() => {
@@ -33,7 +32,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setSimulatedDrivers((prev) =>
         prev.map((drv) => {
           if (activeDriver && drv.id === activeDriver.id) {
-            // Active driver is positioned relative to pickup/dropoff elsewhere
             return drv;
           }
           const deltaX = (Math.random() - 0.5) * 0.4;
@@ -97,7 +95,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <ellipse cx="49" cy="53" rx="5" ry="3.5" fill="#d5f0dc" />
           <ellipse cx="35" cy="22" rx="4" ry="4" fill="#cbebd3" />
 
-          {/* Sungai Martapura (Meandering Blue River of Banjarmasin) */}
+          {/* Sungai Martapura */}
           <path
             d="M 24 0 Q 30 18, 38 28 T 40 48 T 32 64 T 30 82 T 26 100"
             fill="none"
@@ -113,26 +111,20 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             strokeLinecap="round"
           />
 
-          {/* Main Boulevards & Roads (Jl. A. Yani, Kayutangi, Kuripan) */}
-          {/* Jl. A. Yani (Main arterial road to Banjarbaru) */}
+          {/* Main Boulevards & Roads */}
           <line x1="0" y1="48" x2="100" y2="78" stroke="#ffffff" strokeWidth="3" />
           <line x1="0" y1="48" x2="100" y2="78" stroke="#f1c40f" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
-
-          {/* Jl. Brigjen Hasan Basry (Kayutangi to Marabahan) */}
           <line x1="36" y1="0" x2="36" y2="48" stroke="#ffffff" strokeWidth="2.4" />
-
-          {/* Jl. Kuripan & Jl. Pramuka */}
           <line x1="60" y1="36" x2="60" y2="90" stroke="#ffffff" strokeWidth="2" />
           <line x1="20" y1="40" x2="90" y2="40" stroke="#ffffff" strokeWidth="1.8" />
           <line x1="10" y1="70" x2="85" y2="70" stroke="#ffffff" strokeWidth="1.8" />
 
-          {/* Siring Bridge over Martapura River */}
+          {/* Siring Bridge */}
           <line x1="36" y1="42" x2="42" y2="44" stroke="#d97706" strokeWidth="1.4" strokeLinecap="square" />
 
-          {/* Route path between Pickup and Destination if both exist */}
+          {/* Route path */}
           {showRoute && pickup && destination && (
             <>
-              {/* Route Glow */}
               <path
                 d={`M ${pickup.x} ${pickup.y} Q ${(pickup.x + destination.x) / 2 + 5} ${(pickup.y + destination.y) / 2 - 4}, ${destination.x} ${destination.y}`}
                 fill="none"
@@ -153,7 +145,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           )}
         </svg>
 
-        {/* Nearby Drivers on Map (Motorcycle Icons) */}
+        {/* Nearby Drivers on Map */}
         {simulatedDrivers.map((driver) => {
           const isActive = activeDriver && activeDriver.id === driver.id;
           return (
@@ -162,7 +154,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
               className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-out group pointer-events-auto"
               style={{ left: `${driver.x}%`, top: `${driver.y}%` }}
             >
-              {/* Pulse Ring for Active Driver */}
               {isActive && (
                 <div className="absolute -inset-2 rounded-full bg-red-500/25 animate-ping" />
               )}
@@ -174,12 +165,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 }`}
                 title={`${driver.name} (${driver.vehicle})`}
               >
-                {/* Custom Kawai 0511 Rider Icon */}
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d="M19 7c0-1.1-.9-2-2-2h-3v2h3v2.65L13.52 14H10V9H6c-2.21 0-4 1.79-4 4v3h2c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-4-4zm-12 9c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm10 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
                 </svg>
 
-                {/* Driver Tag Badge */}
                 <div className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-[9px] px-1.5 py-0.5 rounded shadow pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                   {driver.name.split(' ')[0]} · ★{driver.rating}
                 </div>
@@ -188,7 +177,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           );
         })}
 
-        {/* Pickup Pin (Green) */}
+        {/* Pickup Pin */}
         {pickup && (
           <div
             className="absolute -translate-x-1/2 -translate-y-full z-20 animate-bounce pointer-events-none"
@@ -207,7 +196,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </div>
         )}
 
-        {/* Destination Pin (Red) */}
+        {/* Destination Pin */}
         {destination && (
           <div
             className="absolute -translate-x-1/2 -translate-y-full z-20 animate-bounce pointer-events-none"
@@ -227,7 +216,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         )}
       </div>
 
-      {/* Map Control Floating Badges (Top & Bottom Corners) */}
+      {/* Map Control Floating Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
         <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-200/80 shadow-sm flex items-center gap-2 text-xs font-medium text-slate-800">
           <Compass className="w-3.5 h-3.5 text-sky-600" />
@@ -244,7 +233,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         )}
       </div>
 
-      {/* Zoom and Traffic density buttons */}
+      {/* Zoom buttons */}
       <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200 shadow-sm">
         <button
           type="button"
@@ -267,7 +256,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </button>
       </div>
 
-      {/* Safe Badge */}
       <div className="absolute bottom-3 left-3 z-10 hidden sm:flex items-center gap-1 text-[11px] text-slate-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded border border-slate-200">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
         <span>GPS Kawai 0511 Akurat</span>

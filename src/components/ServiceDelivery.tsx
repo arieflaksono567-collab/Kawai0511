@@ -33,13 +33,11 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
   const [appliedPromo, setAppliedPromo] = useState<string>('ONGKIRKILAT');
   const [paymentMethod, setPaymentMethod] = useState<'kawaipay' | 'cash'>('kawaipay');
 
-  // Distance calculation
   const dx = pickup.x - destination.x;
   const dy = pickup.y - destination.y;
   const rawDist = Math.sqrt(dx * dx + dy * dy) * 0.18;
   const distanceKm = Math.max(1.2, parseFloat(rawDist.toFixed(1)));
 
-  // Base fare calculation
   const baseRate = deliverySpeed === 'instant' ? 10000 : 7000;
   const perKmRate = 2200;
   const insuranceFee = isInsured ? 1000 : 0;
@@ -72,7 +70,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Intro */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Kawai Kurir Instant 0511</h2>
@@ -117,7 +114,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
 
       {/* Location Pickers */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        {/* Pickup point */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
@@ -169,10 +165,8 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
           </div>
         </div>
 
-        {/* Divider */}
         <div className="border-t border-slate-100" />
 
-        {/* Destination point */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-red-600 flex items-center gap-1">
@@ -233,7 +227,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
           Detail Barang Kiriman
         </h3>
 
-        {/* Category Pills */}
         <div className="flex flex-wrap gap-1.5">
           {['Dokumen', 'Makanan / Kue', 'Pakaian & Olshop', 'Elektronik Kecil', 'Obat / Farmasi', 'Lainnya'].map(
             (cat) => (
@@ -253,7 +246,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
           )}
         </div>
 
-        {/* Weight selector */}
         <div className="grid grid-cols-3 gap-2 pt-1">
           {['Kecil (< 5 kg)', 'Sedang (5-10 kg)', 'Besar (10-20 kg)'].map((w) => (
             <button
@@ -271,7 +263,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
           ))}
         </div>
 
-        {/* Notes for Courier */}
         <div>
           <input
             type="text"
@@ -282,7 +273,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
           />
         </div>
 
-        {/* Insurance */}
         <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer pt-1">
           <input
             type="checkbox"
@@ -362,7 +352,6 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
         </div>
       </div>
 
-      {/* Book Button */}
       <button
         type="button"
         onClick={handleBook}

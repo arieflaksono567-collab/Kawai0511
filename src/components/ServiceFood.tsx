@@ -36,7 +36,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
 
   const addToCart = (item: MenuItem, merchantId: string) => {
     setCart((prev) => {
-      // If adding from a different merchant, replace cart
       if (prev.length > 0 && prev[0].merchantId !== merchantId) {
         return [{ menuItem: item, merchantId, quantity: 1 }];
       }
@@ -101,7 +100,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Food Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Kawai Food 0511</h2>
@@ -113,7 +111,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
         </div>
       </div>
 
-      {/* Search Input */}
       <div>
         <input
           type="text"
@@ -124,7 +121,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
         />
       </div>
 
-      {/* Category Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
         {categories.map((cat) => (
           <button
@@ -142,7 +138,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
         ))}
       </div>
 
-      {/* Merchants List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {filteredMerchants.map((merchant) => (
           <div
@@ -229,7 +224,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
       {selectedMerchant && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
-            {/* Modal Header */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-900 text-base">{selectedMerchant.name}</h3>
@@ -244,7 +238,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
               </button>
             </div>
 
-            {/* Menu Items List */}
             <div className="p-4 overflow-y-auto space-y-3 flex-1">
               {selectedMerchant.menu.map((item) => {
                 const inCart = cart.find((c) => c.menuItem.id === item.id);
@@ -305,7 +298,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
               })}
             </div>
 
-            {/* Bottom Modal Bar */}
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
               <div>
                 <span className="text-xs text-slate-500">Total di keranjang:</span>
@@ -348,7 +340,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
             </div>
 
             <div className="p-4 overflow-y-auto space-y-4 flex-1">
-              {/* Delivery Address */}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
                 <span className="font-semibold text-slate-700 flex items-center gap-1 mb-1">
                   <MapPin className="w-3.5 h-3.5 text-red-600" /> Diantar ke Alamat Kamu:
@@ -357,7 +348,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                 <p className="text-slate-500 text-[11px]">{userLocation.address}</p>
               </div>
 
-              {/* Items List */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-slate-800">Daftar Makanan:</span>
                 {cart.map((ci) => (
@@ -396,7 +386,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                 ))}
               </div>
 
-              {/* Payment Method */}
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-800">Metode Bayar:</span>
                 <div className="flex gap-2">
@@ -425,7 +414,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                 </div>
               </div>
 
-              {/* Voucher */}
               <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                 <span className="text-slate-600 flex items-center gap-1">
                   <Tag className="w-3.5 h-3.5 text-red-600" /> Voucher:
@@ -444,7 +432,6 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                 </select>
               </div>
 
-              {/* Cost Summary */}
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 text-xs">
                 <div className="flex justify-between text-slate-600">
                   <span>Subtotal Makanan</span>

@@ -82,15 +82,14 @@ export const SosModal: React.FC<SosModalProps> = ({
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs flex items-start gap-2">
             <MapPin className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400">Koordinat GPS Driver Terdeteksi:</span>
+              <span className="text-[10px] uppercase font-bold text-slate-400">Koordinat GPS Terdeteksi:</span>
               <p className="font-semibold text-slate-800">{currentLocationName}</p>
-              <p className="text-[11px] text-slate-500 font-mono">Mitra: {driverName}</p>
+              <p className="text-[11px] text-slate-500 font-mono">Mitra / Pengguna: {driverName}</p>
             </div>
           </div>
 
           {activeTab === 'darurat' ? (
             <>
-              {/* Panic Button */}
               {sosSent ? (
                 <div className="bg-emerald-50 border border-emerald-300 p-4 rounded-2xl text-center space-y-2">
                   <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-md">
@@ -158,7 +157,6 @@ export const SosModal: React.FC<SosModalProps> = ({
               </div>
             </>
           ) : (
-            /* Vehicle breakdown assistance */
             <div className="space-y-3">
               <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900">
                 <p className="font-bold mb-0.5">Bantuan Kendaraan Mitra Kawai</p>
