@@ -6,7 +6,10 @@ export interface LocationPoint {
   address: string;
   x: number; // percentage on map (0-100)
   y: number; // percentage on map (0-100)
+  lat?: number;
+  lng?: number;
   landmark?: string;
+  isGpsDetected?: boolean;
 }
 
 export interface Driver {

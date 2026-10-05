@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # KAWAI 0511 - NestJS API Gateway / Core Service
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../infrastructure/docker/Dockerfile.backend
+    container_name: kawai0511_backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://kawai_user:kawai_password@postgres:5432/kawai0511_db?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kawai_network
+
+  # KAWAI 0511 - PostgreSQL 16 with PostGIS
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: kawai0511_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=kawai_user
+      - POSTGRES_PASSWORD=kawai_password
+      - POSTGRES_DB=kawai0511_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - kawai_network
+
+  # KAWAI 0511 - Redis Fast Location & Temporary State
+  redis:
+    image: redis:7.2-alpine
+    container_name: kawai0511_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kawai_network
+
+networks:
+  kawai_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

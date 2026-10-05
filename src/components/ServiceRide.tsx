@@ -1,7 +1,26 @@
 import React, { useState } from 'react';
 import { LocationPoint, OrderDetails } from '../types';
 import { BANJARMASIN_LOCATIONS, PROMO_VOUCHERS } from '../data/mockData';
-import { MapPin, Navigation, Bike, Car, Tag, Shield, Clock, ChevronRight, Check } from 'lucide-react';
+import {
+  MapPin,
+  Navigation,
+  Bike,
+  Car,
+  Tag,
+  Shield,
+  Clock,
+  ChevronRight,
+  Crosshair,
+  Loader2,
+  CheckCircle2,
+  Search,
+  Sparkles
+} from 'lucide-react';
+import {
+  dapatkanLokasiGpsSaatIni,
+  detailKoordinatKeAlamat,
+  koordinatKePersenPeta
+} from '../utils/geocoding';
 
 interface ServiceRideProps {
   pickup: LocationPoint;
@@ -27,6 +46,67 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'kawaipay' | 'cash'>('kawaipay');
   const [needExtraHelmet, setNeedExtraHelmet] = useState<boolean>(false);
   const [tripNotes, setTripNotes] = useState<string>('');
+
+  // GPS Loading states
+  const [isPickupGpsLoading, setIsPickupGpsLoading] = useState<boolean>(false);
+  const [isDestGpsLoading, setIsDestGpsLoading] = useState<boolean>(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const showFeedback = (msg: string) => {
+    setFeedbackMsg(msg);
+    setTimeout(() => setFeedbackMsg(null), 4000);
+  };
+
+  // 1. Detect Current Location via HTML5 Geolocation API + Nominatim Reverse Geocoding
+  const handleDetectCurrentLocation = async (target: 'pickup' | 'destination') => {
+    if (target === 'pickup') {
+      setIsPickupGpsLoading(true);
+    } else {
+      setIsDestGpsLoading(true);
+    }
+
+    try {
+      // Step 1: HTML5 navigator.geolocation.getCurrentPosition (dengan fallback cerdas)
+      const gpsResult = await dapatkanLokasiGpsSaatIni();
+
+      // Step 2: OpenStreetMap Nominatim Reverse Geocoding
+      const geoResult = await detailKoordinatKeAlamat(gpsResult.lat, gpsResult.lng);
+      const { x, y } = koordinatKePersenPeta(gpsResult.lat, gpsResult.lng);
+
+      const detectedLocation: LocationPoint = {
+        id: `gps-${Date.now()}`,
+        name: geoResult.title || 'Lokasi Saya',
+        address: geoResult.fullAddress,
+        x,
+        y,
+        lat: gpsResult.lat,
+        lng: gpsResult.lng,
+        isGpsDetected: !gpsResult.isFallback,
+        landmark: gpsResult.isFallback ? 'Titik Acuan Pusat Banjarmasin' : 'Hasil GPS Real-Time Pengguna',
+      };
+
+      if (target === 'pickup') {
+        onSetPickup(detectedLocation);
+        if (gpsResult.isFallback) {
+          showFeedback(gpsResult.message || 'Izin GPS tidak aktif. Dialihkan ke Jl. A. Yani Banjarmasin.');
+        } else {
+          showFeedback(`Lokasi jemput terdeteksi: ${geoResult.title}`);
+        }
+      } else {
+        onSetDestination(detectedLocation);
+        if (gpsResult.isFallback) {
+          showFeedback(gpsResult.message || 'Izin GPS tidak aktif. Dialihkan ke Jl. A. Yani Banjarmasin.');
+        } else {
+          showFeedback(`Lokasi tujuan diset: ${geoResult.title}`);
+        }
+      }
+    } catch {
+      showFeedback('Lokasi diarahkan ke Jl. A. Yani, Banjarmasin Tengah.');
+    } finally {
+      setIsPickupGpsLoading(false);
+      setIsDestGpsLoading(false);
+    }
+  };
 
   const dx = pickup.x - destination.x;
   const dy = pickup.y - destination.y;
@@ -98,40 +178,83 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
         </button>
       </div>
 
+      {feedbackMsg && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-2.5 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-medium truncate">{feedbackMsg}</span>
+        </div>
+      )}
+
       {/* Location Pickup & Destination Pickers */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        {/* Pickup Item */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        {/* PICKUP ITEM */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
-              Lokasi Jemput
+              Lokasi Jemput (Asal)
             </span>
-            <button
-              type="button"
-              onClick={() => onOpenMapPicker('pickup')}
-              className="text-[11px] text-sky-600 hover:text-sky-800 font-medium hover:underline"
-            >
-              Pilih dari Peta
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleDetectCurrentLocation('pickup')}
+                disabled={isPickupGpsLoading}
+                className="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 font-semibold flex items-center gap-1 transition-colors active:scale-95"
+                title="Gunakan GPS perangkat & Nominatim untuk mendeteksi lokasi saat ini"
+              >
+                {isPickupGpsLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-emerald-700" />
+                ) : (
+                  <Crosshair className="w-3 h-3 text-emerald-700" />
+                )}
+                <span>Lokasi Saat Ini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenMapPicker('pickup')}
+                className="text-[11px] text-sky-600 hover:text-sky-800 font-semibold hover:underline flex items-center gap-0.5"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>Pilih dari Peta</span>
+              </button>
+            </div>
           </div>
+
+          {/* Real Input Text for Pickup Address */}
           <div className="relative">
-            <select
-              value={pickup.id}
+            <input
+              type="text"
+              value={pickup.address || pickup.name}
               onChange={(e) => {
-                const found = BANJARMASIN_LOCATIONS.find((l) => l.id === e.target.value);
-                if (found) onSetPickup(found);
+                onSetPickup({
+                  ...pickup,
+                  name: e.target.value.split(',')[0] || e.target.value,
+                  address: e.target.value,
+                });
               }}
-              className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-8 focus:outline-none focus:ring-1 focus:ring-red-500"
-            >
-              {BANJARMASIN_LOCATIONS.map((loc) => (
-                <option key={`p-${loc.id}`} value={loc.id}>
-                  {loc.name} — {loc.landmark || loc.address.slice(0, 30)}
-                </option>
-              ))}
-            </select>
+              placeholder="Ketik alamat penjemputan atau klik Pilih dari Peta..."
+              className="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white"
+            />
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">{pickup.address}</p>
+
+          {/* Quick preset selector */}
+          <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] pt-0.5 scrollbar-none">
+            <span className="text-slate-400 whitespace-nowrap">Favorit:</span>
+            {BANJARMASIN_LOCATIONS.slice(0, 4).map((loc) => (
+              <button
+                key={`qp-${loc.id}`}
+                type="button"
+                onClick={() => onSetPickup(loc)}
+                className={`px-2 py-0.5 rounded-full border whitespace-nowrap transition-colors ${
+                  pickup.id === loc.id
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 font-bold'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                }`}
+              >
+                {loc.name.split(' ')[0]}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="border-t border-slate-100 relative">
@@ -140,38 +263,74 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           </div>
         </div>
 
-        {/* Destination Item */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
+        {/* DESTINATION ITEM */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-red-600 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-red-600" />
               Tujuan Antar
             </span>
-            <button
-              type="button"
-              onClick={() => onOpenMapPicker('destination')}
-              className="text-[11px] text-sky-600 hover:text-sky-800 font-medium hover:underline"
-            >
-              Pilih dari Peta
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleDetectCurrentLocation('destination')}
+                disabled={isDestGpsLoading}
+                className="text-[11px] bg-red-50 hover:bg-red-100 text-red-700 px-2 py-0.5 rounded-md border border-red-200 font-semibold flex items-center gap-1 transition-colors active:scale-95"
+                title="Gunakan GPS perangkat untuk menentukan lokasi tujuan"
+              >
+                {isDestGpsLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-red-700" />
+                ) : (
+                  <Crosshair className="w-3 h-3 text-red-700" />
+                )}
+                <span>Lokasi Saat Ini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenMapPicker('destination')}
+                className="text-[11px] text-sky-600 hover:text-sky-800 font-semibold hover:underline flex items-center gap-0.5"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>Pilih dari Peta</span>
+              </button>
+            </div>
           </div>
+
+          {/* Real Input Text for Destination Address */}
           <div className="relative">
-            <select
-              value={destination.id}
+            <input
+              type="text"
+              value={destination.address || destination.name}
               onChange={(e) => {
-                const found = BANJARMASIN_LOCATIONS.find((l) => l.id === e.target.value);
-                if (found) onSetDestination(found);
+                onSetDestination({
+                  ...destination,
+                  name: e.target.value.split(',')[0] || e.target.value,
+                  address: e.target.value,
+                });
               }}
-              className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-8 focus:outline-none focus:ring-1 focus:ring-red-500"
-            >
-              {BANJARMASIN_LOCATIONS.map((loc) => (
-                <option key={`d-${loc.id}`} value={loc.id}>
-                  {loc.name} — {loc.landmark || loc.address.slice(0, 30)}
-                </option>
-              ))}
-            </select>
+              placeholder="Ketik alamat tujuan atau klik Pilih dari Peta..."
+              className="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white"
+            />
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 truncate">{destination.address}</p>
+
+          {/* Quick preset selector */}
+          <div className="flex items-center gap-1.5 overflow-x-auto text-[10px] pt-0.5 scrollbar-none">
+            <span className="text-slate-400 whitespace-nowrap">Favorit:</span>
+            {BANJARMASIN_LOCATIONS.slice(1, 5).map((loc) => (
+              <button
+                key={`qd-${loc.id}`}
+                type="button"
+                onClick={() => onSetDestination(loc)}
+                className={`px-2 py-0.5 rounded-full border whitespace-nowrap transition-colors ${
+                  destination.id === loc.id
+                    ? 'bg-red-100 border-red-300 text-red-800 font-bold'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                }`}
+              >
+                {loc.name.split(' ')[0]}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Trip estimate stats */}
@@ -183,7 +342,9 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
             <Clock className="w-3.5 h-3.5 text-amber-600" />
             <span>± {estimatedMins} Menit</span>
           </div>
-          <span className="text-[11px] text-slate-400">Rute tercepat via Jl. A. Yani</span>
+          <span className="text-[11px] text-slate-400 truncate max-w-[180px]">
+            {pickup.name.slice(0, 16)} → {destination.name.slice(0, 16)}
+          </span>
         </div>
       </div>
 

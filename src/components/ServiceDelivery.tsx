@@ -1,7 +1,23 @@
 import React, { useState } from 'react';
 import { LocationPoint, OrderDetails } from '../types';
 import { BANJARMASIN_LOCATIONS, PROMO_VOUCHERS } from '../data/mockData';
-import { Package, ShieldCheck, Clock, MapPin, Tag, User, Phone, CheckCircle2 } from 'lucide-react';
+import {
+  Package,
+  ShieldCheck,
+  Clock,
+  MapPin,
+  Tag,
+  User,
+  Phone,
+  CheckCircle2,
+  Crosshair,
+  Loader2
+} from 'lucide-react';
+import {
+  dapatkanLokasiGpsSaatIni,
+  detailKoordinatKeAlamat,
+  koordinatKePersenPeta
+} from '../utils/geocoding';
 
 interface ServiceDeliveryProps {
   pickup: LocationPoint;
@@ -32,6 +48,62 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
   const [isInsured, setIsInsured] = useState<boolean>(true);
   const [appliedPromo, setAppliedPromo] = useState<string>('ONGKIRKILAT');
   const [paymentMethod, setPaymentMethod] = useState<'kawaipay' | 'cash'>('kawaipay');
+
+  const [isPickupGpsLoading, setIsPickupGpsLoading] = useState<boolean>(false);
+  const [isDestGpsLoading, setIsDestGpsLoading] = useState<boolean>(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const showFeedback = (msg: string) => {
+    setFeedbackMsg(msg);
+    setTimeout(() => setFeedbackMsg(null), 4000);
+  };
+
+  const handleDetectCurrentLocation = async (target: 'pickup' | 'destination') => {
+    if (target === 'pickup') {
+      setIsPickupGpsLoading(true);
+    } else {
+      setIsDestGpsLoading(true);
+    }
+
+    try {
+      const gpsResult = await dapatkanLokasiGpsSaatIni();
+      const geoResult = await detailKoordinatKeAlamat(gpsResult.lat, gpsResult.lng);
+      const { x, y } = koordinatKePersenPeta(gpsResult.lat, gpsResult.lng);
+
+      const detectedLocation: LocationPoint = {
+        id: `gps-${Date.now()}`,
+        name: geoResult.title || 'Lokasi Saya',
+        address: geoResult.fullAddress,
+        x,
+        y,
+        lat: gpsResult.lat,
+        lng: gpsResult.lng,
+        isGpsDetected: !gpsResult.isFallback,
+        landmark: gpsResult.isFallback ? 'Titik Acuan Pusat Banjarmasin' : 'Hasil GPS Real-Time Pengirim',
+      };
+
+      if (target === 'pickup') {
+        onSetPickup(detectedLocation);
+        if (gpsResult.isFallback) {
+          showFeedback(gpsResult.message || 'Izin GPS tidak aktif. Dialihkan ke Jl. A. Yani Banjarmasin.');
+        } else {
+          showFeedback(`Alamat jemput paket terdeteksi: ${geoResult.title}`);
+        }
+      } else {
+        onSetDestination(detectedLocation);
+        if (gpsResult.isFallback) {
+          showFeedback(gpsResult.message || 'Izin GPS tidak aktif. Dialihkan ke Jl. A. Yani Banjarmasin.');
+        } else {
+          showFeedback(`Alamat tujuan paket diset: ${geoResult.title}`);
+        }
+      }
+    } catch {
+      showFeedback('Lokasi diarahkan ke Jl. A. Yani, Banjarmasin Tengah.');
+    } finally {
+      setIsPickupGpsLoading(false);
+      setIsDestGpsLoading(false);
+    }
+  };
 
   const dx = pickup.x - destination.x;
   const dy = pickup.y - destination.y;
@@ -112,39 +184,65 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
         </button>
       </div>
 
+      {feedbackMsg && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-2.5 rounded-xl text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-medium truncate">{feedbackMsg}</span>
+        </div>
+      )}
+
       {/* Location Pickers */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <div>
-          <div className="flex items-center justify-between mb-1">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        {/* PICKUP (PENGIRIM) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
               Alamat Pengirim (Jemput Paket)
             </span>
-            <button
-              type="button"
-              onClick={() => onOpenMapPicker('pickup')}
-              className="text-[11px] text-sky-600 hover:text-sky-800 font-medium hover:underline"
-            >
-              Pilih di Peta
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleDetectCurrentLocation('pickup')}
+                disabled={isPickupGpsLoading}
+                className="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 font-semibold flex items-center gap-1 transition-colors active:scale-95"
+                title="Gunakan GPS perangkat & Nominatim untuk mendeteksi lokasi pengirim saat ini"
+              >
+                {isPickupGpsLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-emerald-700" />
+                ) : (
+                  <Crosshair className="w-3 h-3 text-emerald-700" />
+                )}
+                <span>Lokasi Saat Ini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenMapPicker('pickup')}
+                className="text-[11px] text-sky-600 hover:text-sky-800 font-semibold hover:underline flex items-center gap-0.5"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>Pilih di Peta</span>
+              </button>
+            </div>
           </div>
-          <select
-            value={pickup.id}
+
+          <input
+            type="text"
+            value={pickup.address || pickup.name}
             onChange={(e) => {
-              const found = BANJARMASIN_LOCATIONS.find((l) => l.id === e.target.value);
-              if (found) onSetPickup(found);
+              onSetPickup({
+                ...pickup,
+                name: e.target.value.split(',')[0] || e.target.value,
+                address: e.target.value,
+              });
             }}
-            className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg p-2.5"
-          >
-            {BANJARMASIN_LOCATIONS.map((loc) => (
-              <option key={`p-${loc.id}`} value={loc.id}>
-                {loc.name} — {loc.address.slice(0, 36)}...
-              </option>
-            ))}
-          </select>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-              <User className="w-3.5 h-3.5 text-slate-400" />
+            placeholder="Ketik alamat jemput paket atau gunakan GPS / Peta..."
+            className="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white"
+          />
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-200 text-xs">
+              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 placeholder="Nama Pengirim"
@@ -153,8 +251,8 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
                 className="w-full bg-transparent text-xs focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-              <Phone className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-200 text-xs">
+              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 placeholder="No HP Pengirim"
@@ -167,37 +265,56 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
 
         <div className="border-t border-slate-100" />
 
-        <div>
-          <div className="flex items-center justify-between mb-1">
+        {/* DESTINATION (PENERIMA) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-red-600 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-red-600" />
               Alamat Penerima (Tujuan Paket)
             </span>
-            <button
-              type="button"
-              onClick={() => onOpenMapPicker('destination')}
-              className="text-[11px] text-sky-600 hover:text-sky-800 font-medium hover:underline"
-            >
-              Pilih di Peta
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleDetectCurrentLocation('destination')}
+                disabled={isDestGpsLoading}
+                className="text-[11px] bg-red-50 hover:bg-red-100 text-red-700 px-2 py-0.5 rounded-md border border-red-200 font-semibold flex items-center gap-1 transition-colors active:scale-95"
+                title="Gunakan GPS perangkat untuk lokasi tujuan paket"
+              >
+                {isDestGpsLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-red-700" />
+                ) : (
+                  <Crosshair className="w-3 h-3 text-red-700" />
+                )}
+                <span>Lokasi Saat Ini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenMapPicker('destination')}
+                className="text-[11px] text-sky-600 hover:text-sky-800 font-semibold hover:underline flex items-center gap-0.5"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>Pilih di Peta</span>
+              </button>
+            </div>
           </div>
-          <select
-            value={destination.id}
+
+          <input
+            type="text"
+            value={destination.address || destination.name}
             onChange={(e) => {
-              const found = BANJARMASIN_LOCATIONS.find((l) => l.id === e.target.value);
-              if (found) onSetDestination(found);
+              onSetDestination({
+                ...destination,
+                name: e.target.value.split(',')[0] || e.target.value,
+                address: e.target.value,
+              });
             }}
-            className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg p-2.5"
-          >
-            {BANJARMASIN_LOCATIONS.map((loc) => (
-              <option key={`d-${loc.id}`} value={loc.id}>
-                {loc.name} — {loc.address.slice(0, 36)}...
-              </option>
-            ))}
-          </select>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-              <User className="w-3.5 h-3.5 text-slate-400" />
+            placeholder="Ketik alamat penerima paket atau pilih di Peta..."
+            className="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-red-500 focus:bg-white"
+          />
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-200 text-xs">
+              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 placeholder="Nama Penerima"
@@ -206,8 +323,8 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
                 className="w-full bg-transparent text-xs focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs">
-              <Phone className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-200 text-xs">
+              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <input
                 type="text"
                 placeholder="No HP Penerima"
@@ -217,6 +334,17 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Distance estimate stats */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-sky-600" />
+            <span className="font-semibold text-slate-900">{distanceKm} km jarak antar</span>
+          </div>
+          <span className="text-[11px] text-slate-400 truncate max-w-[220px]">
+            {pickup.name.slice(0, 16)} → {destination.name.slice(0, 16)}
+          </span>
         </div>
       </div>
 

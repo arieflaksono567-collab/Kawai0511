@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { LocationPoint, Driver } from '../types';
-import { MapPin, Navigation, Compass, Layers, ShieldCheck } from 'lucide-react';
+import {
+  MapPin,
+  Navigation,
+  Compass,
+  Layers,
+  ShieldCheck,
+  Loader2,
+  Crosshair,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
+import {
+  detailKoordinatKeAlamat,
+  dapatkanLokasiGpsSaatIni,
+  koordinatKePersenPeta,
+  persenPetaKeKoordinat
+} from '../utils/geocoding';
 
 interface InteractiveMapProps {
   pickup: LocationPoint | null;
@@ -25,6 +41,12 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [simulatedDrivers, setSimulatedDrivers] = useState<Driver[]>(drivers);
+  const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
+  const [isGpsLoading, setIsGpsLoading] = useState<boolean>(false);
+  const [lastNotification, setLastNotification] = useState<{
+    text: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
 
   // Slight gentle movement simulation for surrounding drivers
   useEffect(() => {
@@ -48,28 +70,92 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return () => clearInterval(interval);
   }, [activeDriver]);
 
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const showToast = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setLastNotification({ text, type });
+    setTimeout(() => {
+      setLastNotification((curr) => (curr?.text === text ? null : curr));
+    }, 4500);
+  };
+
+  // 1. CLICK MAP HANDLER: Converts click point to Lat/Lng and reverse geocodes with Nominatim
+  const handleMapClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = ((e.clientX - rect.left) / rect.width) * 100;
     const clickY = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const clickedPoint: LocationPoint = {
-      id: `custom-${Date.now()}`,
-      name: `Titik Peta (${clickX.toFixed(1)}°, ${clickY.toFixed(1)}°)`,
-      address: `Area Banjarmasin Tengah / Sekitar Jl. A. Yani`,
-      x: Math.round(clickX),
-      y: Math.round(clickY),
-    };
+    // Hitung koordinat Latitude & Longitude Banjarmasin dari posisi klik
+    const { lat, lng } = persenPetaKeKoordinat(clickX, clickY);
 
-    if (mode === 'pick_pickup' && onSelectPickup) {
-      onSelectPickup(clickedPoint);
-    } else if (mode === 'pick_destination' && onSelectDestination) {
-      onSelectDestination(clickedPoint);
+    setIsGeocoding(true);
+    try {
+      const geoResult = await detailKoordinatKeAlamat(lat, lng);
+
+      const clickedPoint: LocationPoint = {
+        id: `map-${Date.now()}`,
+        name: geoResult.title,
+        address: geoResult.fullAddress,
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        lat,
+        lng,
+      };
+
+      if (mode === 'pick_destination') {
+        if (onSelectDestination) onSelectDestination(clickedPoint);
+        showToast(`Tujuan dipilih: ${geoResult.title}`, 'success');
+      } else {
+        if (onSelectPickup) onSelectPickup(clickedPoint);
+        showToast(`Titik jemput dipilih: ${geoResult.title}`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memproses titik peta', 'error');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  // 2. HTML5 GEOLOCATION API: Detects user's real GPS position & reverse geocodes via Nominatim
+  const handleGetCurrentLocationGps = async () => {
+    setIsGpsLoading(true);
+
+    try {
+      const gpsResult = await dapatkanLokasiGpsSaatIni();
+      const geoResult = await detailKoordinatKeAlamat(gpsResult.lat, gpsResult.lng);
+      const { x, y } = koordinatKePersenPeta(gpsResult.lat, gpsResult.lng);
+
+      const gpsLocationPoint: LocationPoint = {
+        id: `gps-${Date.now()}`,
+        name: geoResult.title || 'Lokasi Saya',
+        address: geoResult.fullAddress,
+        x,
+        y,
+        lat: gpsResult.lat,
+        lng: gpsResult.lng,
+        isGpsDetected: !gpsResult.isFallback,
+        landmark: gpsResult.isFallback ? 'Titik Acuan Pusat Banjarmasin' : 'Posisi GPS Real-Time Pengguna',
+      };
+
+      if (mode === 'pick_destination' && onSelectDestination) {
+        onSelectDestination(gpsLocationPoint);
+      } else if (onSelectPickup) {
+        onSelectPickup(gpsLocationPoint);
+      }
+
+      if (gpsResult.isFallback) {
+        showToast(gpsResult.message || 'Izin GPS tidak aktif. Menggunakan pusat kota Banjarmasin.', 'info');
+      } else {
+        showToast(`Lokasi GPS aktif: ${geoResult.title}`, 'success');
+      }
+    } catch {
+      showToast('Menggunakan titik pusat Banjarmasin (Jl. A. Yani)', 'info');
+    } finally {
+      setIsGpsLoading(false);
     }
   };
 
   return (
-    <div className="relative w-full h-full min-h-[300px] overflow-hidden bg-[#eaf4fc] select-none rounded-2xl border border-slate-200 shadow-inner">
+    <div className="relative w-full h-full min-h-[340px] overflow-hidden bg-[#eaf4fc] select-none rounded-2xl border border-slate-200 shadow-inner flex flex-col justify-between">
       {/* Map Background SVG Graphics: Banjarmasin Riverway & Main Avenues */}
       <div
         className="absolute inset-0 cursor-crosshair transition-transform duration-300"
@@ -186,7 +272,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div className="flex flex-col items-center">
               <div className="bg-emerald-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                Jemput
+                <span>{pickup.isGpsDetected ? 'GPS Anda' : 'Jemput'}</span>
               </div>
               <div className="w-7 h-7 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                 <MapPin className="w-4 h-4 fill-white" />
@@ -205,7 +291,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div className="flex flex-col items-center">
               <div className="bg-red-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                Tujuan
+                <span>Tujuan</span>
               </div>
               <div className="w-7 h-7 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                 <Navigation className="w-4 h-4 fill-white" />
@@ -216,24 +302,72 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         )}
       </div>
 
-      {/* Map Control Floating Badges */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-        <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-200/80 shadow-sm flex items-center gap-2 text-xs font-medium text-slate-800">
+      {/* Map Control Floating Badges (Top Left) */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 max-w-xs sm:max-w-sm pointer-events-none">
+        <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-200/80 shadow-sm flex items-center gap-2 text-xs font-medium text-slate-800 pointer-events-auto">
           <Compass className="w-3.5 h-3.5 text-sky-600" />
           <span>Banjarmasin (0511)</span>
           <span className="text-slate-400">·</span>
-          <span className="text-emerald-600 text-[11px] font-semibold">Trafik Lancar</span>
+          <span className="text-emerald-600 text-[11px] font-semibold">Nominatim Online</span>
         </div>
 
         {mode !== 'view' && (
-          <div className="bg-amber-500 text-white text-xs font-medium px-2.5 py-1 rounded-md shadow flex items-center gap-1.5 animate-pulse">
-            <MapPin className="w-3.5 h-3.5" />
-            <span>Klik peta untuk pilih titik {mode === 'pick_pickup' ? 'Penjemputan' : 'Tujuan'}</span>
+          <div className="bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-md flex items-center gap-2 animate-pulse pointer-events-auto">
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              Klik peta untuk memilih titik <strong>{mode === 'pick_pickup' ? 'Penjemputan' : 'Tujuan'}</strong>
+            </span>
+          </div>
+        )}
+
+        {isGeocoding && (
+          <div className="bg-slate-900/95 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-2 border border-slate-700 pointer-events-auto">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+            <span>Mencari nama jalan via OpenStreetMap Nominatim...</span>
+          </div>
+        )}
+
+        {lastNotification && (
+          <div
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium shadow-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 border pointer-events-auto ${
+              lastNotification.type === 'success'
+                ? 'bg-emerald-900/90 text-emerald-100 border-emerald-700'
+                : lastNotification.type === 'error'
+                ? 'bg-red-900/90 text-red-100 border-red-700'
+                : 'bg-slate-900/90 text-white border-slate-700'
+            }`}
+          >
+            {lastNotification.type === 'success' ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            ) : lastNotification.type === 'error' ? (
+              <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+            ) : (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+            )}
+            <span className="truncate">{lastNotification.text}</span>
           </div>
         )}
       </div>
 
-      {/* Zoom buttons */}
+      {/* Floating Action Button: HTML5 GPS "Lokasi Saat Ini" (Top Right) */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={handleGetCurrentLocationGps}
+          disabled={isGpsLoading}
+          className="bg-white/95 hover:bg-white text-slate-800 hover:text-red-600 px-3 py-2 rounded-xl border border-slate-200 shadow-md text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 group"
+          title="Gunakan HTML5 Geolocation API untuk mendeteksi koordinat GPS saya sekarang"
+        >
+          {isGpsLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+          ) : (
+            <Crosshair className="w-4 h-4 text-red-600 group-hover:rotate-45 transition-transform" />
+          )}
+          <span>Lokasi Saat Ini</span>
+        </button>
+      </div>
+
+      {/* Zoom controls (Bottom Right) */}
       <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200 shadow-sm">
         <button
           type="button"
@@ -256,9 +390,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </button>
       </div>
 
-      <div className="absolute bottom-3 left-3 z-10 hidden sm:flex items-center gap-1 text-[11px] text-slate-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded border border-slate-200">
+      {/* Bottom Left GPS Indicator */}
+      <div className="absolute bottom-3 left-3 z-10 hidden sm:flex items-center gap-1 text-[11px] text-slate-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded border border-slate-200 shadow-xs">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-        <span>GPS Kawai 0511 Akurat</span>
+        <span>OpenStreetMap & Geolocation API Terintegrasi</span>
       </div>
     </div>
   );
