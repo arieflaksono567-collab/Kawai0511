@@ -133,7 +133,7 @@ function kawaiApiPlugin(): Plugin {
         if (url === '/health' || url === '/api/health') {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ status: 'ok', service: 'kawai0511', phase: 'PHASE 2 - AUTH & USERS' }));
+          res.end(JSON.stringify({ status: 'ok', service: 'kawai0511', phase: 'PHASE 4 - MAPS & LOCATION' }));
           return;
         }
 
@@ -757,18 +757,128 @@ function kawaiApiPlugin(): Plugin {
           return;
         }
 
-        // 10. POST /drivers/location
-        if (url === '/drivers/location' || url === '/api/drivers/location') {
-          readBody((data) => {
-            driverLocation = {
-              ...driverLocation,
-              ...data,
-              lastUpdated: new Date().toISOString(),
-            };
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ success: true, message: 'Lokasi dan heartbeat driver berhasil disimpan di Redis' }));
-          });
+        // 10. POST /drivers/me/location & /drivers/location
+        if (
+          url === '/drivers/me/location' ||
+          url === '/api/drivers/me/location' ||
+          url === '/drivers/location' ||
+          url === '/api/drivers/location'
+        ) {
+          if (req.method === 'POST') {
+            readBody((data) => {
+              const lat = data.latitude !== undefined ? data.latitude : data.lat;
+              const lng = data.longitude !== undefined ? data.longitude : data.lng;
+
+              // Physical bounds validation
+              if (lat === undefined || lat < -90 || lat > 90) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Latitude harus berada dalam rentang -90 hingga 90' }));
+                return;
+              }
+              if (lng === undefined || lng < -180 || lng > 180) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Longitude harus berada dalam rentang -180 hingga 180' }));
+                return;
+              }
+              if (data.accuracyMeters !== undefined && data.accuracyMeters < 0) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Akurasi lokasi tidak boleh bernilai negatif' }));
+                return;
+              }
+              if (data.headingDegrees !== undefined && (data.headingDegrees < 0 || data.headingDegrees > 360)) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ statusCode: 400, error: 'Bad Request', message: 'Heading sudut harus berada dalam rentang 0 hingga 360 derajat' }));
+                return;
+              }
+
+              const recordedAt = data.recordedAt || new Date().toISOString();
+              const nowMs = Date.now();
+              const recordedMs = new Date(recordedAt).getTime();
+              const diffSec = Math.max(0, Math.floor((nowMs - recordedMs) / 1000));
+              const freshness = diffSec < 10 ? 'FRESH' : diffSec <= 30 ? 'STALE' : 'EXPIRED';
+
+              driverLocation = {
+                latitude: lat,
+                longitude: lng,
+                speed: data.speedMps !== undefined ? data.speedMps : (data.speed || 0),
+                heading: data.headingDegrees !== undefined ? data.headingDegrees : (data.heading || 0),
+                accuracy: data.accuracyMeters !== undefined ? data.accuracyMeters : (data.accuracy || 5),
+                ping: 35,
+                battery: data.batteryLevel !== undefined ? data.batteryLevel : (data.battery || 85),
+                network: data.networkType || data.network || '4G',
+                lastUpdated: recordedAt,
+              };
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  message: 'Lokasi GPS pengemudi berhasil diperbarui & disimpan di Redis GEO',
+                  data: {
+                    latitude: lat,
+                    longitude: lng,
+                    accuracyMeters: driverLocation.accuracy,
+                    speedMps: driverLocation.speed,
+                    headingDegrees: driverLocation.heading,
+                    freshness,
+                    isOperationallyAvailable: freshness === 'FRESH',
+                    recordedAt,
+                  },
+                })
+              );
+            });
+            return;
+          }
+
+          // GET /drivers/me/location
+          const recordedMs = new Date(driverLocation.lastUpdated).getTime();
+          const diffSec = Math.max(0, Math.floor((Date.now() - recordedMs) / 1000));
+          const freshness = diffSec < 10 ? 'FRESH' : diffSec <= 30 ? 'STALE' : 'EXPIRED';
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              driverId: driverSystem.id,
+              latitude: driverLocation.latitude,
+              longitude: driverLocation.longitude,
+              accuracyMeters: driverLocation.accuracy,
+              speedMps: driverLocation.speed,
+              headingDegrees: driverLocation.heading,
+              batteryLevel: driverLocation.battery,
+              networkType: driverLocation.network,
+              recordedAt: driverLocation.lastUpdated,
+              freshness,
+              isOperationallyAvailable: freshness === 'FRESH',
+            })
+          );
+          return;
+        }
+
+        // GET /drivers/me/location/status
+        if (url === '/drivers/me/location/status' || url === '/api/drivers/me/location/status') {
+          const recordedMs = new Date(driverLocation.lastUpdated).getTime();
+          const diffSec = Math.max(0, Math.floor((Date.now() - recordedMs) / 1000));
+          const freshness = diffSec < 10 ? 'FRESH' : diffSec <= 30 ? 'STALE' : 'EXPIRED';
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              recorded: true,
+              latitude: driverLocation.latitude,
+              longitude: driverLocation.longitude,
+              accuracyMeters: driverLocation.accuracy,
+              recordedAt: driverLocation.lastUpdated,
+              freshness,
+              isOperationallyAvailable: freshness === 'FRESH',
+            })
+          );
           return;
         }
 
@@ -845,89 +955,206 @@ function kawaiApiPlugin(): Plugin {
           return;
         }
 
-        // 14. GET /location/nearby
-        if (url.startsWith('/location/nearby') || url.startsWith('/api/location/nearby')) {
+        // 14. GET /locations/nearby-drivers & /location/nearby
+        if (
+          url.startsWith('/locations/nearby-drivers') ||
+          url.startsWith('/api/locations/nearby-drivers') ||
+          url.startsWith('/location/nearby') ||
+          url.startsWith('/api/location/nearby')
+        ) {
+          const recordedMs = new Date(driverLocation.lastUpdated).getTime();
+          const diffSec = Math.max(0, Math.floor((Date.now() - recordedMs) / 1000));
+          const freshness = diffSec < 10 ? 'FRESH' : diffSec <= 30 ? 'STALE' : 'EXPIRED';
+
+          const activeDrivers = [
+            {
+              driverId: 'd0000000-0000-0000-0000-000000000001',
+              name: 'Ahmad Gazali',
+              latitude: driverLocation.latitude,
+              longitude: driverLocation.longitude,
+              distanceMeters: 450,
+              distanceKm: 0.45,
+              estimatedEtaMinutes: 2,
+              heading: driverLocation.heading,
+              rating: 4.9,
+              vehiclePlate: 'DA 5110 KAW',
+              locationFreshness: freshness,
+              isOperationallyAvailable: freshness === 'FRESH',
+              recordedAt: driverLocation.lastUpdated,
+            },
+            {
+              driverId: 'd0000000-0000-0000-0000-000000000002',
+              name: 'Muhammad Rizky',
+              latitude: -3.324,
+              longitude: 114.595,
+              distanceMeters: 1400,
+              distanceKm: 1.4,
+              estimatedEtaMinutes: 4,
+              heading: 90,
+              rating: 4.8,
+              vehiclePlate: 'DA 5110 AB',
+              locationFreshness: 'FRESH',
+              isOperationallyAvailable: true,
+              recordedAt: new Date().toISOString(),
+            },
+            {
+              driverId: 'd0000000-0000-0000-0000-000000000003',
+              name: 'Budi Santoso',
+              latitude: -3.312,
+              longitude: 114.588,
+              distanceMeters: 2100,
+              distanceKm: 2.1,
+              estimatedEtaMinutes: 6,
+              heading: 45,
+              rating: 5.0,
+              vehiclePlate: 'DA 4820 CD',
+              locationFreshness: 'FRESH',
+              isOperationallyAvailable: true,
+              recordedAt: new Date().toISOString(),
+            },
+          ];
+
+          // Filter out expired drivers per Phase 4 requirement
+          const available = activeDrivers.filter((d) => d.locationFreshness !== 'EXPIRED');
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          if (url.includes('nearby-drivers')) {
+            res.end(JSON.stringify({ drivers: available, count: available.length }));
+          } else {
+            res.end(JSON.stringify(available));
+          }
+          return;
+        }
+
+        // GET /locations/reverse-geocode
+        if (url.startsWith('/locations/reverse-geocode') || url.startsWith('/api/locations/reverse-geocode')) {
+          const parsed = new URL(url, 'http://localhost');
+          const lat = parseFloat(parsed.searchParams.get('lat') || '-3.319437');
+          const lng = parseFloat(parsed.searchParams.get('lng') || '114.590822');
+
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.end(
-            JSON.stringify([
-              {
-                driverId: 'drv-001',
-                name: 'Ahmad Gazali',
-                latitude: -3.3185,
-                longitude: 114.592,
-                distanceKm: 0.8,
-                estimatedEtaMinutes: 2,
-                heading: 180,
-                rating: 4.9,
-                vehiclePlate: 'DA 4511 KW',
-              },
-              {
-                driverId: 'drv-002',
-                name: 'Muhammad Rizky',
-                latitude: -3.324,
-                longitude: 114.595,
-                distanceKm: 1.4,
-                estimatedEtaMinutes: 4,
-                heading: 90,
-                rating: 4.8,
-                vehiclePlate: 'DA 5110 AB',
-              },
-              {
-                driverId: 'drv-003',
-                name: 'Budi Santoso',
-                latitude: -3.312,
-                longitude: 114.588,
-                distanceKm: 2.1,
-                estimatedEtaMinutes: 6,
-                heading: 45,
-                rating: 5.0,
-                vehiclePlate: 'DA 4820 CD',
-              },
-            ])
+            JSON.stringify({
+              formattedAddress: 'Duta Mall Banjarmasin, Jl. A. Yani Km 2, Banjarmasin Tengah, Kota Banjarmasin',
+              street: 'Jl. A. Yani Km 2',
+              district: 'Banjarmasin Tengah',
+              city: 'Kota Banjarmasin',
+              province: 'Kalimantan Selatan',
+              postalCode: '70233',
+              country: 'Indonesia',
+              latitude: lat,
+              longitude: lng,
+            })
           );
           return;
         }
 
-        // 15. POST /location/route
-        if (url === '/location/route' || url === '/api/location/route') {
-          readBody((data) => {
-            const lat1 = data.pickupLat || -3.3194;
-            const lon1 = data.pickupLng || 114.5908;
-            const lat2 = data.destinationLat || -3.2985;
-            const lon2 = data.destinationLng || 114.588;
+        // GET /locations/search
+        if (url.startsWith('/locations/search') || url.startsWith('/api/locations/search')) {
+          const parsed = new URL(url, 'http://localhost');
+          const q = (parsed.searchParams.get('q') || '').toLowerCase();
 
-            const dx = (lon2 - lon1) * 111.32;
-            const dy = (lat2 - lat1) * 110.57;
+          const allLandmarks = [
+            { name: 'Duta Mall Banjarmasin', formattedAddress: 'Jl. A. Yani Km 2, Banjarmasin Tengah', category: 'MALL', latitude: -3.319437, longitude: 114.590822 },
+            { name: 'Menara Pandang Siring Martapura', formattedAddress: 'Jl. Piere Tendean, Sungai Baru', category: 'TOURIST', latitude: -3.322841, longitude: 114.59351 },
+            { name: 'RSUD Ulin Banjarmasin', formattedAddress: 'Jl. Jen. A. Yani No.43, Sungai Baru', category: 'HOSPITAL', latitude: -3.32651, longitude: 114.5962 },
+            { name: 'Universitas Lambung Mangkurat (ULM)', formattedAddress: 'Jl. Brigjend H. Hasan Basry, Kayu Tangi', category: 'CAMPUS', latitude: -3.29851, longitude: 114.58802 },
+            { name: 'Pelabuhan Trisakti Banjarmasin', formattedAddress: 'Jl. Barito Hilir, Telaga Biru', category: 'PORT', latitude: -3.33201, longitude: 114.56502 },
+            { name: 'Masjid Raya Sabilal Muhtadin', formattedAddress: 'Jl. Jenderal Sudirman No.1, Antasan Besar', category: 'RELIGIOUS', latitude: -3.3182, longitude: 114.5921 },
+            { name: 'Terminal Km 6 Banjarmasin', formattedAddress: 'Jl. Pramuka, Pemurus Luar', category: 'TERMINAL', latitude: -3.3395, longitude: 114.622 },
+          ];
+
+          const filtered = q
+            ? allLandmarks.filter((l) => l.name.toLowerCase().includes(q) || l.formattedAddress.toLowerCase().includes(q) || l.category.toLowerCase().includes(q))
+            : allLandmarks;
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ results: filtered }));
+          return;
+        }
+
+        // GET or POST /locations/route & /location/route
+        if (
+          url.startsWith('/locations/route') ||
+          url.startsWith('/api/locations/route') ||
+          url === '/location/route' ||
+          url === '/api/location/route'
+        ) {
+          const handleRoute = (oLat: number, oLng: number, dLat: number, dLng: number) => {
+            const dx = (dLng - oLng) * 111.32;
+            const dy = (dLat - oLat) * 110.57;
             const straightKm = Math.sqrt(dx * dx + dy * dy);
-            const distanceKm = parseFloat(Math.max(1.2, straightKm * 1.3).toFixed(1));
-            const durationMinutes = Math.max(3, Math.round(distanceKm * 2.8));
+            const distanceKm = parseFloat(Math.max(1.2, straightKm * 1.25).toFixed(2));
+            const distanceMeters = Math.round(distanceKm * 1000);
+            const durationSeconds = Math.max(60, Math.round(distanceKm * 140));
+            const durationMinutes = Math.round(durationSeconds / 60);
 
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.end(
               JSON.stringify({
+                distanceMeters,
                 distanceKm,
+                durationSeconds,
                 durationMinutes,
-                pickupAddress: 'Duta Mall Banjarmasin (Jl. A. Yani)',
+                geometry: '_p~iF~ps|U_ulLnnqC_g~NpjvC',
+                origin: { latitude: oLat, longitude: oLng },
+                destination: { latitude: dLat, longitude: dLng },
+                pickupAddress: 'Duta Mall Banjarmasin (Jl. A. Yani Km 2)',
                 destinationAddress: 'Kampus ULM Banjarmasin (Kayu Tangi)',
-                summary: `Rute optimal via Jl. A. Yani & Jl. Hasan Basry, ${distanceKm} km (~${durationMinutes} mnt).`,
+                summary: `Rute optimal via Jl. A. Yani & Jl. Hasan Basry, ${distanceKm} km (~${durationMinutes} mnt)`,
               })
             );
-          });
-          return;
+          };
+
+          if (req.method === 'POST') {
+            readBody((data) => {
+              const lat1 = data.pickupLat || data.originLat || -3.319437;
+              const lon1 = data.pickupLng || data.originLng || 114.590822;
+              const lat2 = data.destinationLat || data.destLat || -3.29851;
+              const lon2 = data.destinationLng || data.destLng || 114.58802;
+              handleRoute(lat1, lon1, lat2, lon2);
+            });
+            return;
+          } else {
+            const parsed = new URL(url, 'http://localhost');
+            const oLat = parseFloat(parsed.searchParams.get('originLat') || '-3.319437');
+            const oLng = parseFloat(parsed.searchParams.get('originLng') || '114.590822');
+            const dLat = parseFloat(parsed.searchParams.get('destLat') || '-3.29851');
+            const dLng = parseFloat(parsed.searchParams.get('destLng') || '114.58802');
+            handleRoute(oLat, oLng, dLat, dLng);
+            return;
+          }
         }
 
-        // 16. GET /location/landmarks
-        if (url === '/location/landmarks' || url === '/api/location/landmarks') {
+        // GET /admin/drivers/locations
+        if (url === '/admin/drivers/locations' || url === '/api/admin/drivers/locations') {
+          const recordedMs = new Date(driverLocation.lastUpdated).getTime();
+          const diffSec = Math.max(0, Math.floor((Date.now() - recordedMs) / 1000));
+          const freshness = diffSec < 10 ? 'FRESH' : diffSec <= 30 ? 'STALE' : 'EXPIRED';
+
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.end(
             JSON.stringify([
-              { id: 'lm-1', name: 'Duta Mall Banjarmasin', address: 'Jl. A. Yani Km 2', lat: -3.3194, lng: 114.5908 },
-              { id: 'lm-2', name: 'Menara Pandang Siring', address: 'Jl. Piere Tendean', lat: -3.3228, lng: 114.5935 },
-              { id: 'lm-3', name: 'RSUD Ulin Banjarmasin', address: 'Jl. Jen. A. Yani No.43', lat: -3.3265, lng: 114.5962 },
-              { id: 'lm-4', name: 'Universitas Lambung Mangkurat (ULM)', address: 'Kayu Tangi', lat: -3.2985, lng: 114.588 },
+              {
+                driverId: driverSystem.id,
+                driverName: driverSystem.displayName,
+                phoneNumber: driverSystem.phoneNumber,
+                vehiclePlate: 'DA 5110 KAW',
+                latitude: driverLocation.latitude,
+                longitude: driverLocation.longitude,
+                accuracyMeters: driverLocation.accuracy,
+                headingDegrees: driverLocation.heading,
+                speedMps: driverLocation.speed,
+                batteryLevel: driverLocation.battery,
+                freshness,
+                recordedAt: driverLocation.lastUpdated,
+                lastSeen: driverLocation.lastUpdated,
+              },
             ])
           );
           return;
