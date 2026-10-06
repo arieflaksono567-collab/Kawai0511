@@ -1171,8 +1171,6 @@ function kawaiApiPlugin(): Plugin {
             const rawFare = baseFare + dist * perKm + dur * perMin;
             const minFare = 10000;
             const totalFare = Math.round(Math.max(rawFare, minFare));
-            const driverShare = Math.round(totalFare * 0.85);
-            const platformFee = totalFare - driverShare;
 
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
@@ -1181,76 +1179,257 @@ function kawaiApiPlugin(): Plugin {
                 baseFare,
                 distanceKm: dist,
                 durationMinutes: dur,
+                perKmRate: perKm,
+                perMinuteRate: perMin,
+                rawFare,
                 minimumFare: minFare,
                 totalFare,
-                driverShare,
-                platformFee,
+                calculatedAt: new Date().toISOString(),
               })
             );
           });
           return;
         }
 
+        // In-memory store for active rides in dev runtime
+        interface DevRideItem {
+          id: string;
+          passengerId: string;
+          passengerName: string;
+          pickupAddress: string;
+          pickupLat: number;
+          pickupLng: number;
+          destinationAddress: string;
+          destinationLat: number;
+          destinationLng: number;
+          distanceKm: number;
+          durationMinutes: number;
+          totalFare: number;
+          fareSnapshot: any;
+          status: 'SEARCHING' | 'ASSIGNED' | 'ARRIVED' | 'IN_TRIP' | 'COMPLETED' | 'CANCELLED';
+          version: number;
+          driverId?: string;
+          cancelledBy?: string;
+          cancellationReason?: string;
+          driver?: any;
+          matchedCandidate?: any;
+          createdAt: string;
+          assignedAt?: string;
+          arrivedAt?: string;
+          startedAt?: string;
+          completedAt?: string;
+          cancelledAt?: string;
+        }
+
+        if (!(globalThis as any).__devRides) {
+          (globalThis as any).__devRides = new Map<string, DevRideItem>();
+        }
+        const devRides: Map<string, DevRideItem> = (globalThis as any).__devRides;
+
         // 18. POST /rides/order
         if (url === '/rides/order' || url === '/api/rides/order') {
           readBody((data) => {
-            const dist = data.distanceKm || 4.2;
-            const dur = data.durationMinutes || 12;
-            const rawFare = 7000 + dist * 2200 + dur * 200;
-            const totalFare = Math.round(Math.max(rawFare, 10000));
-            const driverShare = Math.round(totalFare * 0.85);
-            const platformFee = totalFare - driverShare;
+            const pLat = data.pickupLat || -3.319437;
+            const pLng = data.pickupLng || 114.590822;
+            const dLat = data.destinationLat || -3.298510;
+            const dLng = data.destinationLng || 114.588020;
 
-            const ride = {
-              id: `ride-${Date.now().toString().slice(-6)}`,
-              passengerId: 'usr-pass-001',
+            const dx = (dLng - pLng) * 111.32;
+            const dy = (dLat - pLat) * 110.57;
+            const straightKm = Math.sqrt(dx * dx + dy * dy);
+            const dist = data.distanceKm || parseFloat(Math.max(1.2, straightKm * 1.25).toFixed(2));
+            const dur = data.durationMinutes || Math.max(3, Math.round(dist * 2.8));
+
+            const baseFare = 7000;
+            const perKm = 2200;
+            const perMin = 200;
+            const rawFare = baseFare + dist * perKm + dur * perMin;
+            const totalFare = Math.round(Math.max(rawFare, 10000));
+
+            const fareSnapshot = {
+              baseFare,
+              distanceKm: dist,
+              durationMinutes: dur,
+              perKmRate: perKm,
+              perMinuteRate: perMin,
+              rawFare,
+              minimumFare: 10000,
+              totalFare,
+              calculatedAt: new Date().toISOString(),
+            };
+
+            const rideId = `ride-${Date.now().toString().slice(-6)}`;
+            const rideItem: DevRideItem = {
+              id: rideId,
+              passengerId: 'b0000000-0000-0000-0000-000000000002',
               passengerName: 'Arief Laksono',
-              pickupAddress: data.pickupAddress || 'Duta Mall Banjarmasin',
-              pickupLat: data.pickupLat || -3.3194,
-              pickupLng: data.pickupLng || 114.5908,
-              destinationAddress: data.destinationAddress || 'Kampus ULM Banjarmasin',
-              destinationLat: data.destinationLat || -3.2985,
-              destinationLng: data.destinationLng || 114.588,
+              pickupAddress: data.pickupAddress || 'Duta Mall Banjarmasin, Jl. A. Yani Km 2',
+              pickupLat: pLat,
+              pickupLng: pLng,
+              destinationAddress: data.destinationAddress || 'Kampus ULM Banjarmasin, Kayu Tangi',
+              destinationLat: dLat,
+              destinationLng: dLng,
               distanceKm: dist,
               durationMinutes: dur,
               totalFare,
-              driverShare,
-              platformFee,
+              fareSnapshot,
               status: 'SEARCHING',
+              version: 1,
+              matchedCandidate: {
+                driverId: 'd0000000-0000-0000-0000-000000000001',
+                driverName: 'Ahmad Gazali',
+                vehiclePlate: 'DA 5110 KAW',
+                distanceMeters: 450,
+                estimatedEtaMinutes: 2,
+                locationFreshness: 'FRESH',
+                isEligible: true,
+              },
               createdAt: new Date().toISOString(),
             };
 
-            res.statusCode = 200;
+            devRides.set(rideId, rideItem);
+
+            res.statusCode = 201;
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(ride));
+            res.end(JSON.stringify(rideItem));
           });
           return;
         }
 
-        // 19. Ride State Transition Endpoints: /rides/:id/accept, arrived, start, finish, cancel
-        if (url.includes('/rides/') && (url.includes('/accept') || url.includes('/arrived') || url.includes('/start') || url.includes('/finish') || url.includes('/cancel'))) {
-          const action = url.split('/').pop();
-          let nextStatus = 'ASSIGNED';
-          if (action === 'arrived') nextStatus = 'ARRIVED';
-          else if (action === 'start') nextStatus = 'IN_TRIP';
-          else if (action === 'finish') nextStatus = 'COMPLETED';
-          else if (action === 'cancel') nextStatus = 'CANCELLED';
+        // GET /rides/my
+        if (url === '/rides/my' || url === '/api/rides/my') {
+          const list = Array.from(devRides.values()).reverse();
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(list));
+          return;
+        }
+
+        // GET /rides/:id
+        if (req.method === 'GET' && url.match(/^\/(api\/)?rides\/[a-zA-Z0-9_-]+$/)) {
+          const rideId = url.split('/').pop() || '';
+          if (rideId !== 'order' && rideId !== 'my' && rideId !== 'estimate') {
+            const item = devRides.get(rideId) || devRides.values().next().value;
+            if (item) {
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(item));
+              return;
+            }
+          }
+        }
+
+        // 19. Ride State Transition Endpoints: /rides/:id/accept, arrived, start, complete, finish, cancel
+        if (
+          url.includes('/rides/') &&
+          (url.includes('/accept') ||
+            url.includes('/arrived') ||
+            url.includes('/start') ||
+            url.includes('/complete') ||
+            url.includes('/finish') ||
+            url.includes('/cancel'))
+        ) {
+          const parts = url.split('/');
+          const action = parts.pop();
+          const rideId = parts.pop() || 'ride-active';
+
+          let ride = devRides.get(rideId);
+          if (!ride) {
+            // Find any latest ride or create stub
+            ride = devRides.values().next().value;
+          }
+
+          if (action === 'cancel') {
+            readBody((data) => {
+              if (ride && (ride.status === 'IN_TRIP' || ride.status === 'COMPLETED')) {
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: 'Order tidak dapat dibatalkan saat perjalanan berlangsung atau sudah selesai' }));
+                return;
+              }
+              if (ride) {
+                ride.status = 'CANCELLED';
+                ride.cancelledBy = data.cancelledBy || 'CUSTOMER';
+                ride.cancellationReason = data.reason || 'Dibatalkan oleh pengguna';
+                ride.cancelledAt = new Date().toISOString();
+                ride.version += 1;
+              }
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true, status: 'CANCELLED', message: 'Order berhasil dibatalkan', ride }));
+            });
+            return;
+          }
+
+          if (action === 'accept') {
+            if (ride && ride.status !== 'SEARCHING') {
+              res.statusCode = 409;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: 'Conflict', message: `Order sudah dalam status ${ride.status}, tidak dapat diterima ulang` }));
+              return;
+            }
+            if (ride) {
+              ride.status = 'ASSIGNED';
+              ride.driverId = 'd0000000-0000-0000-0000-000000000001';
+              ride.assignedAt = new Date().toISOString();
+              ride.version += 1;
+              ride.driver = {
+                id: 'd0000000-0000-0000-0000-000000000001',
+                name: 'Ahmad Gazali',
+                phone: '+6281390511200',
+                vehiclePlate: 'DA 5110 KAW',
+                vehicleModel: 'Honda Vario 160',
+                rating: 4.9,
+              };
+            }
+          } else if (action === 'arrived') {
+            if (ride && ride.status !== 'ASSIGNED') {
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: `Driver hanya dapat konfirmasi tiba jika order dalam status ASSIGNED` }));
+              return;
+            }
+            if (ride) {
+              ride.status = 'ARRIVED';
+              ride.arrivedAt = new Date().toISOString();
+              ride.version += 1;
+            }
+          } else if (action === 'start') {
+            if (ride && ride.status !== 'ARRIVED') {
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: `Trip hanya dapat dimulai jika driver telah tiba (ARRIVED)` }));
+              return;
+            }
+            if (ride) {
+              ride.status = 'IN_TRIP';
+              ride.startedAt = new Date().toISOString();
+              ride.version += 1;
+            }
+          } else if (action === 'complete' || action === 'finish') {
+            if (ride && ride.status !== 'IN_TRIP') {
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: `Hanya trip aktif (IN_TRIP) yang dapat diselesaikan` }));
+              return;
+            }
+            if (ride) {
+              ride.status = 'COMPLETED';
+              ride.completedAt = new Date().toISOString();
+              ride.version += 1;
+            }
+          }
 
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.end(
             JSON.stringify({
-              id: 'ride-0511-active',
-              status: nextStatus,
-              driver: {
-                id: 'drv-001',
-                name: 'Ahmad Gazali',
-                phone: '081390511200',
-                vehiclePlate: 'DA 4511 KW',
-                vehicleModel: 'Honda Vario 150',
-                rating: 4.9,
-              },
-              message: `Order berhasil bertransisi ke status ${nextStatus}`,
+              id: ride ? ride.id : rideId,
+              status: ride ? ride.status : action,
+              version: ride ? ride.version : 2,
+              driver: ride ? ride.driver : undefined,
+              message: `Order berhasil bertransisi ke status ${ride ? ride.status : action}`,
+              ride,
             })
           );
           return;

@@ -6,6 +6,6 @@ export class CreateRideDto {
   destinationAddress: string;
   destinationLat: number;
   destinationLng: number;
-  distanceKm: number;
-  durationMinutes: number;
+  distanceKm?: number;
+  durationMinutes?: number;
 }

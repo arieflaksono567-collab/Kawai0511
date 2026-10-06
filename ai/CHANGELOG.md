@@ -4,76 +4,51 @@ Semua perubahan pada repositori KAWAI 0511 dicatat secara kronologis berdasarkan
 
 ---
 
+## [Phase 5] - 2026-10-06
+### Added
+- **Database Migrasi `database/migrations/005_ride_ordering.sql`**:
+  - Tabel `rides` dengan kolom `version` (optimistic lock), snapshot tarif `fare_snapshot`, rute, dan status lifecycle.
+  - Tabel `ride_state_logs` untuk audit trail setiap transisi status.
+  - Tabel `ride_dispatch_attempts` untuk log penawaran armada.
+- **Backend Ride Module (`/backend/src/ride/`)**:
+  - `FareService`: Mesin kalkulasi tarif resmi KAWAI 0511 (Tarif dasar Rp 7.000, Rp 2.200/km, Rp 200/menit, batas minimum Rp 10.000, zero surge, zero payment).
+  - `RideDispatchService`: Orkestrasi pencocokan armada terdekat dalam radius 1,5 km, memfilter hanya driver dengan GPS `FRESH` (< 10 detik), verifikasi kelayakan Phase 3 `APPROVED` & `ONLINE`, dan proteksi driver tidak sedang melayani order lain.
+  - `RideService`: Pengendali state machine berurutan (`SEARCHING` -> `ASSIGNED` -> `ARRIVED` -> `IN_TRIP` -> `COMPLETED`), proteksi *double-accept* (409 Conflict), dan pencegahan pembatalan saat `IN_TRIP` atau `COMPLETED`.
+  - `RideController`: Endpoints terproteksi JWT & RBAC (`POST /rides/order`, `GET /rides/:id`, `GET /rides/my`, `POST /rides/:id/accept`, `POST /rides/:id/arrived`, `POST /rides/:id/start`, `POST /rides/:id/complete`, `POST /rides/:id/cancel`, `GET /rides/:id/logs`).
+- **Dev Runtime Middleware Sync (`vite.config.ts`)**:
+  - Sinkronisasi endpoint `/rides/order`, `/rides/my`, `/rides/:id`, transisi accept/arrived/start/complete/cancel pada port 3000.
+- **Frontend Web Cockpit (`src/App.tsx`)**:
+  - Tab "Pemesanan & Trip Lifecycle (Phase 5)" dengan form penjemputan, breakdown tarif otomatis, stepper status pemesanan interaktif, dan tombol transisi.
+- **Test Suite**:
+  - `backend/test/phase5-acceptance.spec.ts`: 15 skenario acceptance tests (100% Passed).
+
+---
+
 ## [Phase 4] - 2026-10-06
 ### Added
-- **Database Spasial PostgreSQL 16 + PostGIS**:
-  - Berkas migrasi `database/migrations/004_maps_and_location.sql`.
-  - Tabel `driver_locations` dengan tipe native `GEOGRAPHY(POINT, 4326)`.
-  - Indeks spasial `idx_driver_locations_geo` (GiST) dan index komposit `(driver_id, recorded_at DESC)`.
-  - Trigger `update_driver_location_geom()` untuk sinkronisasi otomatis kolom geometri dari latitude dan longitude.
-  - Tabel `landmarks` dan seed data 7 landmark utama Kota Banjarmasin (Duta Mall, Menara Pandang Siring Martapura, RSUD Ulin, ULM Kayu Tangi, Pelabuhan Trisakti, Masjid Raya Sabilal Muhtadin, Terminal Km 6).
-- **Backend Location & Geospatial Module (`/backend/src/location/`)**:
-  - `LocationService`: Validasi koordinat fisik (lat [-90..90], lng [-180..180], akurasi >= 0, heading 0..360, baterai 0..100%), pembatasan laju transmisi (rate limit max 60 req/menit per driver), dan proteksi out-of-order timestamp.
-  - `LocationFreshnessService`: Mesin evaluasi kesegaran GPS dengan tiga tingkatan: `FRESH` (< 10 detik), `STALE` (10 - 30 detik), dan `EXPIRED` (> 30 detik).
-  - `RedisGeoService`: Implementasi abstraksi cache spasial `GEOADD`, `GEOSEARCH`, dan metadata store dengan proteksi failure resilience & fallback.
-  - `GeocodingService`: Mesin penerjemah koordinat ke hierarki alamat lengkap Kota Banjarmasin serta pencarian teks bebas untuk POI/Landmark.
-  - `RoutingService`: Layanan estimasi jarak jalan raya (koefisien perkotaan 1.25x) dan durasi tempuh sepeda motor (~25 km/jam) dengan kepatuhan mutlak **Zero-Fare Rule** (tanpa logika tarif sebelum Phase 5).
-  - `GeospatialService`: Pencarian driver terdekat dalam radius meter (default 1500m) dengan filter diskualifikasi driver berstatus `EXPIRED`.
-  - `LocationController`: Expose REST API endpoint dengan guard autentikasi `JwtAuthGuard` dan `RolesGuard`.
-- **API Endpoints**:
-  - `POST /drivers/me/location`
-  - `GET /drivers/me/location`
-  - `GET /drivers/me/location/status`
-  - `GET /locations/nearby-drivers`
-  - `GET /locations/reverse-geocode`
-  - `GET /locations/search`
-  - `GET /locations/route`
-  - `GET /admin/drivers/locations`
-  - `GET /health` (diperbarui ke status Phase 4)
-- **Frontend Interactive Cockpit (`src/App.tsx`)**:
-  - Peta Interaktif Kota Banjarmasin dengan visualisasi aliran sungai Barito, Martapura, koridor Jl. A. Yani, Jl. Hasan Basry, dan pin landmark.
-  - Simulator Driver GPS Stream Broadcaster dengan telemetry gauge, coordinate sliders, dan tombol auto-streaming 4 detik.
-  - Panel Radar Armada Terdekat dengan pilihan radius fleksibel (500m, 1000m, 1500m, 3000m, 5000m).
-  - Inspektor Reverse Geocoding interaktif pada setiap klik di peta.
-  - Alat kalkulasi jarak rute dan durasi perjalanan.
-  - Runner uji otomatis untuk 15 skenario acceptance tests.
-  - Konsol REST API explorer terintegrasi.
-- **Test Suites**:
-  - `backend/test/phase4-acceptance.spec.ts`: 15 acceptance test scenarios (100% Passed).
-  - `backend/test/haversine-freshness.spec.ts`: Unit tests untuk fungsi geodesik dan batas kesegaran waktu.
-
-### Fixed
-- Memperbaiki galat kompilasi TypeScript TS5102 pada `backend/tsconfig.json` akibat penghapusan opsi `baseUrl` pada TypeScript 7; digantikan dengan pemetaan path modern `"paths": { "*": ["./*"] }`.
-- Menambahkan konfigurasi eksplisit `include: ["src/**/*"]` dan `exclude: ["node_modules", "dist", "test"]` pada `backend/tsconfig.json` untuk menjaga kebersihan kompilasi dari tipe tes ambien.
+- Database Spasial PostgreSQL 16 + PostGIS (`driver_locations`, `landmarks`, trigger geometri).
+- Modul `backend/src/location/` (`LocationService`, `LocationFreshnessService`, `RedisGeoService`, `GeocodingService`, `RoutingService`, `GeospatialService`).
+- Endpoints lokasi dan geospasial Kota Banjarmasin.
+- 15 acceptance tests Phase 4.
 
 ---
 
 ## [Phase 3] - 2026-10-05
 ### Added
-- Tabel basis data `drivers`, `driver_documents`, `vehicles`, dan `audit_logs` pada `003_driver_system.sql`.
-- Abstraksi penyimpanan berkas dokumen `DocumentStorageProvider` dan implementasi `LocalDocumentStorageProvider`.
-- Centralized `DriverEligibilityService` sebagai sumber kebenaran status kelayakan online driver (wajib 4 berkas APPROVED + kendaraan aktif APPROVED).
-- Endpoint driver: `GET /drivers/me`, `PATCH /drivers/me`, `GET /drivers/me/documents`, `POST /drivers/me/documents`, `GET /drivers/me/vehicles`, `POST /drivers/me/vehicles`, `GET /drivers/me/eligibility`, `GET /drivers/me/status`, `POST /drivers/me/status/online`, `POST /drivers/me/status/offline`.
-- Endpoint admin: `GET /admin/drivers`, `GET /admin/drivers/:id`, approval/rejection dokumen, approval kendaraan, serta suspensi akun.
-- Test suites: unit test kelayakan `driver-eligibility.spec.ts` dan 20 skenario acceptance tests `phase3-acceptance.spec.ts`.
+- Tabel `drivers`, `driver_documents`, `vehicles`, `audit_logs`.
+- `DriverEligibilityService` dan verifikasi KYC mitra pengemudi.
+- 20 acceptance tests Phase 3.
 
 ---
 
 ## [Phase 2] - 2026-10-04
 ### Added
-- Utility normalisasi nomor telepon `normalizePhoneNumber()` (+62 Indonesia format).
-- Abstraksi `OtpProvider` dan implementasi `MockOtpProvider`.
-- Tabel basis data `otp_codes` dan `refresh_tokens`.
-- JWT Access Token (15 menit) dan Refresh Token Rotation (30 hari).
-- Centralized RBAC: `RolesGuard`, `JwtAuthGuard`, `@Roles()`.
-- Endpoint `POST /auth/request-otp`, `POST /auth/verify-otp`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`.
-- Endpoint `GET /users/me`, `PATCH /users/me`.
-- Test suite: unit tests dan 12 acceptance tests.
+- Normalisasi nomor telepon (+62 format) dan layanan OTP aman.
+- JWT Access Token & Refresh Token Rotation.
+- Centralized RBAC dan 12 acceptance tests Phase 2.
 
 ---
 
 ## [Phase 1] - 2026-10-03
 ### Added
-- Inisialisasi struktur repositori monorepo KAWAI 0511.
-- Konfigurasi `docker-compose.yml` untuk PostgreSQL 16 PostGIS dan Redis.
-- Setup template modul NestJS dan migrasi fondasi awal `001_initial_foundation.sql`.
+- Inisialisasi struktur repositori monorepo KAWAI 0511 dan Docker Compose.
