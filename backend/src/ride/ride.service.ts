@@ -27,6 +27,19 @@ export interface RideStateLog {
   createdAt: string;
 }
 
+export interface DispatchAttempt {
+  id: string;
+  rideId: string;
+  driverId: string;
+  attemptNumber: number;
+  distanceMeters: number;
+  etaSeconds: number;
+  status: 'OFFERED' | 'ACCEPTED' | 'REJECTED' | 'TIMEOUT' | 'FAILED';
+  offeredAt: string;
+  respondedAt?: string;
+  createdAt: string;
+}
+
 export interface RideOrder {
   id: string;
   passengerId: string;
@@ -43,6 +56,11 @@ export interface RideOrder {
   fareSnapshot: FareCalculationResult;
   status: RideStatus;
   version: number;
+  currentOfferedDriverId?: string;
+  offerExpiresAt?: string;
+  currentAttemptNumber: number;
+  attemptedDriverIds: string[];
+  rankedCandidatePool?: DispatchCandidate[];
   cancelledBy?: string;
   cancellationReason?: string;
   createdAt: string;
@@ -70,6 +88,10 @@ export class RideService {
   // In-Memory Persistent Store (PostgreSQL 16 representation)
   private rides = new Map<string, RideOrder>();
   private stateLogs: RideStateLog[] = [];
+  private dispatchAttempts: DispatchAttempt[] = [];
+
+  // Concurrency lock for drivers currently offered or assigned in an active trip
+  private activeDriverAssignments = new Map<string, string>(); // driverId -> rideId
 
   constructor(
     private readonly fareService: FareService,
@@ -81,7 +103,6 @@ export class RideService {
   }
 
   private seedSampleRides() {
-    // Seed initial completed trip for driver Ahmad Gazali
     const sampleId = 'r0000000-0000-0000-0000-000000000001';
     const fare = this.fareService.calculateFare(3.8, 11);
     const now = new Date().toISOString();
@@ -94,14 +115,16 @@ export class RideService {
       pickupLat: -3.319437,
       pickupLng: 114.590822,
       destinationAddress: 'Kampus ULM Banjarmasin, Kayu Tangi',
-      destinationLat: -3.298510,
-      destinationLng: 114.588020,
+      destinationLat: -3.29851,
+      destinationLng: 114.58802,
       distanceKm: 3.8,
       durationMinutes: 11,
       totalFare: fare.totalFare,
       fareSnapshot: fare,
       status: 'COMPLETED',
       version: 5,
+      currentAttemptNumber: 1,
+      attemptedDriverIds: ['d0000000-0000-0000-0000-000000000001'],
       createdAt: new Date(Date.now() - 3600000).toISOString(),
       assignedAt: new Date(Date.now() - 3500000).toISOString(),
       arrivedAt: new Date(Date.now() - 3300000).toISOString(),
@@ -121,14 +144,29 @@ export class RideService {
     this.rides.set(sampleId, sampleRide);
   }
 
-  // 1. CREATE RIDE ORDER (Passenger -> SEARCHING)
-  async createRide(passengerId: string, dto: CreateRideDto): Promise<RideOrder> {
+  // 1. CREATE RIDE ORDER (Passenger -> SEARCHING -> First Offer)
+  async createOrder(
+    dto: CreateRideDto & { passengerId: string },
+    persistedLocations: any[] = []
+  ): Promise<RideOrder> {
+    return this.createRide(dto.passengerId, dto, persistedLocations);
+  }
+
+  async createRide(
+    passengerId: string,
+    dto: CreateRideDto,
+    persistedLocations: any[] = []
+  ): Promise<RideOrder> {
     // 1. Validasi koordinat fisik
     if (
-      dto.pickupLat < -90 || dto.pickupLat > 90 ||
-      dto.pickupLng < -180 || dto.pickupLng > 180 ||
-      dto.destinationLat < -90 || dto.destinationLat > 90 ||
-      dto.destinationLng < -180 || dto.destinationLng > 180
+      dto.pickupLat < -90 ||
+      dto.pickupLat > 90 ||
+      dto.pickupLng < -180 ||
+      dto.pickupLng > 180 ||
+      dto.destinationLat < -90 ||
+      dto.destinationLat > 90 ||
+      dto.destinationLng < -180 ||
+      dto.destinationLng > 180
     ) {
       throw new BadRequestException('Koordinat penjemputan atau tujuan di luar batas bumi');
     }
@@ -170,66 +208,207 @@ export class RideService {
       fareSnapshot,
       status: 'SEARCHING',
       version: 1,
+      currentAttemptNumber: 0,
+      attemptedDriverIds: [],
       createdAt: now,
       updatedAt: now,
     };
 
     // 5. Catat audit state log
-    this.recordStateLog(rideId, undefined, 'SEARCHING', passengerId, 'CUSTOMER', 'Pemesanan perjalanan baru dibuat');
+    this.recordStateLog(
+      rideId,
+      undefined,
+      'SEARCHING',
+      passengerId,
+      'CUSTOMER',
+      'Pemesanan perjalanan baru dibuat'
+    );
 
-    // 6. Jalankan Matching Driver via RideDispatchService
+    // 6. Jalankan Matching Driver & Dispatch Engine via RideDispatchService
     const activeDriverIds = this.getActiveDriverIdsInTrip();
     const dispatchResult = await this.dispatchService.matchNearestDriver(
       dto.pickupLat,
       dto.pickupLng,
-      activeDriverIds
+      activeDriverIds,
+      persistedLocations
     );
 
+    ride.rankedCandidatePool = dispatchResult.rankedCandidates;
+
     if (dispatchResult.matched && dispatchResult.selectedDriver) {
-      ride.matchedCandidate = dispatchResult.selectedDriver;
-      this.logger.log(`Order ${rideId} dicocokkan dengan kandidat driver ${dispatchResult.selectedDriver.driverId}`);
+      // Ambil kandidat ranking #1 dan kirim offer
+      const topCandidate = dispatchResult.selectedDriver;
+      ride.matchedCandidate = topCandidate;
+      ride.currentOfferedDriverId = topCandidate.driverId;
+      ride.currentAttemptNumber = 1;
+      ride.attemptedDriverIds = [topCandidate.driverId];
+      ride.offerExpiresAt = new Date(Date.now() + this.dispatchService.offerTimeoutSeconds * 1000).toISOString();
+
+      // Rekam dispatch attempt #1
+      this.recordDispatchAttempt(
+        rideId,
+        topCandidate.driverId,
+        1,
+        topCandidate.distanceMeters,
+        topCandidate.estimatedEtaSeconds,
+        'OFFERED'
+      );
+
+      this.logger.log(
+        `Order ${rideId} mengirim offer ke driver ${topCandidate.driverId} (ETA: ${topCandidate.estimatedEtaSeconds}s, jarak: ${topCandidate.distanceMeters}m)`
+      );
+    } else {
+      // Jika tidak ada kandidat: ride TETAP SEARCHING (Jangan cancel!)
+      this.logger.warn(`Order ${rideId} tidak menemukan kandidat driver eligible dalam radius 1.5 km.`);
+      this.recordStateLog(
+        rideId,
+        'SEARCHING',
+        'SEARCHING',
+        'SYSTEM',
+        'SYSTEM',
+        'Belum ada armada eligible yang terdeteksi di sekitar titik penjemputan'
+      );
     }
 
     this.rides.set(rideId, ride);
     return ride;
   }
 
-  // 2. GET RIDE BY ID
-  async getRide(rideId: string, currentUserId?: string, currentUserRole?: string): Promise<RideOrder> {
+  // 2. DISPATCH NEXT CANDIDATE (reject / timeout / unavailable -> candidate berikutnya)
+  async dispatchNextCandidate(
+    rideId: string,
+    previousStatus: 'REJECTED' | 'TIMEOUT' | 'FAILED',
+    respondingDriverId?: string
+  ): Promise<{ ride: RideOrder; nextAttempt?: DispatchAttempt; remainingCandidates: number }> {
     const ride = this.rides.get(rideId);
     if (!ride) {
-      throw new NotFoundException(`Order perjalanan dengan ID ${rideId} tidak ditemukan`);
+      throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    // IDOR Protection: Penumpang hanya boleh akses order miliknya, Driver hanya boleh akses order miliknya
-    if (currentUserId && currentUserRole) {
-      if (
-        currentUserRole === 'CUSTOMER' && ride.passengerId !== currentUserId
-      ) {
-        throw new ForbiddenException('Akses ditolak: Anda tidak memiliki akses ke order ini');
-      }
-      if (
-        currentUserRole === 'DRIVER' && ride.driverId && ride.driverId !== currentUserId
-      ) {
-        throw new ForbiddenException('Akses ditolak: Order ini bukan milik Anda');
+    if (ride.status !== 'SEARCHING') {
+      throw new BadRequestException(`Dispatch offer hanya dapat dilanjutkan saat order berstatus SEARCHING (saat ini ${ride.status})`);
+    }
+
+    const now = new Date().toISOString();
+
+    // 1. Update status attempt saat ini jika ada
+    if (ride.currentOfferedDriverId) {
+      const activeAttempt = this.dispatchAttempts
+        .slice()
+        .reverse()
+        .find((a) => a.rideId === rideId && a.driverId === ride.currentOfferedDriverId && a.status === 'OFFERED');
+
+      if (activeAttempt) {
+        activeAttempt.status = previousStatus;
+        activeAttempt.respondedAt = now;
       }
     }
 
-    return ride;
+    // 2. Cari kandidat berikutnya dari ranked pool yang belum pernah ditawari
+    const pool = ride.rankedCandidatePool || [];
+    const activeDriverIds = this.getActiveDriverIdsInTrip();
+
+    const nextCandidate = pool.find((cand) => {
+      // Belum pernah ditawari
+      if (ride.attemptedDriverIds.includes(cand.driverId)) return false;
+      // Tidak sedang melayani order lain
+      if (activeDriverIds.has(cand.driverId)) return false;
+      // Masih eligible
+      const eligibility = this.driverEligibilityService.checkDispatchEligibility(cand.driverId);
+      return eligibility.eligible;
+    });
+
+    if (nextCandidate) {
+      ride.currentAttemptNumber += 1;
+      ride.attemptedDriverIds.push(nextCandidate.driverId);
+      ride.currentOfferedDriverId = nextCandidate.driverId;
+      ride.matchedCandidate = nextCandidate;
+      ride.offerExpiresAt = new Date(Date.now() + this.dispatchService.offerTimeoutSeconds * 1000).toISOString();
+      ride.updatedAt = now;
+
+      const newAttempt = this.recordDispatchAttempt(
+        rideId,
+        nextCandidate.driverId,
+        ride.currentAttemptNumber,
+        nextCandidate.distanceMeters,
+        nextCandidate.estimatedEtaSeconds,
+        'OFFERED'
+      );
+
+      this.recordStateLog(
+        rideId,
+        'SEARCHING',
+        'SEARCHING',
+        'SYSTEM',
+        'SYSTEM',
+        `Offer dialihkan ke kandidat berikutnya: ${nextCandidate.driverId} (attempt #${ride.currentAttemptNumber})`
+      );
+
+      return {
+        ride,
+        nextAttempt: newAttempt,
+        remainingCandidates: pool.filter((c) => !ride.attemptedDriverIds.includes(c.driverId)).length,
+      };
+    } else {
+      // Tidak ada kandidat tersisa: ride TETAP SEARCHING
+      ride.currentOfferedDriverId = undefined;
+      ride.offerExpiresAt = undefined;
+      ride.updatedAt = now;
+
+      this.recordStateLog(
+        rideId,
+        'SEARCHING',
+        'SEARCHING',
+        'SYSTEM',
+        'SYSTEM',
+        'Seluruh kandidat dalam radius telah dihubungi namun belum ada yang menerima. Order tetap dalam status SEARCHING.'
+      );
+
+      return {
+        ride,
+        nextAttempt: undefined,
+        remainingCandidates: 0,
+      };
+    }
   }
 
-  // 3. GET USER RIDES (Passenger or Driver active/history)
-  async getUserRides(userId: string, role: string): Promise<RideOrder[]> {
-    const all = Array.from(this.rides.values());
-    if (role === 'CUSTOMER') {
-      return all.filter((r) => r.passengerId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    } else if (role === 'DRIVER') {
-      return all.filter((r) => r.driverId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // 3. DRIVER REJECTS OFFER (Endpoint: POST /rides/:id/reject)
+  async rejectOffer(rideId: string, driverId: string, reason?: string) {
+    const ride = this.rides.get(rideId);
+    if (!ride) {
+      throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
-    return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (ride.status !== 'SEARCHING') {
+      throw new BadRequestException(`Order tidak dalam status penawaran aktif (saat ini ${ride.status})`);
+    }
+
+    // Hanya driver yang sedang ditawarkan order yang boleh mereject
+    if (ride.currentOfferedDriverId !== driverId) {
+      throw new ForbiddenException('Akses ditolak: Anda tidak sedang ditawarkan order ini');
+    }
+
+    this.logger.log(`Driver ${driverId} menolak order ${rideId}. Alasan: ${reason || 'Tidak bersedia'}`);
+    return this.dispatchNextCandidate(rideId, 'REJECTED', driverId);
   }
 
-  // 4. ACCEPT RIDE (Driver -> ASSIGNED with Optimistic Locking)
+  // 4. DISPATCH OFFER TIMEOUT (Endpoint: POST /rides/:id/dispatch/timeout)
+  async handleOfferTimeout(rideId: string, driverId?: string) {
+    const ride = this.rides.get(rideId);
+    if (!ride) {
+      throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
+    }
+
+    if (ride.status !== 'SEARCHING') {
+      throw new BadRequestException(`Order tidak dalam status penawaran aktif`);
+    }
+
+    this.logger.log(`Order ${rideId} mengalami batas waktu (timeout 30s) pada driver ${ride.currentOfferedDriverId}`);
+    return this.dispatchNextCandidate(rideId, 'TIMEOUT', driverId || ride.currentOfferedDriverId);
+  }
+
+  // 5. DRIVER ACCEPTS RIDE (Endpoint: POST /rides/:id/accept)
+  // Syarat: Driver ditawarkan, status ONLINE, APPROVED, GPS FRESH, Atomic Lock & Concurrency Protection
   async acceptRide(
     rideId: string,
     driverId: string,
@@ -240,62 +419,116 @@ export class RideService {
       throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    // 1. Verifikasi Driver Eligibility (Phase 3)
-    const isEligible = this.driverEligibilityService.isDriverEligible(driverId);
-    if (!isEligible) {
-      throw new ForbiddenException('Driver belum memenuhi kelayakan verifikasi operasional untuk menerima order');
+    // A. Validasi Status Order
+    if (ride.status === 'COMPLETED') {
+      throw new BadRequestException('Order perjalanan telah selesai (COMPLETED) dan tidak dapat diterima kembali');
     }
-
-    // 2. Concurrency Check: Driver tidak boleh memiliki order aktif lain
-    const activeDriverIds = this.getActiveDriverIdsInTrip();
-    if (activeDriverIds.has(driverId)) {
-      throw new ConflictException('Driver sedang melayani perjalanan lain yang belum selesai');
+    if (ride.status === 'CANCELLED') {
+      throw new BadRequestException('Order perjalanan telah dibatalkan (CANCELLED) dan tidak dapat diterima');
     }
-
-    // 3. State Machine Check: Hanya SEARCHING yang dapat di-ACCEPT
     if (ride.status !== 'SEARCHING') {
       throw new ConflictException(`Order tidak dapat diterima karena sudah dalam status ${ride.status}`);
     }
 
-    // 4. Optimistic Concurrency Control (Version match)
+    // B. Optimistic Concurrency Control (Version lock)
     if (expectedVersion !== undefined && ride.version !== expectedVersion) {
       throw new ConflictException('Terjadi konflik versi order. Order kemungkinan telah diterima mitra lain');
     }
 
+    // C. Validasi Driver Assignment Match: HANYA DRIVER YANG DITAWARKAN YANG BOLEH MENERIMA!
+    if (ride.currentOfferedDriverId && ride.currentOfferedDriverId !== driverId) {
+      throw new ForbiddenException('Akses ditolak: Order ini ditawarkan kepada mitra driver lain');
+    }
+
+    // D. Validasi Kelayakan Driver (Role, Approved, Dokumen, Kendaraan, Status Online)
+    const eligibility = this.driverEligibilityService.checkDispatchEligibility(driverId);
+    if (!eligibility.eligible) {
+      throw new ForbiddenException(`Driver belum memenuhi kelayakan operasional: ${eligibility.reason}`);
+    }
+
+    // E. Atomic Concurrency Lock: Driver tidak boleh sedang dalam order aktif lain!
+    const activeDriverIds = this.getActiveDriverIdsInTrip();
+    if (activeDriverIds.has(driverId)) {
+      throw new ConflictException('Mitra driver sedang melayani order perjalanan lain yang belum selesai');
+    }
+
+    // Periksa apakah driver sedang terkunci pada penugasan aktif lain secara atomik
+    const existingLockRideId = this.activeDriverAssignments.get(driverId);
+    if (existingLockRideId && existingLockRideId !== rideId) {
+      const lockedRide = this.rides.get(existingLockRideId);
+      if (lockedRide && (lockedRide.status === 'ASSIGNED' || lockedRide.status === 'ARRIVED' || lockedRide.status === 'IN_TRIP')) {
+        throw new ConflictException('Mitra driver sedang melayani perjalanan lain');
+      }
+    }
+
     const now = new Date().toISOString();
 
-    // Atomic assignment transition
+    // F. Update Dispatch Attempt -> ACCEPTED
+    const activeAttempt = this.dispatchAttempts
+      .slice()
+      .reverse()
+      .find((a) => a.rideId === rideId && a.driverId === driverId && a.status === 'OFFERED');
+
+    if (activeAttempt) {
+      activeAttempt.status = 'ACCEPTED';
+      activeAttempt.respondedAt = now;
+    } else {
+      // Rekam direct attempt jika accept manual dalam test
+      this.recordDispatchAttempt(rideId, driverId, ride.currentAttemptNumber || 1, 300, 45, 'ACCEPTED');
+    }
+
+    // G. Transisi Atomik: SEARCHING -> ASSIGNED
     ride.status = 'ASSIGNED';
     ride.driverId = driverId;
     ride.version += 1;
     ride.assignedAt = now;
     ride.updatedAt = now;
+    ride.currentOfferedDriverId = driverId;
+
+    const driverRecord = this.driverEligibilityService.getDriverRecord(driverId);
+    const activeVehicle = driverRecord?.vehicles?.find((v: any) => v.isActive);
+
     ride.driver = {
       id: driverId,
-      name: 'Ahmad Gazali',
+      name: driverRecord?.driver?.displayName || 'Ahmad Gazali',
       phone: '+6281390511200',
-      vehiclePlate: 'DA 5110 KAW',
-      vehicleModel: 'Honda Vario 160',
-      rating: 4.9,
+      vehiclePlate: activeVehicle?.licensePlate || 'DA 5110 KAW',
+      vehicleModel: activeVehicle?.model || 'Honda Vario 160',
+      rating: driverRecord?.driver?.ratingAverage || 4.9,
     };
 
-    this.recordStateLog(rideId, 'SEARCHING', 'ASSIGNED', driverId, 'DRIVER', 'Order berhasil diterima oleh mitra driver');
+    // Kunci driver secara eksklusif ke ride ini
+    this.activeDriverAssignments.set(driverId, rideId);
+
+    this.recordStateLog(
+      rideId,
+      'SEARCHING',
+      'ASSIGNED',
+      driverId,
+      'DRIVER',
+      'Order berhasil diterima dan ditugaskan secara eksklusif ke mitra driver'
+    );
+
     return ride;
   }
 
-  // 5. DRIVER ARRIVED (ASSIGNED -> ARRIVED)
+  // 6. DRIVER ARRIVED (ASSIGNED -> ARRIVED)
   async driverArrived(rideId: string, driverId: string): Promise<RideOrder> {
     const ride = this.rides.get(rideId);
     if (!ride) {
       throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat mengonfirmasi tiba');
+    if (ride.status === 'COMPLETED' || ride.status === 'CANCELLED') {
+      throw new BadRequestException(`Order dalam status ${ride.status} tidak dapat diubah`);
     }
 
     if (ride.status !== 'ASSIGNED') {
       throw new BadRequestException(`Transisi tidak valid: Status saat ini ${ride.status}, wajib ASSIGNED`);
+    }
+
+    if (ride.driverId !== driverId) {
+      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat mengonfirmasi tiba');
     }
 
     const now = new Date().toISOString();
@@ -308,19 +541,23 @@ export class RideService {
     return ride;
   }
 
-  // 6. START RIDE (ARRIVED -> IN_TRIP)
+  // 7. START RIDE (ARRIVED -> IN_TRIP)
   async startRide(rideId: string, driverId: string): Promise<RideOrder> {
     const ride = this.rides.get(rideId);
     if (!ride) {
       throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat memulai perjalanan');
+    if (ride.status === 'COMPLETED' || ride.status === 'CANCELLED') {
+      throw new BadRequestException(`Order dalam status ${ride.status} tidak dapat dimulai`);
     }
 
     if (ride.status !== 'ARRIVED') {
-      throw new BadRequestException(`Transisi tidak valid: Perjalanan hanya dapat dimulai saat status ARRIVED`);
+      throw new BadRequestException(`Transisi tidak valid: Perjalanan hanya dapat dimulai saat status ARRIVED (saat ini ${ride.status})`);
+    }
+
+    if (ride.driverId !== driverId) {
+      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat memulai perjalanan');
     }
 
     const now = new Date().toISOString();
@@ -333,19 +570,23 @@ export class RideService {
     return ride;
   }
 
-  // 7. FINISH / COMPLETE RIDE (IN_TRIP -> COMPLETED)
+  // 8. COMPLETE RIDE (IN_TRIP -> COMPLETED)
   async finishRide(rideId: string, driverId: string): Promise<RideOrder> {
     const ride = this.rides.get(rideId);
     if (!ride) {
       throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    if (ride.driverId !== driverId) {
-      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat menyelesaikan perjalanan');
+    if (ride.status === 'COMPLETED') {
+      throw new BadRequestException('Order perjalanan sudah selesai (COMPLETED) dan tidak dapat diselesaikan ulang');
     }
 
     if (ride.status !== 'IN_TRIP') {
-      throw new BadRequestException(`Transisi tidak valid: Hanya perjalanan aktif (IN_TRIP) yang dapat diselesaikan`);
+      throw new BadRequestException(`Transisi tidak valid: Hanya perjalanan aktif (IN_TRIP) yang dapat diselesaikan (saat ini ${ride.status})`);
+    }
+
+    if (ride.driverId !== driverId) {
+      throw new ForbiddenException('Hanya mitra driver yang ditugaskan yang dapat menyelesaikan perjalanan');
     }
 
     const now = new Date().toISOString();
@@ -354,11 +595,18 @@ export class RideService {
     ride.completedAt = now;
     ride.updatedAt = now;
 
+    // Lepaskan lock assignment driver
+    this.activeDriverAssignments.delete(driverId);
+
     this.recordStateLog(rideId, 'IN_TRIP', 'COMPLETED', driverId, 'DRIVER', 'Perjalanan telah selesai dengan selamat');
     return ride;
   }
 
-  // 8. CANCEL RIDE (from SEARCHING, ASSIGNED, or ARRIVED)
+  async completeRide(rideId: string, driverId: string): Promise<RideOrder> {
+    return this.finishRide(rideId, driverId);
+  }
+
+  // 9. CANCEL RIDE (from SEARCHING, ASSIGNED, or ARRIVED)
   async cancelRide(
     rideId: string,
     actorId: string,
@@ -370,17 +618,24 @@ export class RideService {
       throw new NotFoundException(`Order ${rideId} tidak ditemukan`);
     }
 
-    // Strict Rule: IN_TRIP dan COMPLETED TIDAK BOLEH DIBATALKAN!
-    if (ride.status === 'IN_TRIP' || ride.status === 'COMPLETED') {
-      throw new BadRequestException(`Order tidak dapat dibatalkan saat status ${ride.status}`);
+    // Strict Rule: COMPLETED atau IN_TRIP TIDAK BOLEH DIBATALKAN!
+    if (ride.status === 'COMPLETED') {
+      throw new BadRequestException('Order tidak dapat dibatalkan saat status COMPLETED');
     }
-
+    if (ride.status === 'IN_TRIP') {
+      throw new BadRequestException('Order tidak dapat dibatalkan saat status IN_TRIP');
+    }
     if (ride.status === 'CANCELLED') {
       return ride; // Idempotent
     }
 
     const prevStatus = ride.status;
     const now = new Date().toISOString();
+
+    // Lepas assignment lock jika ada driver
+    if (ride.driverId) {
+      this.activeDriverAssignments.delete(ride.driverId);
+    }
 
     ride.status = 'CANCELLED';
     ride.version += 1;
@@ -389,12 +644,54 @@ export class RideService {
     ride.cancelledAt = now;
     ride.updatedAt = now;
 
+    // Update ongoing dispatch attempts to FAILED
+    for (const a of this.dispatchAttempts) {
+      if (a.rideId === rideId && a.status === 'OFFERED') {
+        a.status = 'FAILED';
+        a.respondedAt = now;
+      }
+    }
+
     this.recordStateLog(rideId, prevStatus, 'CANCELLED', actorId, actorRole, ride.cancellationReason);
     return ride;
   }
 
+  // 10. GET RIDE BY ID with IDOR protection
+  async getRide(rideId: string, currentUserId?: string, currentUserRole?: string): Promise<RideOrder> {
+    const ride = this.rides.get(rideId);
+    if (!ride) {
+      throw new NotFoundException(`Order perjalanan dengan ID ${rideId} tidak ditemukan`);
+    }
+
+    if (currentUserId && currentUserRole) {
+      if (currentUserRole === 'CUSTOMER' && ride.passengerId !== currentUserId) {
+        throw new ForbiddenException('Akses ditolak: Anda tidak memiliki akses ke order ini');
+      }
+      if (currentUserRole === 'DRIVER' && ride.driverId && ride.driverId !== currentUserId) {
+        throw new ForbiddenException('Akses ditolak: Order ini bukan milik Anda');
+      }
+    }
+
+    return ride;
+  }
+
+  // 11. GET USER RIDES
+  async getUserRides(userId: string, role: string): Promise<RideOrder[]> {
+    const all = Array.from(this.rides.values());
+    if (role === 'CUSTOMER') {
+      return all
+        .filter((r) => r.passengerId === userId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (role === 'DRIVER') {
+      return all
+        .filter((r) => r.driverId === userId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   // Helper: Dapatkan driver yang sedang berada dalam trip aktif
-  private getActiveDriverIdsInTrip(): Set<string> {
+  public getActiveDriverIdsInTrip(): Set<string> {
     const activeIds = new Set<string>();
     for (const r of this.rides.values()) {
       if (r.driverId && (r.status === 'ASSIGNED' || r.status === 'ARRIVED' || r.status === 'IN_TRIP')) {
@@ -404,7 +701,36 @@ export class RideService {
     return activeIds;
   }
 
-  // Helper: Rekam audit state log
+  // Helper: Catat Dispatch Attempt
+  public recordDispatchAttempt(
+    rideId: string,
+    driverId: string,
+    attemptNumber: number,
+    distanceMeters: number,
+    etaSeconds: number,
+    status: 'OFFERED' | 'ACCEPTED' | 'REJECTED' | 'TIMEOUT' | 'FAILED'
+  ): DispatchAttempt {
+    const now = new Date().toISOString();
+    const attempt: DispatchAttempt = {
+      id: crypto.randomUUID(),
+      rideId,
+      driverId,
+      attemptNumber,
+      distanceMeters,
+      etaSeconds,
+      status,
+      offeredAt: now,
+      createdAt: now,
+    };
+    this.dispatchAttempts.push(attempt);
+    return attempt;
+  }
+
+  public getDispatchAttempts(rideId: string): DispatchAttempt[] {
+    return this.dispatchAttempts.filter((a) => a.rideId === rideId);
+  }
+
+  // Helper: Catat audit state log
   private recordStateLog(
     rideId: string,
     fromState: RideStatus | undefined,

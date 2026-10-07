@@ -107,7 +107,37 @@ export class RideController {
     return this.rideService.cancelRide(id, actorId, actorRole, dto);
   }
 
-  // 9. AUDIT STATE LOGS
+  // 9. DRIVER REJECTS OFFER (Endpoint: POST /rides/:id/reject)
+  @Post(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DRIVER)
+  @HttpCode(HttpStatus.OK)
+  async rejectOffer(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('reason') reason?: string
+  ) {
+    const driverId = req.user?.driverId || req.user?.id || 'd0000000-0000-0000-0000-000000000001';
+    return this.rideService.rejectOffer(id, driverId, reason);
+  }
+
+  // 10. DISPATCH OFFER TIMEOUT (Endpoint: POST /rides/:id/dispatch/timeout)
+  @Post(':id/dispatch/timeout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async dispatchTimeout(@Req() req: any, @Param('id') id: string) {
+    const driverId = req.user?.driverId || req.user?.id;
+    return this.rideService.handleOfferTimeout(id, driverId);
+  }
+
+  // 11. GET DISPATCH ATTEMPTS
+  @Get(':id/dispatch-attempts')
+  @UseGuards(JwtAuthGuard)
+  async getDispatchAttempts(@Param('id') id: string) {
+    return this.rideService.getDispatchAttempts(id);
+  }
+
+  // 12. AUDIT STATE LOGS
   @Get(':id/logs')
   @UseGuards(JwtAuthGuard)
   async getRideLogs(@Param('id') id: string) {

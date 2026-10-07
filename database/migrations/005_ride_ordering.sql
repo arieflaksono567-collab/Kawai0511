@@ -73,10 +73,15 @@ CREATE TABLE IF NOT EXISTS ride_dispatch_attempts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     ride_id UUID NOT NULL REFERENCES rides(id) ON DELETE CASCADE,
     driver_id UUID NOT NULL REFERENCES drivers(id),
-    status VARCHAR(32) NOT NULL DEFAULT 'OFFERED', -- 'OFFERED', 'ACCEPTED', 'REJECTED', 'TIMEOUT'
+    attempt_number INT NOT NULL DEFAULT 1,
+    distance_meters NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    eta_seconds INT NOT NULL DEFAULT 0,
+    status VARCHAR(32) NOT NULL DEFAULT 'OFFERED', -- 'OFFERED', 'ACCEPTED', 'REJECTED', 'TIMEOUT', 'FAILED'
     offered_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    responded_at TIMESTAMPTZ
+    responded_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_dispatch_attempts_ride ON ride_dispatch_attempts(ride_id);
 CREATE INDEX IF NOT EXISTS idx_dispatch_attempts_driver ON ride_dispatch_attempts(driver_id);
+CREATE INDEX IF NOT EXISTS idx_dispatch_attempts_status ON ride_dispatch_attempts(status);

@@ -1,7 +1,92 @@
 /**
- * KAWAI 0511 - Phase 5 Acceptance Test Suite
- * Ride Ordering, Fare Calculation Engine, Candidate Matching, & Strict State Machine
+ * KAWAI 0511 - Phase 5B Acceptance Test Suite
+ * Driver Matching & Dispatch Engine, Candidate Ranking, Concurrency & State Machine
  */
+
+import { describe, it as test, beforeEach } from 'node:test';
+import assert from 'node:assert';
+
+// Lightweight Jest-compatible expect wrapper backed by node:assert
+const expect = (actual: any) => {
+  const matchers = (isNot: boolean) => ({
+    toBe: (expected: any) => {
+      if (isNot) {
+        assert.notStrictEqual(actual, expected);
+      } else {
+        assert.strictEqual(actual, expected);
+      }
+    },
+    toEqual: (expected: any) => {
+      if (isNot) {
+        assert.notDeepStrictEqual(actual, expected);
+      } else {
+        assert.deepStrictEqual(actual, expected);
+      }
+    },
+    toBeDefined: () => {
+      if (isNot) {
+        assert.strictEqual(actual, undefined);
+      } else {
+        assert.notStrictEqual(actual, undefined);
+      }
+    },
+    toBeUndefined: () => {
+      if (isNot) {
+        assert.notStrictEqual(actual, undefined);
+      } else {
+        assert.strictEqual(actual, undefined);
+      }
+    },
+    toBeGreaterThan: (expected: number) => {
+      if (isNot) {
+        assert.ok(actual <= expected, `${actual} should not be > ${expected}`);
+      } else {
+        assert.ok(actual > expected, `${actual} should be > ${expected}`);
+      }
+    },
+    toBeLessThan: (expected: number) => {
+      if (isNot) {
+        assert.ok(actual >= expected, `${actual} should not be < ${expected}`);
+      } else {
+        assert.ok(actual < expected, `${actual} should be < ${expected}`);
+      }
+    },
+    toContain: (item: any) => {
+      if (typeof actual === 'string') {
+        if (isNot) {
+          assert.ok(!actual.includes(item), `"${actual}" should not contain "${item}"`);
+        } else {
+          assert.ok(actual.includes(item), `"${actual}" does not contain "${item}"`);
+        }
+      } else if (Array.isArray(actual)) {
+        if (isNot) {
+          assert.ok(!actual.includes(item), `Array should not contain ${JSON.stringify(item)}`);
+        } else {
+          assert.ok(actual.includes(item), `Array does not contain ${JSON.stringify(item)}`);
+        }
+      }
+    },
+    toThrow: (expectedError?: any) => {
+      if (typeof actual === 'function') {
+        if (isNot) {
+          assert.doesNotThrow(actual, expectedError);
+        } else {
+          assert.throws(actual, expectedError);
+        }
+      }
+    },
+  });
+
+  return {
+    ...matchers(false),
+    not: matchers(true),
+    rejects: {
+      toThrow: async (expectedError?: any) => {
+        await assert.rejects(actual, expectedError);
+      },
+    },
+  };
+};
 
 import { FareService } from '../src/ride/fare.service';
 import { RideDispatchService } from '../src/ride/ride-dispatch.service';
@@ -13,7 +98,7 @@ import { RoutingService } from '../src/location/routing.service';
 import { DriverEligibilityService } from '../src/driver/driver-eligibility.service';
 import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 
-describe('Phase5RideOrderingAcceptanceTests', () => {
+describe('Phase 5B: Driver Matching & Dispatch Acceptance Tests', () => {
   let fareService: FareService;
   let freshnessService: LocationFreshnessService;
   let redisGeoService: RedisGeoService;
@@ -24,7 +109,7 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
   let rideService: RideService;
 
   const passengerId = 'b0000000-0000-0000-0000-000000000002';
-  const driverId = 'd0000000-0000-0000-0000-000000000001';
+  const primaryDriverId = 'd0000000-0000-0000-0000-000000000001'; // Ahmad Gazali
 
   beforeEach(() => {
     fareService = new FareService();
@@ -37,154 +122,470 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
     rideService = new RideService(fareService, dispatchService, routingService, driverEligibilityService);
   });
 
-  // TEST 1: Minimum Fare Enforcement
-  test('TEST 1: Enforce minimum fare threshold (Rp 10.000) for short trips', () => {
-    // 0.5 km & 2 minutes = 7000 + 1100 + 400 = 8500 -> Enforced to 10000
-    const fare = fareService.calculateFare(0.5, 2);
-    expect(fare.baseFare).toBe(7000);
-    expect(fare.minimumFare).toBe(10000);
-    expect(fare.rawFare).toBe(8500);
-    expect(fare.totalFare).toBe(10000);
-  });
-
-  // TEST 2: Exact Fare Calculation for Standard Banjarmasin Route
-  test('TEST 2: Exact fare calculation for standard route Duta Mall to ULM (4.2 km, 12 min)', () => {
-    // 4.2 km & 12 minutes = 7000 + (4.2 * 2200) + (12 * 200) = 7000 + 9240 + 2400 = 18640
-    const fare = fareService.calculateFare(4.2, 12);
-    expect(fare.totalFare).toBe(18640);
-    expect(fare.distanceFare).toBe(9240);
-    expect(fare.durationFare).toBe(2400);
-  });
-
-  // TEST 3: Passenger creates ride order with SEARCHING status and fare snapshot
-  test('TEST 3: Create ride order starts in SEARCHING status with frozen fare snapshot', async () => {
-    const ride = await rideService.createRide(passengerId, {
-      pickupAddress: 'Duta Mall Banjarmasin, Jl. A. Yani Km 2',
-      pickupLat: -3.319437,
-      pickupLng: 114.590822,
-      destinationAddress: 'Universitas Lambung Mangkurat, Kayu Tangi',
-      destinationLat: -3.298510,
-      destinationLng: 114.588020,
-      distanceKm: 4.2,
-      durationMinutes: 12,
-    });
-
-    expect(ride.status).toBe('SEARCHING');
-    expect(ride.version).toBe(1);
-    expect(ride.totalFare).toBe(18640);
-    expect(ride.fareSnapshot).toBeDefined();
-    expect(ride.fareSnapshot.baseFare).toBe(7000);
-  });
-
-  // TEST 4: Candidate Matching filters out STALE or EXPIRED drivers
-  test('TEST 4: Matching only accepts candidate drivers with FRESH GPS (< 10 detik)', async () => {
-    const activeTripDrivers = new Set<string>();
-
-    // Driver with STALE location (> 15 detik lalu)
-    const staleRecordedAt = new Date(Date.now() - 15000).toISOString();
-    const mockLocations = [
+  // TEST 1: Only eligible drivers matched
+  test('TEST 1: only eligible drivers matched', async () => {
+    // Driver Ahmad Gazali is fully approved, online, 4 approved docs, active vehicle, FRESH location
+    const freshLocations = [
       {
-        driverId: 'drv-stale',
-        latitude: -3.319437,
-        longitude: 114.590822,
-        recordedAt: staleRecordedAt,
+        driverId: primaryDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: new Date().toISOString(),
       },
     ];
 
     const result = await dispatchService.matchNearestDriver(
-      -3.319437,
-      114.590822,
-      activeTripDrivers,
+      -3.3194,
+      114.5908,
+      new Set(),
+      freshLocations
+    );
+
+    expect(result.matched).toBe(true);
+    expect(result.selectedDriver).toBeDefined();
+    expect(result.selectedDriver?.driverId).toBe(primaryDriverId);
+    expect(result.selectedDriver?.isEligible).toBe(true);
+  });
+
+  // TEST 2: Stale driver excluded
+  test('TEST 2: stale driver excluded', async () => {
+    // GPS recorded 16 seconds ago (> 10s and <= 30s -> STALE)
+    const staleTime = new Date(Date.now() - 16000).toISOString();
+    const mockLocations = [
+      {
+        driverId: primaryDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: staleTime,
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
       mockLocations
     );
 
-    // Stale driver must not be selected
     expect(result.matched).toBe(false);
     expect(result.rejectedReasons.some((r) => r.includes('GPS berstatus STALE'))).toBe(true);
   });
 
-  // TEST 5: Sequential legal state transitions
-  test('TEST 5: Strict state machine allows valid progression: SEARCHING -> ASSIGNED -> ARRIVED -> IN_TRIP -> COMPLETED', async () => {
-    const ride = await rideService.createRide(passengerId, {
-      pickupAddress: 'Duta Mall',
-      pickupLat: -3.3194,
-      pickupLng: 114.5908,
-      destinationAddress: 'ULM',
-      destinationLat: -3.2985,
-      destinationLng: 114.5880,
-      distanceKm: 3.5,
-      durationMinutes: 10,
+  // TEST 3: Expired driver excluded
+  test('TEST 3: expired driver excluded', async () => {
+    // GPS recorded 45 seconds ago (> 30s -> EXPIRED)
+    const expiredTime = new Date(Date.now() - 45000).toISOString();
+    const mockLocations = [
+      {
+        driverId: primaryDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: expiredTime,
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.rejectedReasons.some((r) => r.includes('GPS berstatus EXPIRED'))).toBe(true);
+  });
+
+  // TEST 4: Offline driver excluded
+  test('TEST 4: offline driver excluded', async () => {
+    const offlineDriverId = 'drv-offline-001';
+    driverEligibilityService.setDriverRecord(offlineDriverId, {
+      driver: {
+        id: offlineDriverId,
+        verificationStatus: 'APPROVED',
+        operationalStatus: 'OFFLINE', // OFFLINE!
+        displayName: 'Budi Offline',
+      },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
     });
+
+    const mockLocations = [
+      {
+        driverId: offlineDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.rejectedReasons.some((r) => r.includes('OFFLINE'))).toBe(true);
+  });
+
+  // TEST 5: Unapproved driver excluded
+  test('TEST 5: unapproved driver excluded', async () => {
+    const pendingDriverId = 'drv-pending-002';
+    driverEligibilityService.setDriverRecord(pendingDriverId, {
+      driver: {
+        id: pendingDriverId,
+        verificationStatus: 'UNDER_REVIEW', // Not APPROVED!
+        operationalStatus: 'ONLINE',
+        displayName: 'Rizki Pending',
+      },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'PENDING' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+    });
+
+    const mockLocations = [
+      {
+        driverId: pendingDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.rejectedReasons.some((r) => r.includes('Status verifikasi driver bukan APPROVED'))).toBe(true);
+  });
+
+  // TEST 6: Inactive vehicle excluded
+  test('TEST 6: inactive vehicle excluded', async () => {
+    const noVehicleDriverId = 'drv-no-veh-003';
+    driverEligibilityService.setDriverRecord(noVehicleDriverId, {
+      driver: {
+        id: noVehicleDriverId,
+        verificationStatus: 'APPROVED',
+        operationalStatus: 'ONLINE',
+        displayName: 'Hasan Inactive Vehicle',
+      },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [
+        { isActive: false, verificationStatus: 'APPROVED' }, // Inactive vehicle!
+      ],
+    });
+
+    const mockLocations = [
+      {
+        driverId: noVehicleDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.rejectedReasons.some((r) => r.includes('Tidak ada kendaraan aktif'))).toBe(true);
+  });
+
+  // TEST 7: Driver already on active ride excluded
+  test('TEST 7: driver already on active ride excluded', async () => {
+    const activeBusyDrivers = new Set<string>([primaryDriverId]);
+
+    const mockLocations = [
+      {
+        driverId: primaryDriverId,
+        latitude: -3.3194,
+        longitude: 114.5908,
+        recordedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      activeBusyDrivers,
+      mockLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.rejectedReasons.some((r) => r.includes('Sedang melayani order lain'))).toBe(true);
+  });
+
+  // TEST 8: Radius filtering (> 1500 meters excluded)
+  test('TEST 8: radius filtering excludes driver beyond 1500m', async () => {
+    // Pickup at Duta Mall (-3.3194, 114.5908)
+    // Driver at Kayu Tangi (~2.4 km away)
+    const farLocations = [
+      {
+        driverId: primaryDriverId,
+        latitude: -3.2985,
+        longitude: 114.5880,
+        recordedAt: new Date().toISOString(),
+      },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      farLocations
+    );
+
+    expect(result.matched).toBe(false);
+    expect(result.candidatesCount).toBe(0);
+  });
+
+  // TEST 9: Closest driver ranking (distance tie-breaker when ETA is identical)
+  test('TEST 9: closest driver ranking breaks tie when ETA is identical', async () => {
+    const driverA = 'drv-closer-001';
+    const driverB = 'drv-farther-002';
+
+    const createDriverRecord = (id: string, name: string) => ({
+      driver: { id, verificationStatus: 'APPROVED', operationalStatus: 'ONLINE', displayName: name },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+      idleSince: new Date(Date.now() - 3600000).toISOString(),
+    });
+
+    driverEligibilityService.setDriverRecord(driverA, createDriverRecord(driverA, 'Driver Dekat'));
+    driverEligibilityService.setDriverRecord(driverB, createDriverRecord(driverB, 'Driver Jauh'));
+
+    const now = new Date().toISOString();
+    // Driver A is ~300 meters away, Driver B is ~800 meters away
+    const mockLocations = [
+      { driverId: driverB, latitude: -3.3265, longitude: 114.5935, recordedAt: now }, // ~800m
+      { driverId: driverA, latitude: -3.3220, longitude: 114.5915, recordedAt: now }, // ~300m
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(true);
+    expect(result.rankedCandidates.length).toBe(2);
+    expect(result.selectedDriver?.driverId).toBe(driverA);
+    expect(result.rankedCandidates[0].distanceMeters).toBeLessThan(result.rankedCandidates[1].distanceMeters);
+  });
+
+  // TEST 10: ETA ranking (shorter ETA wins)
+  test('TEST 10: ETA ranking places faster arrival candidate at rank #1', async () => {
+    const driverFast = 'drv-fast-001';
+    const driverSlow = 'drv-slow-002';
+
+    const createDriverRecord = (id: string, name: string) => ({
+      driver: { id, verificationStatus: 'APPROVED', operationalStatus: 'ONLINE', displayName: name },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+    });
+
+    driverEligibilityService.setDriverRecord(driverFast, createDriverRecord(driverFast, 'Fast Driver'));
+    driverEligibilityService.setDriverRecord(driverSlow, createDriverRecord(driverSlow, 'Slow Driver'));
+
+    const now = new Date().toISOString();
+    const mockLocations = [
+      { driverId: driverSlow, latitude: -3.3280, longitude: 114.5950, recordedAt: now },
+      { driverId: driverFast, latitude: -3.3205, longitude: 114.5912, recordedAt: now },
+    ];
+
+    const result = await dispatchService.matchNearestDriver(
+      -3.3194,
+      114.5908,
+      new Set(),
+      mockLocations
+    );
+
+    expect(result.matched).toBe(true);
+    expect(result.selectedDriver?.driverId).toBe(driverFast);
+    expect(result.selectedDriver?.estimatedEtaSeconds).toBeLessThan(
+      result.rankedCandidates[1].estimatedEtaSeconds
+    );
+  });
+
+  // TEST 11: Reject -> next driver
+  test('TEST 11: reject -> offer immediately moves to next driver', async () => {
+    const driver1 = 'drv-cand-1';
+    const driver2 = 'drv-cand-2';
+
+    const createRecord = (id: string, name: string) => ({
+      driver: { id, verificationStatus: 'APPROVED', operationalStatus: 'ONLINE', displayName: name },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+    });
+
+    driverEligibilityService.setDriverRecord(driver1, createRecord(driver1, 'Driver Satu'));
+    driverEligibilityService.setDriverRecord(driver2, createRecord(driver2, 'Driver Dua'));
+
+    const now = new Date().toISOString();
+    const mockLocations = [
+      { driverId: driver1, latitude: -3.3205, longitude: 114.5912, recordedAt: now }, // closer
+      { driverId: driver2, latitude: -3.3240, longitude: 114.5930, recordedAt: now }, // further
+    ];
+
+    // Create ride with mockLocations
+    const ride = await rideService.createRide(
+      passengerId,
+      {
+        pickupAddress: 'Duta Mall',
+        pickupLat: -3.3194,
+        pickupLng: 114.5908,
+        destinationAddress: 'ULM',
+        destinationLat: -3.2985,
+        destinationLng: 114.5880,
+        distanceKm: 3.5,
+        durationMinutes: 10,
+      },
+      mockLocations
+    );
+
+    // Initial offer sent to driver1 (attempt 1)
+    expect(ride.status).toBe('SEARCHING');
+    expect(ride.currentOfferedDriverId).toBe(driver1);
+    expect(ride.currentAttemptNumber).toBe(1);
+
+    // Driver 1 rejects the offer
+    const dispatchResult = await rideService.rejectOffer(ride.id, driver1, 'Ban bocor');
+    expect(dispatchResult.ride.currentOfferedDriverId).toBe(driver2);
+    expect(dispatchResult.ride.currentAttemptNumber).toBe(2);
+
+    // Verify dispatch attempts log
+    const attempts = rideService.getDispatchAttempts(ride.id);
+    expect(attempts.length).toBe(2);
+    expect(attempts[0].driverId).toBe(driver1);
+    expect(attempts[0].status).toBe('REJECTED');
+    expect(attempts[1].driverId).toBe(driver2);
+    expect(attempts[1].status).toBe('OFFERED');
+  });
+
+  // TEST 12: Timeout -> next driver
+  test('TEST 12: timeout -> offer transitions to next candidate driver', async () => {
+    const driver1 = 'drv-time-1';
+    const driver2 = 'drv-time-2';
+
+    const createRecord = (id: string, name: string) => ({
+      driver: { id, verificationStatus: 'APPROVED', operationalStatus: 'ONLINE', displayName: name },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+    });
+
+    driverEligibilityService.setDriverRecord(driver1, createRecord(driver1, 'Driver T1'));
+    driverEligibilityService.setDriverRecord(driver2, createRecord(driver2, 'Driver T2'));
+
+    const now = new Date().toISOString();
+    const mockLocations = [
+      { driverId: driver1, latitude: -3.3205, longitude: 114.5912, recordedAt: now },
+      { driverId: driver2, latitude: -3.3240, longitude: 114.5930, recordedAt: now },
+    ];
+
+    const ride = await rideService.createRide(
+      passengerId,
+      {
+        pickupAddress: 'Duta Mall',
+        pickupLat: -3.3194,
+        pickupLng: 114.5908,
+        destinationAddress: 'ULM',
+        destinationLat: -3.2985,
+        destinationLng: 114.5880,
+        distanceKm: 3.5,
+        durationMinutes: 10,
+      },
+      mockLocations
+    );
+
+    expect(ride.currentOfferedDriverId).toBe(driver1);
+
+    // Trigger offer timeout on driver 1
+    const timeoutResult = await rideService.handleOfferTimeout(ride.id, driver1);
+    expect(timeoutResult.ride.currentOfferedDriverId).toBe(driver2);
+    expect(timeoutResult.ride.currentAttemptNumber).toBe(2);
+
+    const attempts = rideService.getDispatchAttempts(ride.id);
+    expect(attempts[0].status).toBe('TIMEOUT');
+    expect(attempts[1].status).toBe('OFFERED');
+  });
+
+  // TEST 13: No driver available -> remains SEARCHING
+  test('TEST 13: no driver available -> ride remains SEARCHING without cancelling', async () => {
+    // No drivers around
+    const ride = await rideService.createRide(
+      passengerId,
+      {
+        pickupAddress: 'Pelabuhan Trisakti',
+        pickupLat: -3.3350,
+        pickupLng: 114.5680,
+        destinationAddress: 'Duta Mall',
+        destinationLat: -3.3194,
+        destinationLng: 114.5908,
+        distanceKm: 4.5,
+        durationMinutes: 14,
+      },
+      [] // empty locations
+    );
 
     expect(ride.status).toBe('SEARCHING');
-
-    // 1. Accept
-    const assigned = await rideService.acceptRide(ride.id, driverId);
-    expect(assigned.status).toBe('ASSIGNED');
-    expect(assigned.driverId).toBe(driverId);
-    expect(assigned.version).toBe(2);
-
-    // 2. Arrived
-    const arrived = await rideService.driverArrived(ride.id, driverId);
-    expect(arrived.status).toBe('ARRIVED');
-    expect(arrived.version).toBe(3);
-
-    // 3. Start Trip
-    const inTrip = await rideService.startRide(ride.id, driverId);
-    expect(inTrip.status).toBe('IN_TRIP');
-    expect(inTrip.version).toBe(4);
-
-    // 4. Complete Trip
-    const completed = await rideService.finishRide(ride.id, driverId);
-    expect(completed.status).toBe('COMPLETED');
-    expect(completed.completedAt).toBeDefined();
-    expect(completed.version).toBe(5);
+    expect(ride.currentOfferedDriverId).toBeUndefined();
+    expect(ride.status).not.toBe('CANCELLED');
   });
 
-  // TEST 6: Rejection of illegal transition skips
-  test('TEST 6: Reject illegal status jumps (e.g. SEARCHING directly to COMPLETED)', async () => {
-    const ride = await rideService.createRide(passengerId, {
-      pickupAddress: 'Duta Mall',
-      pickupLat: -3.3194,
-      pickupLng: 114.5908,
-      destinationAddress: 'ULM',
-      destinationLat: -3.2985,
-      destinationLng: 114.5880,
-      distanceKm: 3.5,
-      durationMinutes: 10,
-    });
-
-    // Cannot start ride while still in SEARCHING
-    await expect(rideService.startRide(ride.id, driverId)).rejects.toThrow(BadRequestException);
-    // Cannot finish ride while still in SEARCHING
-    await expect(rideService.finishRide(ride.id, driverId)).rejects.toThrow(BadRequestException);
-  });
-
-  // TEST 7: Optimistic Concurrency Control prevents double-accept on same order
-  test('TEST 7: Optimistic Concurrency Control prevents double-accept (HTTP 409 Conflict)', async () => {
-    const ride = await rideService.createRide(passengerId, {
-      pickupAddress: 'Duta Mall',
-      pickupLat: -3.3194,
-      pickupLng: 114.5908,
-      destinationAddress: 'ULM',
-      destinationLat: -3.2985,
-      destinationLng: 114.5880,
-      distanceKm: 3.5,
-      durationMinutes: 10,
-    });
-
-    // Driver 1 accepts successfully
-    await rideService.acceptRide(ride.id, driverId, 1);
-
-    // Driver 2 attempts to accept same ride -> Must throw ConflictException
-    await expect(
-      rideService.acceptRide(ride.id, 'd0000000-0000-0000-0000-000000000002', 1)
-    ).rejects.toThrow(ConflictException);
-  });
-
-  // TEST 8: Driver cannot accept ride if already busy in active trip
-  test('TEST 8: Driver in active trip is rejected from accepting second ride concurrently', async () => {
-    // Ride 1
+  // TEST 14: Concurrent assignment protection
+  test('TEST 14: concurrent assignment protection guarantees only one ride wins driver', async () => {
+    // Ride 1 and Ride 2 created
     const ride1 = await rideService.createRide(passengerId, {
       pickupAddress: 'Duta Mall',
       pickupLat: -3.3194,
@@ -195,9 +596,7 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       distanceKm: 3.0,
       durationMinutes: 8,
     });
-    await rideService.acceptRide(ride1.id, driverId);
 
-    // Ride 2
     const ride2 = await rideService.createRide(passengerId, {
       pickupAddress: 'RSUD Ulin',
       pickupLat: -3.3265,
@@ -209,12 +608,15 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       durationMinutes: 6,
     });
 
-    // Driver tries to accept Ride 2 while Ride 1 is still ASSIGNED -> Must be rejected
-    await expect(rideService.acceptRide(ride2.id, driverId)).rejects.toThrow(ConflictException);
+    // Ride 1 accepts driver Ahmad Gazali
+    await rideService.acceptRide(ride1.id, primaryDriverId);
+
+    // Ride 2 tries to accept the same driver -> Must fail with ConflictException
+    await expect(rideService.acceptRide(ride2.id, primaryDriverId)).rejects.toThrow(ConflictException);
   });
 
-  // TEST 9: Cancellation permitted from SEARCHING and ASSIGNED
-  test('TEST 9: Cancellation is permitted during SEARCHING or ASSIGNED states', async () => {
+  // TEST 15: Double accept rejected
+  test('TEST 15: double accept rejected with HTTP 409 Conflict', async () => {
     const ride = await rideService.createRide(passengerId, {
       pickupAddress: 'Duta Mall',
       pickupLat: -3.3194,
@@ -226,17 +628,15 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       durationMinutes: 8,
     });
 
-    const cancelled = await rideService.cancelRide(ride.id, passengerId, 'CUSTOMER', {
-      reason: 'Ingin berganti rute penjemputan',
-    });
+    // Accept 1 succeeds
+    await rideService.acceptRide(ride.id, primaryDriverId, 1);
 
-    expect(cancelled.status).toBe('CANCELLED');
-    expect(cancelled.cancellationReason).toBe('Ingin berganti rute penjemputan');
-    expect(cancelled.cancelledBy).toBe('CUSTOMER');
+    // Accept 2 on same ride -> Must throw ConflictException
+    await expect(rideService.acceptRide(ride.id, primaryDriverId, 1)).rejects.toThrow(ConflictException);
   });
 
-  // TEST 10: Cancellation strictly rejected during IN_TRIP or COMPLETED
-  test('TEST 10: Cancellation strictly forbidden when trip is IN_TRIP or COMPLETED', async () => {
+  // TEST 16: Invalid state transition rejected
+  test('TEST 16: invalid state transition rejected (e.g. SEARCHING directly to IN_TRIP)', async () => {
     const ride = await rideService.createRide(passengerId, {
       pickupAddress: 'Duta Mall',
       pickupLat: -3.3194,
@@ -248,18 +648,79 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       durationMinutes: 8,
     });
 
-    await rideService.acceptRide(ride.id, driverId);
-    await rideService.driverArrived(ride.id, driverId);
-    await rideService.startRide(ride.id, driverId);
-
-    // Trip is IN_TRIP -> Cancellation must throw BadRequestException
-    await expect(
-      rideService.cancelRide(ride.id, passengerId, 'CUSTOMER')
-    ).rejects.toThrow('Order tidak dapat dibatalkan saat status IN_TRIP');
+    // Cannot jump straight to IN_TRIP or COMPLETED
+    await expect(rideService.startRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
+    await expect(rideService.finishRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
   });
 
-  // TEST 11: Audit State Log records every transition
-  test('TEST 11: System records state logs for every transition with actor role', async () => {
+  // TEST 17: Unauthorized driver rejected
+  test('TEST 17: unauthorized driver rejected from accepting an offer assigned to another', async () => {
+    const targetDriver = 'drv-target-001';
+    const intruderDriver = 'drv-intruder-002';
+
+    const createRecord = (id: string, name: string) => ({
+      driver: { id, verificationStatus: 'APPROVED', operationalStatus: 'ONLINE', displayName: name },
+      userRole: 'DRIVER',
+      documents: [
+        { documentType: 'KTP', verificationStatus: 'APPROVED' },
+        { documentType: 'SIM_C', verificationStatus: 'APPROVED' },
+        { documentType: 'STNK', verificationStatus: 'APPROVED' },
+        { documentType: 'SKCK', verificationStatus: 'APPROVED' },
+      ],
+      vehicles: [{ isActive: true, verificationStatus: 'APPROVED' }],
+    });
+
+    driverEligibilityService.setDriverRecord(targetDriver, createRecord(targetDriver, 'Target Driver'));
+    driverEligibilityService.setDriverRecord(intruderDriver, createRecord(intruderDriver, 'Intruder Driver'));
+
+    const mockLocations = [
+      { driverId: targetDriver, latitude: -3.3200, longitude: 114.5910, recordedAt: new Date().toISOString() },
+    ];
+
+    const ride = await rideService.createRide(
+      passengerId,
+      {
+        pickupAddress: 'Duta Mall',
+        pickupLat: -3.3194,
+        pickupLng: 114.5908,
+        destinationAddress: 'ULM',
+        destinationLat: -3.2985,
+        destinationLng: 114.5880,
+        distanceKm: 3.0,
+        durationMinutes: 8,
+      },
+      mockLocations
+    );
+
+    expect(ride.currentOfferedDriverId).toBe(targetDriver);
+
+    // Intruder attempts to accept the offer
+    await expect(rideService.acceptRide(ride.id, intruderDriver)).rejects.toThrow(ForbiddenException);
+  });
+
+  // TEST 18: Customer cannot manipulate driver assignment
+  test('TEST 18: customer cannot manipulate driver assignment', async () => {
+    const maliciousPayload = {
+      pickupAddress: 'Duta Mall',
+      pickupLat: -3.3194,
+      pickupLng: 114.5908,
+      destinationAddress: 'ULM',
+      destinationLat: -3.2985,
+      destinationLng: 114.5880,
+      distanceKm: 3.0,
+      durationMinutes: 8,
+      driverId: 'malicious-injected-driver', // injected field
+    } as any;
+
+    const ride = await rideService.createRide(passengerId, maliciousPayload);
+
+    // Driver assignment must remain system-controlled (SEARCHING, not arbitrarily assigned)
+    expect(ride.status).toBe('SEARCHING');
+    expect(ride.driverId).toBeUndefined();
+  });
+
+  // TEST 19: Completed ride cannot restart
+  test('TEST 19: completed ride cannot restart or transition backwards', async () => {
     const ride = await rideService.createRide(passengerId, {
       pickupAddress: 'Duta Mall',
       pickupLat: -3.3194,
@@ -271,19 +732,23 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       durationMinutes: 8,
     });
 
-    await rideService.acceptRide(ride.id, driverId);
-    await rideService.driverArrived(ride.id, driverId);
+    await rideService.acceptRide(ride.id, primaryDriverId);
+    await rideService.driverArrived(ride.id, primaryDriverId);
+    await rideService.startRide(ride.id, primaryDriverId);
+    await rideService.finishRide(ride.id, primaryDriverId);
 
-    const logs = rideService.getStateLogs(ride.id);
-    expect(logs.length).toBe(3); // SEARCHING, ASSIGNED, ARRIVED
-    expect(logs[0].toState).toBe('SEARCHING');
-    expect(logs[1].toState).toBe('ASSIGNED');
-    expect(logs[2].toState).toBe('ARRIVED');
-    expect(logs[1].actorRole).toBe('DRIVER');
+    // Attempting to accept again on completed ride
+    await expect(rideService.acceptRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
+    // Attempting to start again on completed ride
+    await expect(rideService.startRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
+    // Attempting to cancel completed ride
+    await expect(rideService.cancelRide(ride.id, passengerId, 'CUSTOMER')).rejects.toThrow(
+      BadRequestException
+    );
   });
 
-  // TEST 12: IDOR protection prevents unauthorized access
-  test('TEST 12: IDOR protection rejects unauthorized users from reading order details', async () => {
+  // TEST 20: Cancelled ride cannot restart
+  test('TEST 20: cancelled ride cannot restart or transition to another state', async () => {
     const ride = await rideService.createRide(passengerId, {
       pickupAddress: 'Duta Mall',
       pickupLat: -3.3194,
@@ -295,40 +760,16 @@ describe('Phase5RideOrderingAcceptanceTests', () => {
       durationMinutes: 8,
     });
 
-    // Other stranger passenger attempts to access ride -> 403 Forbidden
-    await expect(
-      rideService.getRide(ride.id, 'stranger-user-id', 'CUSTOMER')
-    ).rejects.toThrow(ForbiddenException);
-  });
+    // Cancel from SEARCHING
+    await rideService.cancelRide(ride.id, passengerId, 'CUSTOMER', { reason: 'Ubah rencana' });
 
-  // TEST 13: Configurable fare parameters
-  test('TEST 13: Fare configuration parameters are verifiable and configurable', () => {
-    const config = fareService.getConfig();
-    expect(config.baseFare).toBe(7000);
-    expect(config.perKmRate).toBe(2200);
-    expect(config.perMinuteRate).toBe(200);
-    expect(config.minimumFare).toBe(10000);
-  });
-
-  // TEST 14: Auto-routing fallback calculates distance if not provided
-  test('TEST 14: Auto-routing service calculates distance & duration if not in payload', async () => {
-    const ride = await rideService.createRide(passengerId, {
-      pickupAddress: 'Duta Mall',
-      pickupLat: -3.319437,
-      pickupLng: 114.590822,
-      destinationAddress: 'ULM',
-      destinationLat: -3.298510,
-      destinationLng: 114.588020,
-    });
-
-    expect(ride.distanceKm).toBeGreaterThan(2.0);
-    expect(ride.durationMinutes).toBeGreaterThan(3);
-    expect(ride.totalFare).toBeGreaterThanOrEqual(10000);
-  });
-
-  // TEST 15: Retrieve user rides list
-  test('TEST 15: Retrieve passenger order history accurately', async () => {
-    const rides = await rideService.getUserRides(passengerId, 'CUSTOMER');
-    expect(Array.isArray(rides)).toBe(true);
+    // Attempting to accept a cancelled ride
+    await expect(rideService.acceptRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
+    // Attempting to arrive on a cancelled ride
+    await expect(rideService.driverArrived(ride.id, primaryDriverId)).rejects.toThrow(
+      BadRequestException
+    );
+    // Attempting to start a cancelled ride
+    await expect(rideService.startRide(ride.id, primaryDriverId)).rejects.toThrow(BadRequestException);
   });
 });

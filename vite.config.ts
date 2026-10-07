@@ -1219,6 +1219,8 @@ function kawaiApiPlugin(): Plugin {
           startedAt?: string;
           completedAt?: string;
           cancelledAt?: string;
+          currentAttemptNumber?: number;
+          lastRejectedReason?: string;
         }
 
         if (!(globalThis as any).__devRides) {
@@ -1319,24 +1321,87 @@ function kawaiApiPlugin(): Plugin {
           }
         }
 
-        // 19. Ride State Transition Endpoints: /rides/:id/accept, arrived, start, complete, finish, cancel
+        // 19. Ride State Transition Endpoints: /rides/:id/accept, reject, arrived, start, complete, finish, cancel, timeout
         if (
           url.includes('/rides/') &&
           (url.includes('/accept') ||
+            url.includes('/reject') ||
+            url.includes('/timeout') ||
             url.includes('/arrived') ||
             url.includes('/start') ||
             url.includes('/complete') ||
             url.includes('/finish') ||
-            url.includes('/cancel'))
+            url.includes('/cancel') ||
+            url.includes('/dispatch-attempts'))
         ) {
           const parts = url.split('/');
           const action = parts.pop();
-          const rideId = parts.pop() || 'ride-active';
+          const subAction = parts[parts.length - 1];
+          let rideId = parts.pop() || 'ride-active';
+          if (action === 'timeout' && subAction === 'dispatch') {
+            rideId = parts.pop() || 'ride-active';
+          }
 
           let ride = devRides.get(rideId);
           if (!ride) {
-            // Find any latest ride or create stub
             ride = devRides.values().next().value;
+          }
+
+          if (action === 'dispatch-attempts') {
+            const attempts = [
+              {
+                id: 'att-1',
+                rideId: ride ? ride.id : rideId,
+                driverId: 'd0000000-0000-0000-0000-000000000001',
+                attemptNumber: 1,
+                distanceMeters: 450,
+                etaSeconds: 120,
+                status: ride && ride.status === 'ASSIGNED' ? 'ACCEPTED' : 'OFFERED',
+                offeredAt: new Date(Date.now() - 30000).toISOString(),
+                createdAt: new Date(Date.now() - 30000).toISOString(),
+              },
+            ];
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(attempts));
+            return;
+          }
+
+          if (action === 'reject') {
+            readBody((data) => {
+              if (ride) {
+                ride.currentAttemptNumber = (ride.currentAttemptNumber || 1) + 1;
+                ride.lastRejectedReason = data.reason || 'Mitra driver menolak tawaran';
+              }
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  message: 'Penawaran ditolak, sistem mengalihkan ke kandidat berikutnya',
+                  attemptNumber: ride ? ride.currentAttemptNumber : 2,
+                  ride,
+                })
+              );
+            });
+            return;
+          }
+
+          if (action === 'timeout') {
+            if (ride) {
+              ride.currentAttemptNumber = (ride.currentAttemptNumber || 1) + 1;
+            }
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                success: true,
+                message: 'Batas waktu 30 detik habis, mencari kandidat berikutnya',
+                attemptNumber: ride ? ride.currentAttemptNumber : 2,
+                ride,
+              })
+            );
+            return;
           }
 
           if (action === 'cancel') {

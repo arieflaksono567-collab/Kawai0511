@@ -48,18 +48,15 @@ export class GeospatialService {
         const recordedAt = metadata?.recordedAt || now.toISOString();
         const freshness = this.freshnessService.calculateFreshness(recordedAt, now);
 
-        // Filter out EXPIRED drivers
-        if (freshness !== 'EXPIRED') {
-          results.push({
-            driverId: r.member,
-            distanceMeters: r.distanceMeters,
-            latitude: r.latitude,
-            longitude: r.longitude,
-            locationFreshness: freshness,
-            recordedAt,
-            accuracyMeters: metadata?.accuracyMeters,
-          });
-        }
+        results.push({
+          driverId: r.member,
+          distanceMeters: r.distanceMeters,
+          latitude: r.latitude,
+          longitude: r.longitude,
+          locationFreshness: freshness,
+          recordedAt,
+          accuracyMeters: metadata?.accuracyMeters,
+        });
       }
       return results;
     }
@@ -69,17 +66,15 @@ export class GeospatialService {
       const distance = calculateDistanceMeters(latitude, longitude, loc.latitude, loc.longitude);
       if (distance <= radiusMeters) {
         const freshness = this.freshnessService.calculateFreshness(loc.recordedAt, now);
-        if (freshness !== 'EXPIRED') {
-          results.push({
-            driverId: loc.driverId,
-            distanceMeters: distance,
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            locationFreshness: freshness,
-            recordedAt: new Date(loc.recordedAt).toISOString(),
-            accuracyMeters: loc.accuracyMeters,
-          });
-        }
+        results.push({
+          driverId: loc.driverId,
+          distanceMeters: distance,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          locationFreshness: freshness,
+          recordedAt: new Date(loc.recordedAt).toISOString(),
+          accuracyMeters: loc.accuracyMeters,
+        });
       }
     }
 
