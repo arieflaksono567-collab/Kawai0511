@@ -195,17 +195,17 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
 
       {/* Floating Cart Indicator */}
       {cart.length > 0 && (
-        <div className="sticky bottom-3 z-30 bg-slate-900 text-white p-3 rounded-2xl shadow-xl flex items-center justify-between animate-in slide-in-from-bottom-2">
+        <div className="sticky bottom-3 z-30 bg-[#18B86A] text-white p-3 rounded-2xl shadow-md flex items-center justify-between animate-in slide-in-from-bottom-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center relative">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center relative">
               <ShoppingBag className="w-5 h-5 text-white" />
-              <span className="absolute -top-1 -right-1 bg-white text-slate-900 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-white text-[#0E8F52] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {cart.reduce((a, b) => a + b.quantity, 0)}
               </span>
             </div>
             <div>
               <p className="text-xs font-semibold">{currentCartMerchant?.name}</p>
-              <p className="text-xs font-bold text-red-400 font-mono tabular-nums">
+              <p className="text-xs font-bold text-white font-mono tabular-nums">
                 Rp {subtotalFood.toLocaleString('id-ID')}
               </p>
             </div>
@@ -213,7 +213,7 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors"
+            className="px-4 py-2 bg-white hover:bg-[#DDF8EA] text-[#0E8F52] rounded-xl text-xs font-bold transition-colors shadow-xs"
           >
             Lihat Keranjang
           </button>
@@ -256,28 +256,28 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                         )}
                       </div>
                       <p className="text-xs text-slate-500 line-clamp-2 mb-1.5">{item.description}</p>
-                      <span className="text-xs font-bold text-red-600 font-mono tabular-nums">
+                      <span className="text-xs font-bold text-[#18B86A] font-mono tabular-nums">
                         Rp {item.price.toLocaleString('id-ID')}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {inCart ? (
-                        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg">
+                        <div className="flex items-center gap-1.5 bg-[#F0F5F2] p-1 rounded-xl border border-[#D7E2DB]">
                           <button
                             type="button"
                             onClick={() => removeFromCart(item.id)}
-                            className="w-6 h-6 rounded bg-white text-slate-800 flex items-center justify-center font-bold text-sm shadow-sm"
+                            className="w-6 h-6 rounded-lg bg-white text-[#17211B] flex items-center justify-center font-bold text-sm shadow-xs border border-[#D7E2DB] hover:bg-[#F0F5F2]"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="text-xs font-bold text-slate-900 px-1 font-mono">
+                          <span className="text-xs font-bold text-[#17211B] px-1 font-mono">
                             {inCart.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => addToCart(item, selectedMerchant.id)}
-                            className="w-6 h-6 rounded bg-red-600 text-white flex items-center justify-center font-bold text-sm shadow-sm"
+                            className="w-6 h-6 rounded-lg bg-[#18B86A] text-white flex items-center justify-center font-bold text-sm shadow-xs hover:bg-[#0E8F52]"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -286,7 +286,7 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                         <button
                           type="button"
                           onClick={() => addToCart(item, selectedMerchant.id)}
-                          className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-[#DDF8EA] text-[#0E8F52] hover:bg-[#18B86A] hover:text-white font-bold text-xs transition-colors flex items-center gap-1 border border-[#18B86A]/20 cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Tambah</span>
@@ -451,18 +451,18 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                     <span className="font-mono">-Rp {discount.toLocaleString('id-ID')}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 font-bold text-slate-900 text-sm">
+                <div className="flex justify-between items-baseline pt-2 border-t border-[#E4ECE7] font-bold text-[#17211B] text-sm">
                   <span>Total Pembayaran</span>
-                  <span className="text-red-600 font-mono">Rp {totalPay.toLocaleString('id-ID')}</span>
+                  <span className="text-[#18B86A] font-mono text-base">Rp {totalPay.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-white">
+            <div className="p-4 border-t border-[#E4ECE7] bg-white">
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"
+                className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Utensils className="w-4 h-4" />
                 <span>Pesan Sekarang · Rp {totalPay.toLocaleString('id-ID')}</span>

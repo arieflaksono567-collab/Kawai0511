@@ -129,25 +129,25 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
         return {
           title: 'Driver Sudah Tiba di Lokasi Jemput!',
           desc: 'Driver menunggu di titik penjemputan / resto. Silakan temui driver.',
-          color: 'bg-emerald-600',
+          color: 'bg-[#18B86A]',
         };
       case 'on_the_way':
         return {
           title: 'Dalam Perjalanan Menuju Alamat Tujuan',
           desc: 'Perjalanan aman dengan helm standar SNI & protokol keselamatan Kawai 0511.',
-          color: 'bg-red-600',
+          color: 'bg-[#18B86A]',
         };
       case 'completed':
         return {
           title: 'Pesanan Selesai!',
           desc: 'Terima kasih telah menggunakan Kawai 0511. Semoga perjalanan menyenangkan!',
-          color: 'bg-slate-900',
+          color: 'bg-[#17211B]',
         };
       default:
         return {
           title: 'Pesanan Aktif',
           desc: 'Status pesanan sedang diproses.',
-          color: 'bg-slate-700',
+          color: 'bg-[#17211B]',
         };
     }
   };
@@ -155,14 +155,14 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
   const banner = getStatusBanner();
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg space-y-0">
+    <div className="bg-white rounded-2xl border border-[#E4ECE7] overflow-hidden shadow-sm space-y-0 text-[#17211B]">
       {/* Top Status Ribbon */}
       <div className={`${banner.color} text-white p-3.5 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           {order.status === 'searching' ? (
             <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
           ) : order.status === 'completed' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+            <CheckCircle2 className="w-5 h-5 text-white" />
           ) : (
             <Bike className="w-5 h-5 animate-pulse" />
           )}
@@ -177,7 +177,7 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             <button
               type="button"
               onClick={() => setIsSosOpen(true)}
-              className="px-2.5 py-1 bg-red-700 hover:bg-red-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow border border-red-500 animate-pulse"
+              className="px-2.5 py-1 bg-[#E5484D] hover:bg-rose-700 text-white rounded-xl text-[10px] font-bold flex items-center gap-1 shadow-xs border border-white/20 active:scale-95 transition cursor-pointer"
               title="Pusat Bantuan & SOS Darurat"
             >
               <Siren className="w-3 h-3 text-white" />
@@ -185,7 +185,7 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             </button>
           )}
 
-          <span className="text-[10px] font-mono uppercase bg-white/20 px-2 py-0.5 rounded text-white font-semibold">
+          <span className="text-[10px] font-mono uppercase bg-white/20 px-2 py-0.5 rounded-lg text-white font-semibold">
             {order.status.replace(/_/g, ' ')}
           </span>
         </div>
@@ -193,28 +193,28 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
 
       <div className="p-4 space-y-4">
         {order.driver && order.status !== 'searching' && (
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+          <div className="bg-[#F0F5F2] p-3.5 rounded-2xl border border-[#E4ECE7] flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img
                   src={order.driver.photoUrl}
                   alt={order.driver.name}
                   referrerPolicy="no-referrer"
-                  className="w-12 h-12 rounded-full object-cover border-2 border-red-500 shadow-sm"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-[#18B86A] shadow-xs"
                 />
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[#18B86A] border-2 border-white" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="font-bold text-sm text-slate-900">{order.driver.name}</h4>
-                  <div className="flex items-center text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                  <h4 className="font-bold text-sm text-[#17211B]">{order.driver.name}</h4>
+                  <div className="flex items-center text-[10px] text-[#F5A623] font-bold bg-amber-50 px-1.5 py-0.5 rounded-lg border border-amber-200">
                     <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
                     <span>{order.driver.rating}</span>
                   </div>
                 </div>
-                <p className="text-xs font-semibold text-slate-700">{order.driver.vehicle}</p>
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
-                  <span className="bg-slate-200 px-1.5 py-0.5 rounded text-slate-900 font-bold">
+                <p className="text-xs font-semibold text-[#66736B]">{order.driver.vehicle}</p>
+                <div className="flex items-center gap-2 text-[11px] text-[#66736B] font-mono">
+                  <span className="bg-white border border-[#D7E2DB] px-1.5 py-0.5 rounded text-[#17211B] font-bold">
                     {order.driver.plateNumber}
                   </span>
                   <span>· {order.driver.totalTrips} order</span>
@@ -227,15 +227,15 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsChatOpen(true)}
-                  className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-sky-600 hover:bg-sky-50 flex items-center justify-center shadow-sm relative transition-colors"
+                  className="w-9 h-9 rounded-xl bg-white border border-[#D7E2DB] text-[#2F80ED] hover:bg-[#F0F5F2] flex items-center justify-center shadow-xs relative transition-colors cursor-pointer"
                   title="Chat Driver"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#18B86A] rounded-full" />
                 </button>
                 <a
                   href={`tel:${order.driver.phone}`}
-                  className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50 flex items-center justify-center shadow-sm transition-colors"
+                  className="w-9 h-9 rounded-xl bg-[#DDF8EA] border border-[#18B86A]/30 text-[#0E8F52] hover:bg-[#18B86A] hover:text-white flex items-center justify-center shadow-xs transition-colors cursor-pointer"
                   title="Telepon Driver"
                 >
                   <Phone className="w-4 h-4" />
@@ -351,8 +351,8 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             </span>
           </div>
           <div className="text-right">
-            <span className="text-slate-500">Total Tarif:</span>
-            <span className="ml-1 font-bold text-red-600 font-mono text-sm">
+            <span className="text-[#66736B]">Total Tarif:</span>
+            <span className="ml-1 font-bold text-[#18B86A] font-mono text-sm">
               Rp {order.totalPay.toLocaleString('id-ID')}
             </span>
           </div>
@@ -363,7 +363,7 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
             <button
               type="button"
               onClick={() => onCancelOrder(order.id)}
-              className="w-full py-2.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-xs font-semibold transition-colors"
+              className="w-full py-3 bg-white hover:bg-rose-50 border border-rose-200 text-[#E5484D] rounded-2xl text-xs font-semibold transition-colors cursor-pointer"
             >
               Batalkan Pencarian
             </button>
@@ -374,14 +374,14 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
               <button
                 type="button"
                 onClick={() => onUpdateStatus(order.id, 'completed')}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                className="flex-1 py-3 bg-[#18B86A] hover:bg-[#0E8F52] text-white rounded-2xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
               >
                 Simulasi Selesai Langsung
               </button>
               <button
                 type="button"
                 onClick={() => onCancelOrder(order.id)}
-                className="px-3 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-medium"
+                className="px-4 py-3 bg-white border border-[#D7E2DB] text-[#66736B] hover:text-[#17211B] hover:bg-[#F0F5F2] rounded-2xl text-xs font-medium cursor-pointer"
               >
                 Batalkan
               </button>
@@ -389,10 +389,10 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           )}
 
           {order.status === 'completed' && !isRatingSubmitted && (
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+            <div className="bg-[#F7FAF8] p-4 rounded-2xl border border-[#E4ECE7] space-y-3">
               <div className="text-center">
-                <h4 className="font-bold text-xs text-slate-900">Beri Nilai Driver</h4>
-                <p className="text-[11px] text-slate-500">Bagaimana pelayanan Pak {order.driver?.name}?</p>
+                <h4 className="font-bold text-xs text-[#17211B]">Beri Nilai Driver</h4>
+                <p className="text-[11px] text-[#66736B]">Bagaimana pelayanan Pak {order.driver?.name}?</p>
               </div>
 
               <div className="flex items-center justify-center gap-2">
@@ -401,13 +401,13 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
                     key={star}
                     type="button"
                     onClick={() => setSelectedRating(star)}
-                    className="p-1 focus:outline-none transition-transform hover:scale-125"
+                    className="p-1 focus:outline-none transition-transform hover:scale-125 cursor-pointer"
                   >
                     <Star
                       className={`w-6 h-6 ${
                         star <= selectedRating
                           ? 'fill-amber-400 text-amber-400'
-                          : 'text-slate-300'
+                          : 'text-[#D7E2DB]'
                       }`}
                     />
                   </button>
@@ -415,17 +415,17 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
               </div>
 
               <div className="space-y-1">
-                <span className="text-[11px] font-semibold text-slate-700">Kirim Tip Driver (Opsional):</span>
+                <span className="text-[11px] font-semibold text-[#17211B]">Kirim Tip Driver (Opsional):</span>
                 <div className="grid grid-cols-4 gap-1.5 text-xs font-mono">
                   {[0, 2000, 5000, 10000].map((tip) => (
                     <button
                       key={tip}
                       type="button"
                       onClick={() => setSelectedTip(tip)}
-                      className={`py-1 rounded border text-[11px] font-bold ${
+                      className={`py-1.5 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
                         selectedTip === tip
-                          ? 'bg-red-600 text-white border-red-600'
-                          : 'bg-white text-slate-700 border-slate-200'
+                          ? 'bg-[#18B86A] text-white border-[#18B86A]'
+                          : 'bg-white text-[#17211B] border-[#D7E2DB] hover:bg-[#F0F5F2]'
                       }`}
                     >
                       {tip === 0 ? 'Nol' : `+${tip / 1000}k`}
@@ -440,7 +440,7 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
                   setIsRatingSubmitted(true);
                   onFinishOrder(order.id, selectedRating, selectedTip);
                 }}
-                className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                className="w-full py-3 bg-[#18B86A] hover:bg-[#0E8F52] text-white rounded-2xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
               >
                 Kirim Penilaian & Selesai
               </button>
@@ -448,8 +448,8 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
           )}
 
           {isRatingSubmitted && (
-            <div className="text-center py-2 text-xs text-emerald-600 font-semibold flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="text-center py-2 text-xs text-[#0E8F52] font-semibold flex items-center justify-center gap-1.5 bg-[#DDF8EA] p-3 rounded-2xl border border-[#18B86A]/30">
+              <CheckCircle2 className="w-4 h-4 text-[#18B86A]" />
               <span>Terima kasih! Ulasan kamu telah tersimpan.</span>
             </div>
           )}
@@ -459,22 +459,22 @@ export const ActiveOrderTracker: React.FC<ActiveOrderTrackerProps> = ({
       {isChatOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl h-[480px] flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white">
+            <div className="p-3.5 border-b border-[#E4ECE7] flex items-center justify-between bg-white text-[#17211B]">
               <div className="flex items-center gap-2.5">
                 <img
                   src={order.driver?.photoUrl}
                   alt="Driver"
-                  className="w-8 h-8 rounded-full object-cover border border-white"
+                  className="w-8 h-8 rounded-full object-cover border border-[#E4ECE7]"
                 />
                 <div>
-                  <h4 className="font-bold text-xs">{order.driver?.name}</h4>
-                  <p className="text-[10px] text-emerald-400">Online · Kawai 0511 Messenger</p>
+                  <h4 className="font-bold text-xs text-[#17211B]">{order.driver?.name}</h4>
+                  <p className="text-[10px] text-[#0E8F52]">Online · Kawai 0511 Messenger</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsChatOpen(false)}
-                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
+                className="w-7 h-7 rounded-full hover:bg-[#F0F5F2] flex items-center justify-center text-[#66736B] hover:text-[#17211B]"
               >
                 <X className="w-4 h-4" />
               </button>

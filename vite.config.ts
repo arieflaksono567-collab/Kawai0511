@@ -882,18 +882,94 @@ function kawaiApiPlugin(): Plugin {
           return;
         }
 
-        // 11. GET /drivers/earnings
-        if (url === '/drivers/earnings' || url === '/api/drivers/earnings') {
+        // 11. GET /drivers/me/earnings & /drivers/earnings (Phase 6C Authoritative Ledger)
+        if (
+          url.startsWith('/drivers/me/earnings') ||
+          url.startsWith('/api/drivers/me/earnings') ||
+          url === '/drivers/earnings' ||
+          url === '/api/drivers/earnings'
+        ) {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.end(
             JSON.stringify({
-              todayEarnings: 168000,
-              todayTrips: 12,
-              breakdown: {
-                tripFares: 142800,
-                tips: 15000,
-                bonusIncentives: 10200,
+              driverId: 'd0000000-0000-0000-0000-000000000001',
+              totalCompletedRides: 12,
+              grossFare: 218235,
+              driverEarnings: 185500,
+              platformFee: 32735,
+              todayEarnings: 185500,
+              todayRides: 12,
+              weekEarnings: 1240000,
+              weekRides: 74,
+              currency: 'IDR',
+              period: 'today',
+              authoritativeSource: 'LEDGER',
+              ledgerAccountId: 'DRIVER_PAYABLE_d0000000',
+              ledgerBalance: 185500,
+            })
+          );
+          return;
+        }
+
+        // Phase 6 Payment Endpoints: POST /payments
+        if ((url === '/payments' || url === '/api/payments') && req.method === 'POST') {
+          readBody((data) => {
+            const amount = data.amount || 18400;
+            const driverAmount = Math.round(amount * 0.85);
+            const platformAmount = amount - driverAmount;
+            const method = data.method || 'CASH';
+            const status = method === 'CASH' ? 'PAID' : 'PENDING';
+            const paymentId = 'pay-' + Date.now().toString().slice(-6);
+
+            res.statusCode = 201;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                statusCode: 201,
+                message:
+                  method === 'CASH'
+                    ? 'Pembayaran tunai berhasil dicatat dan diselesaikan'
+                    : 'Pembayaran digital berhasil diinisiasi, menunggu konfirmasi gateway',
+                data: {
+                  payment: {
+                    id: paymentId,
+                    rideId: data.rideId || 'ride-0511-demo',
+                    amount,
+                    currency: 'IDR',
+                    method,
+                    status,
+                    provider: data.provider || method,
+                    paidAt: status === 'PAID' ? new Date().toISOString() : undefined,
+                    isSettled: status === 'PAID',
+                    driverShareAmount: driverAmount,
+                    platformFeeAmount: platformAmount,
+                    ledgerTransactionId: 'tx-ledger-' + Date.now().toString().slice(-6),
+                  },
+                  split: {
+                    driverAmount,
+                    platformAmount,
+                  },
+                },
+              })
+            );
+          });
+          return;
+        }
+
+        // Phase 6 Settlement Endpoint: POST /payments/:id/settle
+        if (url.includes('/payments/') && url.endsWith('/settle') && req.method === 'POST') {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              statusCode: 200,
+              message: 'Settlement bagi hasil transaksi berhasil diproses dan dicatat di buku besar',
+              data: {
+                settlementId: 'stl-' + Date.now().toString().slice(-6),
+                status: 'PAID',
+                isSettled: true,
+                settledAt: new Date().toISOString(),
               },
             })
           );

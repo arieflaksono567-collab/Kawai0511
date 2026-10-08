@@ -20,6 +20,7 @@ import {
   Terminal,
   Activity
 } from 'lucide-react';
+import { KAWAI_COLORS } from '../constants/theme';
 
 interface SimulationStep {
   step: number;
@@ -118,83 +119,78 @@ export const E2ESimulationRunner: React.FC = () => {
       sublabel: 'Penugasan Mitra',
       icon: ShieldCheck,
       status: 'PENDING',
-      log: 'Status beralih ke ASSIGNED (v2). driver_id & assigned_at tersimpan secara atomik.',
+      log: 'Order beralih ke ASSIGNED (v2). Mitra Ahmad Gazali resmi ditugaskan.',
     },
     {
       step: 10,
-      id: 'driver_arrived',
+      id: 'driver_arrived_act',
       label: 'DRIVER ARRIVED',
-      sublabel: 'Aksi Kedatangan Driver',
+      sublabel: 'Aksi Tiba di Lokasi',
       icon: MapPin,
       status: 'PENDING',
-      log: 'POST /rides/:id/arrived: Mitra tiba di titik penjemputan Duta Mall Banjarmasin.',
+      log: 'Driver menempuh rute menuju titik jemput Duta Mall Banjarmasin.',
     },
     {
       step: 11,
-      id: 'arrived',
+      id: 'arrived_state',
       label: 'ARRIVED',
-      sublabel: 'Status Penjemputan Tiba',
-      icon: MapPin,
+      sublabel: 'Status Tiba Terkunci',
+      icon: Flag,
       status: 'PENDING',
-      log: 'Status beralih ke ARRIVED (v3). arrived_at tersimpan. Penumpang diberitahu.',
+      log: 'Transisi state ASSIGNED -> ARRIVED (v3). Notifikasi dikirim ke penumpang.',
     },
     {
       step: 12,
-      id: 'start',
-      label: 'START',
-      sublabel: 'Aksi Mulai Perjalanan',
+      id: 'start_act',
+      label: 'START TRIP',
+      sublabel: 'Penumpang Masuk Kendaraan',
       icon: Navigation,
       status: 'PENDING',
-      log: 'POST /rides/:id/start: Penumpang telah naik, trip bersama dimulai.',
+      log: 'Penumpang menaiki motor. Helm SNI terpasang, perjalanan dimulai.',
     },
     {
       step: 13,
       id: 'in_trip',
       label: 'IN_TRIP',
-      sublabel: 'Status Dalam Perjalanan',
+      sublabel: 'Sedang Berjalan',
       icon: Navigation,
       status: 'PENDING',
-      log: 'Status beralih ke IN_TRIP (v4). started_at tersimpan. Navigasi menuju ULM aktif.',
+      log: 'Transisi ARRIVED -> IN_TRIP (v4). GPS telemetri rute aktif.',
     },
     {
       step: 14,
-      id: 'complete',
-      label: 'COMPLETE',
-      sublabel: 'Aksi Penyelesaian Trip',
-      icon: Flag,
+      id: 'complete_act',
+      label: 'COMPLETE ACTION',
+      sublabel: 'Tiba di Destinasi',
+      icon: CheckCircle2,
       status: 'PENDING',
-      log: 'POST /rides/:id/complete: Mitra tiba di tujuan dan mengonfirmasi perjalanan selesai.',
+      log: 'Driver tiba di ULM Kayutangi dan menekan [SELESAIKAN PERJALANAN].',
     },
     {
       step: 15,
-      id: 'completed',
+      id: 'completed_final',
       label: 'COMPLETED',
-      sublabel: 'Status Final Terkunci',
+      sublabel: 'Selesai & Terkunci',
       icon: CheckCircle2,
       status: 'PENDING',
-      log: 'Status final COMPLETED (v5). completed_at tersimpan. Proteksi double-complete aktif.',
+      log: 'Transisi IN_TRIP -> COMPLETED (v5). Tarif Rp 19.040 terkunci di buku besar.',
     },
   ];
 
   const [steps, setSteps] = useState<SimulationStep[]>(initialSteps);
   const [consoleLogs, setConsoleLogs] = useState<string[]>([
-    'System ready. Klik "Jalankan Simulasi Lengkap" untuk memulai acceptance test otomatis.',
+    'Sistem KAWAI 0511 siap dijalankan. Klik "Jalankan Simulasi Lengkap" untuk memulai.',
   ]);
 
   const addLog = (msg: string) => {
-    const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
-    setConsoleLogs((prev) => [`[${time}] ${msg}`, ...prev.slice(0, 40)]);
+    setConsoleLogs((prev) => [...prev, `[${new Date().toLocaleTimeString('id-ID')}] ${msg}`]);
   };
 
   const runSimulation = async () => {
     if (isRunning) return;
     setIsRunning(true);
     setCompletedAll(false);
-    setConsoleLogs([]);
-    addLog('🚀 MEMULAI SIMULASI END-TO-END ACCEPTANCE TEST (PHASE 5A + 5B)');
-
-    // Reset steps
-    setSteps(initialSteps);
+    setConsoleLogs(['🚀 Memulai simulasi Acceptance Test 15-Tahap KAWAI 0511 Banjarmasin...']);
 
     for (let i = 0; i < initialSteps.length; i++) {
       setCurrentStepIndex(i);
@@ -207,7 +203,7 @@ export const E2ESimulationRunner: React.FC = () => {
       addLog(`   ${current.log}`);
 
       // Delay for visual fidelity
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 500));
 
       const nowTime = new Date().toLocaleTimeString('id-ID', { hour12: false });
       setSteps((prev) =>
@@ -237,22 +233,22 @@ export const E2ESimulationRunner: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* HEADER BANNER */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* HEADER BANNER - Bright Clean Card */}
+      <div className="bg-white border border-[#E4ECE7] rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#DDF8EA] text-[#0E8F52] font-bold border border-[#18B86A]/20">
               PHASE 5 ACCEPTANCE TEST
             </span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2F80ED] font-bold border border-blue-200">
               15-STEP PIPELINE
             </span>
           </div>
-          <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
-            <Activity className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-xl font-bold text-[#17211B] flex items-center gap-2">
+            <Activity className="w-5 h-5 text-[#18B86A]" />
             Acceptance Test End-to-End Simulation
           </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs text-[#66736B] mt-1 max-w-2xl">
             Simulasi lengkap dari autentikasi pelanggan, kalkulasi snapshot tarif resmi, pencocokan radar 1.5 km, penawaran 30s timeout, hingga transisi status perjalanan lengkap (COMPLETED).
           </p>
         </div>
@@ -262,7 +258,7 @@ export const E2ESimulationRunner: React.FC = () => {
           <button
             disabled={isRunning}
             onClick={resetSimulation}
-            className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition cursor-pointer disabled:opacity-50"
+            className="p-3 bg-[#F0F5F2] hover:bg-[#E4ECE7] text-[#17211B] border border-[#D7E2DB] rounded-xl transition cursor-pointer disabled:opacity-50"
             title="Reset Simulasi"
           >
             <RotateCcw className="w-4 h-4" />
@@ -271,10 +267,10 @@ export const E2ESimulationRunner: React.FC = () => {
           <button
             disabled={isRunning}
             onClick={runSimulation}
-            className={`px-5 py-3 rounded-xl font-extrabold text-xs flex items-center gap-2 transition shadow-lg uppercase tracking-wider cursor-pointer ${
+            className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center gap-2 transition shadow-sm uppercase tracking-wider cursor-pointer ${
               isRunning
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25'
+                ? 'bg-[#F0F5F2] text-[#A8B2AC] border border-[#D7E2DB] cursor-not-allowed'
+                : 'bg-[#18B86A] hover:bg-[#0E8F52] text-white'
             }`}
           >
             <Play className="w-4 h-4 fill-current" />
@@ -295,10 +291,10 @@ export const E2ESimulationRunner: React.FC = () => {
               key={item.id}
               className={`p-3.5 rounded-2xl border transition-all ${
                 isCurrent
-                  ? 'bg-slate-900 border-emerald-400 ring-2 ring-emerald-500/30 shadow-lg scale-[1.02]'
+                  ? 'bg-[#DDF8EA]/40 border-[#18B86A] ring-2 ring-[#18B86A]/30 shadow-sm scale-[1.02]'
                   : isDone
-                  ? 'bg-slate-900/90 border-emerald-500/40 text-slate-200'
-                  : 'bg-slate-950/60 border-slate-800/80 text-slate-500'
+                  ? 'bg-white border-[#18B86A]/40 text-[#17211B] shadow-xs'
+                  : 'bg-[#F7FAF8] border-[#E4ECE7] text-[#66736B]'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -306,17 +302,17 @@ export const E2ESimulationRunner: React.FC = () => {
                   <span
                     className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
                       isDone
-                        ? 'bg-emerald-500 text-slate-950 font-black'
+                        ? 'bg-[#18B86A] text-white font-bold'
                         : isCurrent
-                        ? 'bg-emerald-400 text-slate-950 animate-pulse'
-                        : 'bg-slate-800 text-slate-400'
+                        ? 'bg-[#0E8F52] text-white animate-pulse'
+                        : 'bg-[#E4ECE7] text-[#66736B]'
                     }`}
                   >
                     {item.step}
                   </span>
                   <span
-                    className={`text-xs font-black tracking-wide ${
-                      isDone || isCurrent ? 'text-white' : 'text-slate-400'
+                    className={`text-xs font-bold tracking-wide ${
+                      isDone || isCurrent ? 'text-[#17211B]' : 'text-[#66736B]'
                     }`}
                   >
                     {item.label}
@@ -324,25 +320,25 @@ export const E2ESimulationRunner: React.FC = () => {
                 </div>
 
                 {isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-[#18B86A]" />
                 ) : isCurrent ? (
-                  <Clock className="w-4 h-4 text-emerald-400 animate-spin" />
+                  <Clock className="w-4 h-4 text-[#18B86A] animate-spin" />
                 ) : (
-                  <span className="w-2 h-2 rounded-full bg-slate-700" />
+                  <span className="w-2 h-2 rounded-full bg-[#D7E2DB]" />
                 )}
               </div>
 
-              <div className="text-[11px] font-semibold text-slate-300 truncate">
+              <div className="text-[11px] font-semibold text-[#17211B] truncate">
                 {item.sublabel}
               </div>
-              <p className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">
+              <p className="text-[10px] text-[#66736B] line-clamp-2 mt-1 leading-snug">
                 {item.log}
               </p>
 
               {item.timestamp && (
-                <div className="mt-2 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                <div className="mt-2 pt-1.5 border-t border-[#E4ECE7] flex items-center justify-between text-[9px] text-[#66736B] font-mono">
                   <span>WITA</span>
-                  <span className="text-emerald-400">{item.timestamp}</span>
+                  <span className="text-[#0E8F52] font-semibold">{item.timestamp}</span>
                 </div>
               )}
             </div>
@@ -351,29 +347,29 @@ export const E2ESimulationRunner: React.FC = () => {
       </div>
 
       {/* CONSOLE / AUDIT LOG TERMINAL */}
-      <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 shadow-xl space-y-2">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-            <Terminal className="w-4 h-4 text-emerald-400" />
+      <div className="bg-white rounded-2xl border border-[#E4ECE7] p-4 shadow-sm space-y-2">
+        <div className="flex items-center justify-between pb-2 border-b border-[#E4ECE7]">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#17211B]">
+            <Terminal className="w-4 h-4 text-[#18B86A]" />
             <span>Terminal Log Simulasi Real-Time</span>
           </div>
-          <span className="text-[10px] font-mono text-slate-500">
+          <span className="text-[10px] font-mono text-[#66736B]">
             NODE.JS TEST RUNNER READY
           </span>
         </div>
 
-        <div className="bg-slate-900/90 rounded-xl p-3 font-mono text-[11px] text-slate-300 h-44 overflow-y-auto space-y-1">
+        <div className="bg-[#17211B] rounded-xl p-3 font-mono text-[11px] text-[#DDF8EA] h-44 overflow-y-auto space-y-1">
           {consoleLogs.map((log, index) => (
             <div
               key={index}
               className={`${
                 log.includes('✅') || log.includes('🎉')
-                  ? 'text-emerald-400 font-semibold'
+                  ? 'text-[#18B86A] font-semibold'
                   : log.includes('▶️')
                   ? 'text-sky-300'
                   : log.includes('🚀')
                   ? 'text-amber-300 font-bold'
-                  : 'text-slate-300'
+                  : 'text-slate-200'
               }`}
             >
               {log}

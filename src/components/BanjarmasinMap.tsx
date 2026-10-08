@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Navigation, Bike, Compass, Crosshair } from 'lucide-react';
 import { LocationPoint } from '../types';
+import { KAWAI_COLORS } from '../constants/theme';
 
 interface BanjarmasinMapProps {
   pickup: LocationPoint;
@@ -40,32 +41,32 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
   const driverToPickupD = `M ${driverSvg.x} ${driverSvg.y} Q ${(driverSvg.x + pickupSvg.x) / 2} ${(driverSvg.y + pickupSvg.y) / 2 - 15} ${pickupSvg.x} ${pickupSvg.y}`;
 
   return (
-    <div className="relative w-full h-[260px] sm:h-[320px] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-inner select-none">
-      {/* Map Background SVG */}
+    <div className="relative w-full h-[260px] sm:h-[320px] bg-[#F0F5F2] rounded-2xl overflow-hidden border border-[#E4ECE7] shadow-sm select-none">
+      {/* Map Background SVG (Bright Clean Mobility Style) */}
       <svg
         viewBox="0 0 1000 600"
         className="w-full h-full object-cover"
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          {/* Street pattern grid */}
+          {/* Subtle street grid pattern */}
           <pattern id="street-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" strokeWidth="0.8" opacity="0.6" />
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E2EBE5" strokeWidth="0.8" />
           </pattern>
-          {/* River gradient */}
+          {/* Clean River gradient */}
           <linearGradient id="river-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#0284c7" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#0369a1" stopOpacity="0.55" />
+            <stop offset="0%" stopColor="#C5E6F7" />
+            <stop offset="100%" stopColor="#A8DAF5" />
           </linearGradient>
-          {/* Radar ripple gradient */}
+          {/* Green Radar ripple */}
           <radialGradient id="radar-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+            <stop offset="0%" stopColor="#18B86A" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#18B86A" stopOpacity="0" />
           </radialGradient>
         </defs>
 
         {/* Base ground & Grid */}
-        <rect width="1000" height="600" fill="#0f172a" />
+        <rect width="1000" height="600" fill="#F0F5F2" />
         <rect width="1000" height="600" fill="url(#street-grid)" />
 
         {/* Sungai Barito (Barat) */}
@@ -95,65 +96,98 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
           strokeLinecap="round"
         />
 
-        {/* Jembatan Merdeka & Jembatan Banua Anyar (Bridges) */}
-        <line x1="355" y1="230" x2="385" y2="250" stroke="#64748b" strokeWidth="4" />
-        <line x1="425" y1="350" x2="455" y2="370" stroke="#64748b" strokeWidth="4" />
+        {/* Area Hijau Taman Siring & Kamboja */}
+        <ellipse cx="390" cy="270" rx="40" ry="24" fill="#DDF8EA" opacity="0.85" />
+        <ellipse cx="480" cy="410" rx="45" ry="28" fill="#DDF8EA" opacity="0.85" />
 
-        {/* Jalan Utama: Jl. A. Yani (Arteri Banjarmasin) */}
+        {/* Jembatan Merdeka & Jembatan Banua Anyar */}
+        <line x1="355" y1="230" x2="385" y2="250" stroke="#94A3B8" strokeWidth="5" strokeLinecap="round" />
+        <line x1="425" y1="350" x2="455" y2="370" stroke="#94A3B8" strokeWidth="5" strokeLinecap="round" />
+
+        {/* Jalan Utama: Jl. A. Yani (Arteri Banjarmasin) - Clean white with soft casing */}
         <path
           d="M 360 380 L 520 440 L 720 520 L 980 590"
           fill="none"
-          stroke="#334155"
-          strokeWidth="10"
+          stroke="#D7E2DB"
+          strokeWidth="12"
+          strokeLinecap="round"
         />
         <path
           d="M 360 380 L 520 440 L 720 520 L 980 590"
           fill="none"
-          stroke="#475569"
-          strokeWidth="4"
-          strokeDasharray="12,8"
+          stroke="#FFFFFF"
+          strokeWidth="8"
+          strokeLinecap="round"
         />
 
         {/* Jalan Utama: Jl. Hasan Basry (Kayutangi / ULM) */}
         <path
           d="M 350 220 L 350 40"
           fill="none"
-          stroke="#334155"
-          strokeWidth="8"
+          stroke="#D7E2DB"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 350 220 L 350 40"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="6"
+          strokeLinecap="round"
         />
 
         {/* Jalan Utama: Jl. Pierre Tendean (Siring) */}
         <path
           d="M 360 220 L 440 340"
           fill="none"
-          stroke="#334155"
-          strokeWidth="8"
+          stroke="#D7E2DB"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 360 220 L 440 340"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="6"
+          strokeLinecap="round"
         />
 
-        {/* Area Hijau Taman Siring & Kamboja */}
-        <ellipse cx="390" cy="270" rx="35" ry="20" fill="#065f46" opacity="0.25" />
-        <ellipse cx="480" cy="410" rx="40" ry="25" fill="#065f46" opacity="0.25" />
+        {/* Jalan Lingkar Lainnya */}
+        <path
+          d="M 120 420 L 360 380 L 360 220 L 220 180"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
 
-        {/* ROUTE LINE (Jika bukan cancelled/idle) */}
+        {/* ROUTE LINE (KAWAI Green #18B86A) */}
         {pickupSvg.x !== destSvg.x && (
           <>
-            {/* Route Outer Shadow */}
+            {/* Soft Glow */}
             <path
               d={routePathD}
               fill="none"
-              stroke="#059669"
-              strokeWidth="6"
+              stroke="#DDF8EA"
+              strokeWidth="8"
               strokeLinecap="round"
-              opacity="0.3"
             />
-            {/* Animated Active Route */}
+            {/* Primary KAWAI Green Solid Route */}
             <path
               d={routePathD}
               fill="none"
-              stroke="#10b981"
-              strokeWidth="3.5"
+              stroke="#18B86A"
+              strokeWidth="4"
               strokeLinecap="round"
-              strokeDasharray="8,6"
+            />
+            {/* Animated Dashed Tracker */}
+            <path
+              d={routePathD}
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="6,8"
               className="animate-pulse"
             />
           </>
@@ -164,8 +198,8 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
           <path
             d={driverToPickupD}
             fill="none"
-            stroke="#38bdf8"
-            strokeWidth="2.5"
+            stroke="#0E8F52"
+            strokeWidth="3"
             strokeDasharray="6,4"
             className="animate-pulse"
           />
@@ -176,11 +210,11 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
           <g>
             <circle cx={pickupSvg.x} cy={pickupSvg.y} r="85" fill="url(#radar-glow)">
               <animate attributeName="r" values="30;120" dur="2s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.7;0" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx={pickupSvg.x} cy={pickupSvg.y} r="50" fill="none" stroke="#10b981" strokeWidth="1.5" opacity="0.4">
-              <animate attributeName="r" values="10;80" dur="2s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={pickupSvg.x} cy={pickupSvg.y} r="50" fill="none" stroke="#18B86A" strokeWidth="2" opacity="0.6">
+              <animate attributeName="r" values="10;80" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.9;0" dur="2s" repeatCount="indefinite" />
             </circle>
           </g>
         )}
@@ -192,7 +226,7 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
         {landmarks.slice(0, 7).map((lm) => {
           const isPickup = lm.id === pickup.id;
           const isDest = lm.id === destination.id;
-          if (isPickup || isDest) return null; // handled separately
+          if (isPickup || isDest) return null;
 
           return (
             <button
@@ -202,61 +236,60 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
               className="absolute pointer-events-auto -translate-x-1/2 -translate-y-1/2 group transition-transform hover:scale-110 focus:outline-none"
               style={{ left: `${lm.x}%`, top: `${lm.y}%` }}
             >
-              <div className="w-2.5 h-2.5 rounded-full bg-slate-600 border border-slate-400 group-hover:bg-amber-400 group-hover:border-amber-200 transition-colors shadow-sm" />
-              <span className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-7 whitespace-nowrap bg-slate-950/95 text-slate-200 text-[10px] px-2 py-0.5 rounded border border-slate-700 shadow-lg z-30 font-medium">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#A8B2AC] border border-white group-hover:bg-[#18B86A] transition-colors shadow-sm" />
+              <span className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-7 whitespace-nowrap bg-white text-[#17211B] text-[10px] px-2 py-0.5 rounded-lg border border-[#E4ECE7] shadow-md z-30 font-medium">
                 {lm.name}
               </span>
             </button>
           );
         })}
 
-        {/* PICKUP PIN */}
+        {/* PICKUP PIN (KAWAI Green #18B86A) */}
         <div
           className="absolute pointer-events-auto -translate-x-1/2 -translate-y-full z-20 transition-all duration-500 ease-out"
           style={{ left: `${pickup.x}%`, top: `${pickup.y}%` }}
         >
           <div className="flex flex-col items-center">
-            <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-emerald-400 whitespace-nowrap mb-0.5 flex items-center gap-1">
+            <span className="bg-[#18B86A] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
               Pickup: {pickup.name.length > 18 ? pickup.name.slice(0, 16) + '..' : pickup.name}
             </span>
-            <div className="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white shadow-xl flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-[#18B86A] border-2 border-white shadow-md flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-white" />
             </div>
-            <div className="w-1 h-2 bg-emerald-600" />
+            <div className="w-1 h-2 bg-[#18B86A]" />
           </div>
         </div>
 
-        {/* DESTINATION PIN */}
+        {/* DESTINATION PIN (Status Danger / Destination Red #E5484D) */}
         <div
           className="absolute pointer-events-auto -translate-x-1/2 -translate-y-full z-20 transition-all duration-500 ease-out"
           style={{ left: `${destination.x}%`, top: `${destination.y}%` }}
         >
           <div className="flex flex-col items-center">
-            <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border border-rose-400 whitespace-nowrap mb-0.5 flex items-center gap-1">
+            <span className="bg-[#E5484D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
               <MapPin className="w-2.5 h-2.5" />
               Tujuan: {destination.name.length > 18 ? destination.name.slice(0, 16) + '..' : destination.name}
             </span>
-            <div className="w-5 h-5 rounded-full bg-rose-500 border-2 border-white shadow-xl flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-[#E5484D] border-2 border-white shadow-md flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-white" />
             </div>
-            <div className="w-1 h-2 bg-rose-600" />
+            <div className="w-1 h-2 bg-[#E5484D]" />
           </div>
         </div>
 
-        {/* DRIVER POSITION PIN */}
+        {/* DRIVER POSITION PIN (KAWAI Brand Driver #18B86A) */}
         {driverPosition && (
           <div
             className="absolute pointer-events-auto -translate-x-1/2 -translate-y-1/2 z-25 transition-all duration-700 ease-out"
             style={{ left: `${driverPosition.x}%`, top: `${driverPosition.y}%` }}
           >
             <div className="relative flex items-center justify-center group">
-              {/* Radar pulse around driver */}
-              <div className="absolute w-9 h-9 rounded-full bg-sky-500/20 animate-ping" />
-              <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-sky-400 shadow-xl flex items-center justify-center text-sky-300">
+              <div className="absolute w-9 h-9 rounded-full bg-[#18B86A]/20 animate-ping" />
+              <div className="w-8 h-8 rounded-full bg-white border-2 border-[#18B86A] shadow-md flex items-center justify-center text-[#18B86A]">
                 <Bike className="w-4 h-4" />
               </div>
-              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-[9px] font-mono font-bold text-sky-300 px-1.5 py-0.2 rounded border border-sky-500/40 shadow">
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white text-[9px] font-mono font-bold text-[#17211B] px-1.5 py-0.2 rounded border border-[#E4ECE7] shadow-sm">
                 DA 5110 KAW
               </span>
             </div>
@@ -264,20 +297,20 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
         )}
       </div>
 
-      {/* MAP CONTROLS OVERLAY */}
-      <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 text-[11px] text-slate-300">
-        <Compass className="w-3.5 h-3.5 text-emerald-400 animate-spin-slow" />
-        <span className="font-semibold text-white">Banjarmasin</span>
-        <span className="text-slate-500">•</span>
-        <span className="text-emerald-400 font-mono text-[10px]">Kota Seribu Sungai</span>
+      {/* MAP CONTROLS OVERLAY - Light & Clean */}
+      <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-xl border border-[#E4ECE7] text-[11px] text-[#17211B] shadow-sm">
+        <Compass className="w-3.5 h-3.5 text-[#18B86A]" />
+        <span className="font-semibold text-[#17211B]">Banjarmasin</span>
+        <span className="text-[#A8B2AC]">•</span>
+        <span className="text-[#0E8F52] font-medium text-[10px]">Kota Seribu Sungai</span>
       </div>
 
-      <div className="absolute top-3 right-3 z-30 flex items-center gap-1 bg-slate-950/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 text-[10px] text-slate-400">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+      <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2 py-1 rounded-xl border border-[#E4ECE7] text-[10px] text-[#66736B] shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-[#18B86A] animate-pulse" />
         <span>Radius 1.5 km</span>
       </div>
 
-      <div className="absolute bottom-2 left-3 z-30 text-[10px] text-slate-500 bg-slate-950/70 px-2 py-0.5 rounded backdrop-blur border border-slate-800/60 hidden sm:block">
+      <div className="absolute bottom-2 left-3 z-30 text-[10px] text-[#66736B] bg-white/90 px-2 py-0.5 rounded-lg backdrop-blur border border-[#E4ECE7] shadow-xs hidden sm:block">
         Sungai Martapura & Siring • Jl. A. Yani • ULM Kayutangi
       </div>
     </div>

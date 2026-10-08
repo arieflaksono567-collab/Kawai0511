@@ -220,9 +220,9 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
               <span className="font-mono">-Rp {discount.toLocaleString('id-ID')}</span>
             </div>
           )}
-          <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 font-bold text-slate-900">
+          <div className="flex justify-between items-baseline pt-2 border-t border-[#E4ECE7] font-bold text-[#17211B]">
             <span>Perkiraan Total Bayar</span>
-            <span className="text-base text-red-600 font-mono">
+            <span className="text-base text-[#18B86A] font-mono">
               ± Rp {grandTotalEstimate.toLocaleString('id-ID')}
             </span>
           </div>
@@ -233,7 +233,7 @@ export const ServiceMart: React.FC<ServiceMartProps> = ({
         type="button"
         onClick={handleBook}
         disabled={customList.length === 0}
-        className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-slate-300 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"
+        className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer"
       >
         <ShoppingBag className="w-4 h-4" />
         <span>Kirim Kurir Belanja Kawai Sekarang</span>

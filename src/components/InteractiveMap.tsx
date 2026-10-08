@@ -255,7 +255,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   <path d="M19 7c0-1.1-.9-2-2-2h-3v2h3v2.65L13.52 14H10V9H6c-2.21 0-4 1.79-4 4v3h2c0 1.66 1.34 3 3 3s3-1.34 3-3h4c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-4-4zm-12 9c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm10 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
                 </svg>
 
-                <div className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-[9px] px-1.5 py-0.5 rounded shadow pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-full mt-0.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white text-[#17211B] text-[9px] px-1.5 py-0.5 rounded-lg shadow-sm border border-[#E4ECE7] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                   {driver.name.split(' ')[0]} · ★{driver.rating}
                 </div>
               </div>
@@ -321,28 +321,28 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         )}
 
         {isGeocoding && (
-          <div className="bg-slate-900/95 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg flex items-center gap-2 border border-slate-700 pointer-events-auto">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+          <div className="bg-white/95 text-[#17211B] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-2 border border-[#E4ECE7] pointer-events-auto">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#18B86A] shrink-0" />
             <span>Mencari nama jalan via OpenStreetMap Nominatim...</span>
           </div>
         )}
 
         {lastNotification && (
           <div
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium shadow-md flex items-center gap-2 animate-in fade-in slide-in-from-top-1 border pointer-events-auto ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-1 border pointer-events-auto ${
               lastNotification.type === 'success'
-                ? 'bg-emerald-900/90 text-emerald-100 border-emerald-700'
+                ? 'bg-[#DDF8EA] text-[#0E8F52] border-[#18B86A]/30'
                 : lastNotification.type === 'error'
-                ? 'bg-red-900/90 text-red-100 border-red-700'
-                : 'bg-slate-900/90 text-white border-slate-700'
+                ? 'bg-rose-50 text-[#E5484D] border-rose-200'
+                : 'bg-white text-[#17211B] border-[#E4ECE7]'
             }`}
           >
             {lastNotification.type === 'success' ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#18B86A] shrink-0" />
             ) : lastNotification.type === 'error' ? (
-              <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <AlertCircle className="w-3.5 h-3.5 text-[#E5484D] shrink-0" />
             ) : (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#18B86A] shrink-0" />
             )}
             <span className="truncate">{lastNotification.text}</span>
           </div>

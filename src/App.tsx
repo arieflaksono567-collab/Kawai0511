@@ -8,17 +8,21 @@ import {
   Sparkles,
   Info,
   Shield,
-  Phone
+  Phone,
+  CreditCard
 } from 'lucide-react';
 import { BANJARMASIN_LOCATIONS } from './data/mockData';
 import { LocationPoint } from './types';
 import { PassengerView } from './components/PassengerView';
 import { DriverView } from './components/DriverView';
 import { E2ESimulationRunner } from './components/E2ESimulationRunner';
+import { PassengerPaymentCard } from './components/PassengerPaymentCard';
+import { DriverEarningsCard } from './components/DriverEarningsCard';
+import { KAWAI_COLORS } from './constants/theme';
 
 export default function App() {
-  // Current active mode: 'passenger' | 'driver' | 'dual' | 'e2e'
-  const [viewMode, setViewMode] = useState<'passenger' | 'driver' | 'dual' | 'e2e'>('passenger');
+  // Current active mode: 'passenger' | 'driver' | 'dual' | 'e2e' | 'payment'
+  const [viewMode, setViewMode] = useState<'passenger' | 'driver' | 'dual' | 'e2e' | 'payment'>('passenger');
 
   // Selected Pickup & Destination
   const [pickup, setPickup] = useState<LocationPoint>(BANJARMASIN_LOCATIONS[0]); // Duta Mall
@@ -123,6 +127,7 @@ export default function App() {
       await fetch(`/rides/${activeRide.id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Ban bocor' }),
       });
     } catch {
       // Fallback
@@ -131,17 +136,17 @@ export default function App() {
     setActiveRide((prev: any) => ({
       ...prev,
       status: 'SEARCHING',
-      currentAttemptNumber: (prev.currentAttemptNumber || 1) + 1,
+      driver: null,
+      version: (prev.version || 1) + 1,
     }));
-    showToast('Order ditolak. Dialihkan ke kandidat berikutnya.');
+    showToast('Order ditolak. Menawarkan ke kandidat berikutnya...');
   };
 
-  // DRIVER: TIMEOUT (30 DETIK)
+  // DRIVER: TIMEOUT (30s)
   const handleTimeoutRide = async () => {
     try {
       await fetch(`/rides/${activeRide.id}/timeout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       });
     } catch {
       // Fallback
@@ -150,17 +155,19 @@ export default function App() {
     setActiveRide((prev: any) => ({
       ...prev,
       status: 'SEARCHING',
-      currentAttemptNumber: (prev.currentAttemptNumber || 1) + 1,
+      driver: null,
+      version: (prev.version || 1) + 1,
     }));
-    showToast('Waktu respons 30s habis. Order dialihkan.');
+    showToast('Waktu habis (30s). Menawarkan ke driver berikutnya...');
   };
 
-  // DRIVER: SAYA SUDAH TIBA (ARRIVED)
+  // DRIVER: TIBA DI LOKASI JEMPUT
   const handleArrivedRide = async () => {
     try {
       await fetch(`/rides/${activeRide.id}/arrived`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedVersion: activeRide.version }),
       });
     } catch {
       // Fallback
@@ -174,12 +181,13 @@ export default function App() {
     showToast('Driver telah tiba di titik jemput.');
   };
 
-  // DRIVER: MULAI PERJALANAN (START)
+  // DRIVER: MULAI PERJALANAN
   const handleStartRide = async () => {
     try {
       await fetch(`/rides/${activeRide.id}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedVersion: activeRide.version }),
       });
     } catch {
       // Fallback
@@ -199,6 +207,7 @@ export default function App() {
       await fetch(`/rides/${activeRide.id}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedVersion: activeRide.version }),
       });
     } catch {
       // Fallback
@@ -209,16 +218,16 @@ export default function App() {
       status: 'COMPLETED',
       version: (prev.version || 1) + 1,
     }));
-    showToast('Perjalanan selesai! Terima kasih.');
+    showToast('Perjalanan selesai! Silakan lakukan pembayaran.');
   };
 
-  // PASSENGER / DRIVER: BATALKAN ORDER (CANCEL)
+  // BATALKAN ORDER
   const handleCancelRide = async () => {
     try {
       await fetch(`/rides/${activeRide.id}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Dibatalkan oleh pengguna' }),
+        body: JSON.stringify({ reason: 'Dibatalkan oleh penumpang' }),
       });
     } catch {
       // Fallback
@@ -234,38 +243,38 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
-      {/* GLOBAL TOP NAVIGATION & ROLE SWITCHER */}
-      <nav className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div className="min-h-screen bg-[#F7FAF8] text-[#17211B] flex flex-col font-sans selection:bg-[#DDF8EA] selection:text-[#0E8F52]">
+      {/* GLOBAL TOP NAVIGATION & ROLE SWITCHER - Bright Clean Header */}
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E4ECE7] px-4 py-3 shadow-xs">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Logo & Brand */}
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xs tracking-tight shadow-md shadow-emerald-500/20">
+            <div className="w-8 h-8 rounded-xl bg-[#18B86A] flex items-center justify-center text-white font-black text-xs tracking-tight shadow-xs">
               0511
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm tracking-wide text-white">
+                <span className="font-extrabold text-sm tracking-wide text-[#17211B]">
                   KAWAI 0511
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                <span className="text-[10px] font-semibold text-[#0E8F52] bg-[#DDF8EA] border border-[#18B86A]/20 px-1.5 py-0.2 rounded">
                   Banjarmasin
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-[#66736B]">
                 Layanan Ojek & Transportasi Lokal Kalimantan Selatan
               </p>
             </div>
           </div>
 
           {/* Role & View Mode Switcher */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center bg-[#F0F5F2] p-1 rounded-xl border border-[#D7E2DB] text-xs">
             <button
               onClick={() => setViewMode('passenger')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
                 viewMode === 'passenger'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#18B86A] text-white shadow-xs'
+                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -274,10 +283,10 @@ export default function App() {
 
             <button
               onClick={() => setViewMode('driver')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
                 viewMode === 'driver'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#18B86A] text-white shadow-xs'
+                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
               }`}
             >
               <Bike className="w-3.5 h-3.5" />
@@ -286,10 +295,10 @@ export default function App() {
 
             <button
               onClick={() => setViewMode('dual')}
-              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
                 viewMode === 'dual'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#18B86A] text-white shadow-xs'
+                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
               }`}
               title="Tampilkan kedua aplikasi berdampingan untuk menguji simulasi secara langsung"
             >
@@ -298,11 +307,24 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => setViewMode('payment')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+                viewMode === 'payment'
+                  ? 'bg-[#18B86A] text-white shadow-xs'
+                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+              }`}
+              title="Tampilkan UI Pembayaran Penumpang & Pendapatan Driver (Langkah 6)"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>UI Pembayaran (Langkah 6)</span>
+            </button>
+
+            <button
               onClick={() => setViewMode('e2e')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
                 viewMode === 'e2e'
-                  ? 'bg-emerald-500 text-slate-950 shadow'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#18B86A] text-white shadow-xs'
+                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
               }`}
               title="Jalankan simulasi otomatis siklus lengkap 15 tahap"
             >
@@ -315,7 +337,7 @@ export default function App() {
 
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 border border-emerald-300 animate-bounce text-xs">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#18B86A] text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 border border-white/20 animate-bounce text-xs">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -362,14 +384,14 @@ export default function App() {
         {/* VIEW 3: DUAL SIMULATION (SIDE-BY-SIDE) */}
         {viewMode === 'dual' && (
           <div className="w-full space-y-4 animate-fadeIn">
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-2xl flex items-center justify-between text-xs text-emerald-300">
+            <div className="p-3.5 bg-[#DDF8EA] border border-[#18B86A]/30 rounded-2xl flex items-center justify-between text-xs text-[#0E8F52]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Sparkles className="w-4 h-4 text-[#18B86A] shrink-0" />
                 <span>
                   <strong>Mode Simulasi Interaktif:</strong> Tekan <strong>[PESAN OJEK]</strong> di sisi Penumpang, dan saksikan tawaran order otomatis masuk ke aplikasi Driver secara real-time.
                 </span>
               </div>
-              <span className="text-[10px] font-mono bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-200">
+              <span className="text-[10px] font-mono bg-white text-[#17211B] border border-[#D7E2DB] px-2 py-0.5 rounded">
                 Status: {activeRide.status}
               </span>
             </div>
@@ -377,8 +399,8 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Left Column: Passenger App */}
               <div className="space-y-2">
-                <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-slate-400">
-                  <User className="w-4 h-4 text-emerald-400" />
+                <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-[#66736B]">
+                  <User className="w-4 h-4 text-[#18B86A]" />
                   <span>Aplikasi Penumpang (Passenger View)</span>
                 </div>
                 <PassengerView
@@ -396,8 +418,8 @@ export default function App() {
 
               {/* Right Column: Driver App */}
               <div className="space-y-2">
-                <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-slate-400">
-                  <Bike className="w-4 h-4 text-sky-400" />
+                <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-[#66736B]">
+                  <Bike className="w-4 h-4 text-[#18B86A]" />
                   <span>Aplikasi Mitra Pengemudi (Driver View)</span>
                 </div>
                 <DriverView
@@ -418,7 +440,62 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 4: E2E SIMULATION ACCEPTANCE TEST */}
+        {/* VIEW 4: LANGKAH 6 — UI PEMBAYARAN & PENDAPATAN */}
+        {viewMode === 'payment' && (
+          <div className="w-full space-y-6 animate-fadeIn py-2">
+            <div className="p-4 bg-[#DDF8EA]/60 border border-[#18B86A]/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#0E8F52]">
+              <div className="flex items-center gap-2.5">
+                <CreditCard className="w-5 h-5 text-[#18B86A] shrink-0" />
+                <div>
+                  <h3 className="font-bold text-[#17211B] text-sm">Langkah 6 — UI Pembayaran & Pendapatan</h3>
+                  <p className="text-[#66736B] text-xs mt-0.5">
+                    Antarmuka Penumpang (CASH & DIGITAL Provider Abstraction) dan Mitra Driver (Double-Entry Authoritative Ledger).
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[11px] bg-white px-3 py-1 rounded-xl border border-[#D7E2DB]">
+                <span className="text-[#66736B]">Tarif Contoh:</span>
+                <span className="text-[#18B86A] font-bold">Rp 18.400</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto w-full">
+              {/* Sisi Penumpang: Kartu Pembayaran */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-[#66736B] px-2 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-[#18B86A]" />
+                  <span>Sisi Penumpang (Passenger UI)</span>
+                </div>
+                <PassengerPaymentCard
+                  fareAmount={18400}
+                  rideId="ride-0511-demo"
+                  driverId="d0000000-0000-0000-0000-000000000001"
+                  driverName="Ahmad Gazali"
+                  onPaymentSuccess={() => {
+                    showToast('Pembayaran berhasil dicatat di buku besar!');
+                  }}
+                />
+              </div>
+
+              {/* Sisi Driver: Kartu Pendapatan */}
+              <div className="space-y-3">
+                <div className="text-xs font-bold text-[#66736B] px-2 flex items-center gap-1.5">
+                  <Bike className="w-4 h-4 text-[#18B86A]" />
+                  <span>Sisi Mitra Driver (Driver UI)</span>
+                </div>
+                <DriverEarningsCard
+                  driverId="d0000000-0000-0000-0000-000000000001"
+                  driverName="Ahmad Gazali"
+                  initialTodayEarnings={185500}
+                  initialTodayRides={12}
+                  initialWeekEarnings={1240000}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW 5: E2E SIMULATION ACCEPTANCE TEST */}
         {viewMode === 'e2e' && (
           <div className="w-full py-2 animate-fadeIn">
             <E2ESimulationRunner />
@@ -427,9 +504,9 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-slate-900/60 border-t border-slate-800/80 px-4 py-3 text-center text-[11px] text-slate-500">
+      <footer className="bg-white border-t border-[#E4ECE7] px-4 py-3 text-center text-[11px] text-[#66736B]">
         <p>
-          KAWAI 0511 Banjarmasin • Kode Wilayah 0511 Kalimantan Selatan • Driver Matching & Dispatch Engine Phase 5
+          KAWAI 0511 Banjarmasin • Kode Wilayah 0511 Kalimantan Selatan • Bright Clean Mobility UI
         </p>
       </footer>
     </div>

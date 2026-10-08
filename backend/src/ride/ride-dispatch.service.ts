@@ -82,8 +82,9 @@ export class RideDispatchService {
 
       // 3. Filter GPS Freshness: WAJIB FRESH (< 10 detik). STALE & EXPIRED DITOLAK!
       if (cand.locationFreshness !== 'FRESH') {
+        const displayFreshness = cand.locationFreshness === 'DEGRADED' ? 'EXPIRED' : cand.locationFreshness;
         rejectedReasons.push(
-          `Driver ${cand.driverId} dilewati: GPS berstatus ${cand.locationFreshness} (wajib FRESH < 10 detik).`
+          `Driver ${cand.driverId} dilewati: GPS berstatus ${displayFreshness} (wajib FRESH < 10 detik).`
         );
         continue;
       }

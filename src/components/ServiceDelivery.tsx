@@ -471,9 +471,9 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
               <span className="font-mono tabular-nums">-Rp {discount.toLocaleString('id-ID')}</span>
             </div>
           )}
-          <div className="flex justify-between items-baseline pt-1 border-t border-slate-200 font-bold text-slate-900">
+          <div className="flex justify-between items-baseline pt-1 border-t border-[#E4ECE7] font-bold text-[#17211B]">
             <span>Total Biaya Kurir</span>
-            <span className="text-base text-red-600 font-mono tabular-nums">
+            <span className="text-base text-[#18B86A] font-mono tabular-nums">
               Rp {totalPay.toLocaleString('id-ID')}
             </span>
           </div>
@@ -483,7 +483,7 @@ export const ServiceDelivery: React.FC<ServiceDeliveryProps> = ({
       <button
         type="button"
         onClick={handleBook}
-        className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 transition-all"
+        className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] active:bg-[#0E8F52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
       >
         <Package className="w-4 h-4" />
         <span>Panggil Kurir Instant Kawai 0511</span>

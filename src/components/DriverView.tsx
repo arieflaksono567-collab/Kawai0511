@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { LocationPoint } from '../types';
 import { BanjarmasinMap } from './BanjarmasinMap';
+import { DriverEarningsCard } from './DriverEarningsCard';
+import { KAWAI_COLORS } from '../constants/theme';
 
 interface DriverViewProps {
   activeRide: any;
@@ -48,7 +50,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
 }) => {
   const [isOnline, setIsOnline] = useState(true);
   const [countdown, setCountdown] = useState(30);
-  const [todayEarnings, setTodayEarnings] = useState(168000);
+  const [todayEarnings, setTodayEarnings] = useState(185500);
   const [completedTrips, setCompletedTrips] = useState(12);
 
   const isOfferPending = activeRide && activeRide.status === 'SEARCHING' && isOnline;
@@ -89,12 +91,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const driverNetShare = Math.round(totalFare * 0.85); // 85% driver take
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col font-sans">
-      {/* 1. DRIVER HEADER */}
-      <header className="px-5 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
+    <div className="w-full max-w-md mx-auto bg-white border border-[#E4ECE7] rounded-3xl shadow-sm overflow-hidden flex flex-col font-sans text-[#17211B]">
+      {/* 1. DRIVER HEADER (Bright & Clean) */}
+      <header className="px-5 py-4 bg-white border-b border-[#E4ECE7] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden shadow">
+            <div className="w-10 h-10 rounded-xl bg-[#F0F5F2] border border-[#D7E2DB] overflow-hidden shadow-xs">
               <img
                 src="/src/assets/images/driver_portrait_ridho_1790780315040.jpg"
                 alt="Ahmad Gazali"
@@ -105,30 +107,30 @@ export const DriverView: React.FC<DriverViewProps> = ({
               />
             </div>
             <div
-              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-950 ${
-                isOnline ? 'bg-emerald-400' : 'bg-slate-500'
+              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                isOnline ? 'bg-[#18B86A]' : 'bg-[#66736B]'
               }`}
             />
           </div>
 
           <div>
             <div className="flex items-center gap-1.5">
-              <h2 className="text-sm font-extrabold text-white">Ahmad Gazali</h2>
-              <span className="text-[10px] bg-slate-800 text-slate-300 font-mono font-bold px-1.5 py-0.2 rounded border border-slate-700">
+              <h2 className="text-sm font-bold text-[#17211B]">Ahmad Gazali</h2>
+              <span className="text-[10px] bg-[#F0F5F2] text-[#17211B] font-mono font-bold px-1.5 py-0.2 rounded border border-[#D7E2DB]">
                 DA 5110 KAW
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Honda Vario 160 • ★ 4.9</p>
+            <p className="text-[11px] text-[#66736B]">Honda Vario 160 • ★ 4.9</p>
           </div>
         </div>
 
         {/* ONLINE / OFFLINE TOGGLE */}
         <button
           onClick={() => setIsOnline(!isOnline)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
             isOnline
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-              : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'
+              ? 'bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/40 hover:bg-[#DDF8EA]'
+              : 'bg-[#F0F5F2] text-[#66736B] border border-[#D7E2DB] hover:text-[#17211B]'
           }`}
         >
           <Power className="w-3.5 h-3.5" />
@@ -137,20 +139,20 @@ export const DriverView: React.FC<DriverViewProps> = ({
       </header>
 
       {/* GPS STATUS BAR */}
-      <div className="px-4 py-2 bg-slate-950/60 border-b border-slate-800/80 flex items-center justify-between text-[11px]">
-        <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
-          <Radio className="w-3 h-3 animate-pulse" />
+      <div className="px-4 py-2 bg-[#F0F5F2] border-b border-[#E4ECE7] flex items-center justify-between text-[11px]">
+        <div className="flex items-center gap-1.5 text-[#0E8F52] font-medium">
+          <Radio className="w-3 h-3 text-[#18B86A] animate-pulse" />
           <span>GPS FRESH (&lt; 10s)</span>
-          <span className="text-slate-500">•</span>
-          <span className="text-slate-400">Akurasi ~5m</span>
+          <span className="text-[#A8B2AC]">•</span>
+          <span className="text-[#66736B]">Akurasi ~5m</span>
         </div>
-        <div className="text-slate-400 font-mono text-[10px]">
+        <div className="text-[#66736B] font-mono text-[10px]">
           Redis GEO • PostGIS Aktif
         </div>
       </div>
 
       {/* 2. DRIVER MAP VIEW */}
-      <div className="p-3 bg-slate-950/40">
+      <div className="p-3 bg-[#F7FAF8]">
         <BanjarmasinMap
           pickup={pickup}
           destination={destination}
@@ -163,27 +165,27 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
       {/* 3. DRIVER DISPATCH OR TRIP CONTROLS */}
       <div className="p-5 space-y-4">
-        {/* CASE A: INCOMING OFFER MODAL / CARD (30s TIMER) */}
+        {/* CASE A: INCOMING OFFER (ORDER MASUK) */}
         {isOfferPending && (
-          <div className="bg-slate-950 rounded-2xl border-2 border-emerald-500/60 p-5 shadow-2xl space-y-4 relative overflow-hidden animate-pulse-slow">
+          <div className="bg-white rounded-2xl border-2 border-[#18B86A] p-5 shadow-md space-y-4 relative overflow-hidden animate-pulse-slow">
             {/* Top alert bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#18B86A] animate-ping" />
+                <span className="text-xs font-bold text-[#18B86A] uppercase tracking-wider">
                   Order Masuk Baru!
                 </span>
               </div>
-              <div className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+              <div className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-amber-50 text-[#F5A623] border border-[#F5A623]/30 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 <span>{countdown}s</span>
               </div>
             </div>
 
             {/* Countdown Progress Bar */}
-            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#F0F5F2] rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-400 transition-all duration-1000 ease-linear rounded-full"
+                className="h-full bg-[#18B86A] transition-all duration-1000 ease-linear rounded-full"
                 style={{ width: `${(countdown / 30) * 100}%` }}
               />
             </div>
@@ -191,43 +193,43 @@ export const DriverView: React.FC<DriverViewProps> = ({
             {/* Trip Details */}
             <div className="space-y-2.5 text-xs">
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <MapPin className="w-3.5 h-3.5" />
+                <div className="w-5 h-5 rounded-md bg-[#DDF8EA] text-[#0E8F52] flex items-center justify-center shrink-0 mt-0.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#18B86A]" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                  <span className="text-[10px] text-[#66736B] uppercase font-semibold block">
                     Titik Jemput:
                   </span>
-                  <span className="font-bold text-white text-sm">{pickup.name}</span>
-                  <p className="text-[10px] text-slate-400 truncate">{pickup.address}</p>
+                  <span className="font-bold text-[#17211B] text-sm">{pickup.name}</span>
+                  <p className="text-[10px] text-[#66736B] truncate">{pickup.address}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-md bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-md bg-rose-50 text-[#E5484D] flex items-center justify-center shrink-0 mt-0.5">
                   <Navigation className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                  <span className="text-[10px] text-[#66736B] uppercase font-semibold block">
                     Tujuan Penumpang:
                   </span>
-                  <span className="font-bold text-white text-sm">{destination.name}</span>
-                  <p className="text-[10px] text-slate-400 truncate">{destination.address}</p>
+                  <span className="font-bold text-[#17211B] text-sm">{destination.name}</span>
+                  <p className="text-[10px] text-[#66736B] truncate">{destination.address}</p>
                 </div>
               </div>
             </div>
 
             {/* Earnings Breakdown */}
-            <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+            <div className="p-3 bg-[#F7FAF8] rounded-xl border border-[#E4ECE7] flex items-center justify-between text-xs">
               <div>
-                <span className="text-[10px] text-slate-400 block">Pendapatan Mitra (85%):</span>
-                <span className="text-base font-black text-emerald-400 font-mono">
+                <span className="text-[10px] text-[#66736B] block">Pendapatan Mitra (85%):</span>
+                <span className="text-base font-black text-[#18B86A] font-mono">
                   Rp {driverNetShare.toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 block">Total Tarif:</span>
-                <span className="text-xs font-bold text-slate-300 font-mono">
+                <span className="text-[10px] text-[#66736B] block">Total Tarif:</span>
+                <span className="text-xs font-bold text-[#17211B] font-mono">
                   Rp {totalFare.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -237,7 +239,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
             <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 onClick={onRejectRide}
-                className="py-3 bg-slate-800 hover:bg-rose-500/20 text-rose-400 border border-slate-700 hover:border-rose-500/40 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="py-3 bg-white hover:bg-rose-50 text-[#E5484D] border border-rose-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <XCircle className="w-4 h-4" />
                 <span>Tolak (Reject)</span>
@@ -245,7 +247,7 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
               <button
                 onClick={onAcceptRide}
-                className="py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black shadow-lg shadow-emerald-500/30 transition flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
+                className="py-3 bg-[#18B86A] hover:bg-[#0E8F52] text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Terima Order</span>
@@ -257,34 +259,34 @@ export const DriverView: React.FC<DriverViewProps> = ({
         {/* CASE B: ACTIVE TRIP LIFECYCLE (ASSIGNED -> ARRIVED -> IN_TRIP -> COMPLETED) */}
         {activeRide &&
           ['ASSIGNED', 'ARRIVED', 'IN_TRIP'].includes(activeRide.status) && (
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="bg-[#F7FAF8] rounded-2xl border border-[#E4ECE7] p-4 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E4ECE7]">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-bold text-white">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#18B86A] animate-pulse" />
+                  <span className="text-xs font-bold text-[#17211B]">
                     Trip Sedang Berjalan (Order #{activeRide.id ? activeRide.id.slice(-6) : '0511'})
                   </span>
                 </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/20">
                   {activeRide.status}
                 </span>
               </div>
 
               {/* Passenger Info Card */}
-              <div className="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800">
+              <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-[#E4ECE7]">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                  <span className="text-[10px] text-[#66736B] uppercase font-semibold block">
                     Penumpang:
                   </span>
-                  <span className="font-bold text-white text-sm">
+                  <span className="font-bold text-[#17211B] text-sm">
                     {activeRide.passengerName || 'Arief Laksono'}
                   </span>
-                  <p className="text-[10px] text-slate-400">Pembayaran Tunai (Cash)</p>
+                  <p className="text-[10px] text-[#66736B]">Pembayaran Tunai (Cash)</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <a
                     href="tel:+6281255110987"
-                    className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/30 border border-emerald-500/30"
+                    className="w-9 h-9 rounded-lg bg-[#DDF8EA] text-[#0E8F52] flex items-center justify-center hover:bg-[#18B86A] hover:text-white border border-[#18B86A]/30 transition"
                     title="Hubungi Penumpang"
                   >
                     <Phone className="w-4 h-4" />
@@ -295,12 +297,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
               {/* Progress Stepper & Contextual Button */}
               {activeRide.status === 'ASSIGNED' && (
                 <div className="space-y-3">
-                  <p className="text-xs text-slate-300">
-                    Menuju lokasi penjemputan penumpang di <strong>{pickup.name}</strong>.
+                  <p className="text-xs text-[#66736B]">
+                    Menuju lokasi penjemputan penumpang di <strong className="text-[#17211B]">{pickup.name}</strong>.
                   </p>
                   <button
                     onClick={onArrivedRide}
-                    className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs transition uppercase tracking-wider shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition uppercase tracking-wider shadow-sm flex items-center justify-center gap-2"
                   >
                     <MapPin className="w-4 h-4" />
                     <span>SAYA SUDAH TIBA DI LOKASI PENJEMPUTAN</span>
@@ -310,12 +312,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
               {activeRide.status === 'ARRIVED' && (
                 <div className="space-y-3">
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs">
+                  <div className="p-2.5 bg-[#DDF8EA] border border-[#18B86A]/30 rounded-xl text-[#0E8F52] text-xs">
                     Driver sudah tiba di titik jemput. Pastikan penumpang sudah naik kendaraan.
                   </div>
                   <button
                     onClick={onStartRide}
-                    className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition uppercase tracking-wider shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition uppercase tracking-wider shadow-sm flex items-center justify-center gap-2"
                   >
                     <Navigation className="w-4 h-4" />
                     <span>MULAI PERJALANAN (START TRIP)</span>
@@ -325,12 +327,12 @@ export const DriverView: React.FC<DriverViewProps> = ({
 
               {activeRide.status === 'IN_TRIP' && (
                 <div className="space-y-3">
-                  <p className="text-xs text-slate-300">
-                    Dalam perjalanan menuju <strong>{destination.name}</strong>.
+                  <p className="text-xs text-[#66736B]">
+                    Dalam perjalanan menuju <strong className="text-[#17211B]">{destination.name}</strong>.
                   </p>
                   <button
                     onClick={onCompleteRide}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs transition uppercase tracking-wider shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition uppercase tracking-wider shadow-sm flex items-center justify-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>SELESAIKAN PERJALANAN (COMPLETE)</span>
@@ -347,60 +349,43 @@ export const DriverView: React.FC<DriverViewProps> = ({
           activeRide.status === 'CANCELLED') &&
           !isOfferPending && (
             <div className="space-y-4">
-              {/* Standby Status Banner */}
-              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+              {/* Standby Status Banner (Requirement 10: ONLINE — SIAP MENERIMA ORDER) */}
+              <div
+                className={`p-4 rounded-2xl border flex items-center justify-between ${
+                  isOnline
+                    ? 'bg-[#DDF8EA] border-[#18B86A]/30 text-[#0E8F52]'
+                    : 'bg-[#F0F5F2] border-[#D7E2DB] text-[#66736B]'
+                }`}
+              >
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`w-3 h-3 rounded-full ${
-                      isOnline ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'
+                      isOnline ? 'bg-[#18B86A] animate-ping' : 'bg-[#66736B]'
                     }`}
                   />
                   <div>
-                    <span className="text-xs font-bold text-white block">
-                      {isOnline ? 'Siap Menerima Order Ojek' : 'Driver Sedang Istirahat (Offline)'}
+                    <span className="text-xs font-bold block">
+                      {isOnline
+                        ? 'ONLINE — SIAP MENERIMA ORDER'
+                        : 'OFFLINE — Driver Sedang Istirahat'}
                     </span>
-                    <span className="text-[10px] text-slate-400">
-                      {isOnline ? 'Standby di sekitar Duta Mall Banjarmasin' : 'Aktifkan status untuk mulai'}
+                    <span className="text-[10px] opacity-80">
+                      {isOnline
+                        ? 'Standby di sekitar Duta Mall Banjarmasin'
+                        : 'Aktifkan status untuk mulai menerima order'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Daily Performance & Earnings */}
-              <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    Kinerja Hari Ini
-                  </span>
-                  <span className="text-[10px] text-slate-400">Update real-time</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] text-slate-400 block">Pendapatan Bersih (85%):</span>
-                    <span className="text-sm font-black text-emerald-400 font-mono mt-0.5 block">
-                      Rp {todayEarnings.toLocaleString('id-ID')}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800/80">
-                    <span className="text-[10px] text-slate-400 block">Trip Selesai:</span>
-                    <span className="text-sm font-black text-white font-mono mt-0.5 block">
-                      {completedTrips} Perjalanan
-                    </span>
-                  </div>
-                </div>
-
-                {/* Driver Document / Verification Badge */}
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-emerald-300">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Verifikasi KYC: <strong>APPROVED</strong></span>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-400">SIM C • STNK Aktif</span>
-                </div>
-              </div>
+              {/* Phase 6C Authoritative Driver Earnings Card */}
+              <DriverEarningsCard
+                driverId="d0000000-0000-0000-0000-000000000001"
+                driverName="Ahmad Gazali"
+                initialTodayEarnings={todayEarnings || 185500}
+                initialTodayRides={completedTrips || 12}
+                initialWeekEarnings={1240000}
+              />
             </div>
           )}
       </div>

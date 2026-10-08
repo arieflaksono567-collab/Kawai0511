@@ -128,38 +128,42 @@ export const DriverModeView: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Driver Status Bar & Internet Connection Indicator */}
-      <div className="bg-slate-900 text-white p-4 rounded-2xl shadow-lg space-y-3">
+      <div className="bg-white border border-[#E4ECE7] text-[#17211B] p-4 rounded-2xl shadow-sm space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-base border-2 border-slate-700">
+              <div className="w-12 h-12 rounded-2xl bg-[#18B86A] flex items-center justify-center font-bold text-white text-base shadow-xs">
                 0511
               </div>
               <span
-                className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${
-                  isOnline && networkStatus !== 'offline' ? 'bg-emerald-500' : 'bg-slate-500'
+                className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                  isOnline && networkStatus !== 'offline' ? 'bg-[#18B86A]' : 'bg-[#66736B]'
                 }`}
               />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="font-bold text-sm">Pak Ridho Saputra (Mitra Kawai)</h3>
-                <span className="text-[10px] bg-red-600/80 px-1.5 py-0.2 rounded font-mono">DA 4511 AB</span>
+                <h3 className="font-bold text-sm text-[#17211B]">Pak Ridho Saputra (Mitra Kawai)</h3>
+                <span className="text-[10px] bg-[#F0F5F2] text-[#17211B] border border-[#D7E2DB] px-1.5 py-0.2 rounded font-mono">DA 4511 AB</span>
               </div>
-              <p className="text-xs text-slate-400">
-                Status:{' '}
+              <p className="text-xs text-[#66736B] mt-0.5">
                 <span
-                  className={
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
                     isOnline && networkStatus !== 'offline'
-                      ? 'text-emerald-400 font-semibold'
-                      : 'text-slate-400'
-                  }
+                      ? 'bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/30'
+                      : 'bg-[#F0F5F2] text-[#66736B] border border-[#D7E2DB]'
+                  }`}
                 >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isOnline && networkStatus !== 'offline' ? 'bg-[#18B86A] animate-ping' : 'bg-[#66736B]'
+                    }`}
+                  />
                   {networkStatus === 'offline'
-                    ? 'Koneksi Terputus'
+                    ? 'KONEKSI TERPUTUS'
                     : isOnline
-                    ? 'Aktif & Menerima Orderan'
-                    : 'Offline (Istirahat)'}
+                    ? 'ONLINE — SIAP MENERIMA ORDER'
+                    : 'OFFLINE — Driver Sedang Istirahat'}
                 </span>
               </p>
             </div>
@@ -169,7 +173,7 @@ export const DriverModeView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsSosOpen(true)}
-              className="px-3 py-2 rounded-xl bg-red-600/90 hover:bg-red-600 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-red-600/30 active:scale-95 transition-all border border-red-400/40 animate-pulse"
+              className="px-3 py-2 rounded-xl bg-[#E5484D] hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
               title="Tombol Bantuan Darurat & SOS Driver"
             >
               <Siren className="w-4 h-4 text-white" />
@@ -179,10 +183,10 @@ export const DriverModeView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsOnline(!isOnline)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ${
                 isOnline
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                  ? 'bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/40 hover:bg-[#cbf5de]'
+                  : 'bg-[#F0F5F2] text-[#66736B] border border-[#D7E2DB] hover:text-[#17211B]'
               }`}
             >
               <Power className="w-3.5 h-3.5" />
@@ -191,34 +195,34 @@ export const DriverModeView: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+        <div className="pt-2 border-t border-[#E4ECE7] flex flex-wrap items-center justify-between text-xs text-[#66736B] gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold text-[#17211B] flex items-center gap-1.5">
               {networkStatus === 'offline' ? (
-                <WifiOff className="w-3.5 h-3.5 text-red-400" />
+                <WifiOff className="w-3.5 h-3.5 text-[#E5484D]" />
               ) : (
-                <Wifi className={`w-3.5 h-3.5 ${networkStatus === 'strong' ? 'text-emerald-400' : 'text-amber-400'}`} />
+                <Wifi className={`w-3.5 h-3.5 ${networkStatus === 'strong' ? 'text-[#18B86A]' : 'text-[#F5A623]'}`} />
               )}
               Jaringan:
             </span>
 
-            <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded text-[11px] font-mono">
+            <div className="flex items-center gap-1 bg-[#F0F5F2] border border-[#D7E2DB] px-2 py-0.5 rounded text-[11px] font-mono">
               <span
                 className={`w-2 h-2 rounded-full ${
                   networkStatus === 'strong'
-                    ? 'bg-emerald-400'
+                    ? 'bg-[#18B86A]'
                     : networkStatus === 'weak'
-                    ? 'bg-amber-400'
-                    : 'bg-red-400'
+                    ? 'bg-[#F5A623]'
+                    : 'bg-[#E5484D]'
                 }`}
               />
               <span
                 className={
                   networkStatus === 'strong'
-                    ? 'text-emerald-300 font-bold'
+                    ? 'text-[#0E8F52] font-bold'
                     : networkStatus === 'weak'
-                    ? 'text-amber-300 font-bold'
-                    : 'text-red-300 font-bold'
+                    ? 'text-[#F5A623] font-bold'
+                    : 'text-[#E5484D] font-bold'
                 }
               >
                 {networkStatus === 'strong'
@@ -233,7 +237,7 @@ export const DriverModeView: React.FC = () => {
               type="button"
               onClick={handleTestPing}
               disabled={isCheckingPing}
-              className="text-[10px] text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-0.5 ml-1"
+              className="text-[10px] text-[#18B86A] hover:underline flex items-center gap-0.5 ml-1 font-semibold cursor-pointer"
               title="Uji Ulang Koneksi Internet"
             >
               <RefreshCw className={`w-3 h-3 ${isCheckingPing ? 'animate-spin' : ''}`} />
@@ -242,12 +246,12 @@ export const DriverModeView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1 text-[10px]">
-            <span className="text-slate-500">Uji Jaringan:</span>
+            <span className="text-[#66736B]">Uji Jaringan:</span>
             <button
               type="button"
               onClick={() => setNetworkStatus('strong')}
-              className={`px-1.5 py-0.5 rounded ${
-                networkStatus === 'strong' ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'hover:bg-slate-800'
+              className={`px-2 py-0.5 rounded transition ${
+                networkStatus === 'strong' ? 'bg-[#DDF8EA] text-[#0E8F52] font-bold border border-[#18B86A]/30' : 'hover:bg-[#F0F5F2] text-[#66736B]'
               }`}
             >
               Kuat
@@ -255,8 +259,8 @@ export const DriverModeView: React.FC = () => {
             <button
               type="button"
               onClick={() => setNetworkStatus('weak')}
-              className={`px-1.5 py-0.5 rounded ${
-                networkStatus === 'weak' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'hover:bg-slate-800'
+              className={`px-2 py-0.5 rounded transition ${
+                networkStatus === 'weak' ? 'bg-amber-50 text-[#F5A623] font-bold border border-amber-300' : 'hover:bg-[#F0F5F2] text-[#66736B]'
               }`}
             >
               Lemah
@@ -264,8 +268,8 @@ export const DriverModeView: React.FC = () => {
             <button
               type="button"
               onClick={() => setNetworkStatus('offline')}
-              className={`px-1.5 py-0.5 rounded ${
-                networkStatus === 'offline' ? 'bg-red-500/20 text-red-300 font-bold' : 'hover:bg-slate-800'
+              className={`px-2 py-0.5 rounded transition ${
+                networkStatus === 'offline' ? 'bg-rose-50 text-[#E5484D] font-bold border border-rose-300' : 'hover:bg-[#F0F5F2] text-[#66736B]'
               }`}
             >
               Putus
@@ -275,10 +279,10 @@ export const DriverModeView: React.FC = () => {
 
         {networkStatus !== 'strong' && (
           <div
-            className={`p-2 rounded-xl text-xs flex items-center gap-2 ${
+            className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
               networkStatus === 'offline'
-                ? 'bg-red-950/80 border border-red-800 text-red-200'
-                : 'bg-amber-950/80 border border-amber-800 text-amber-200'
+                ? 'bg-rose-50 border border-rose-200 text-[#E5484D]'
+                : 'bg-amber-50 border border-amber-200 text-[#F5A623]'
             }`}
           >
             <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -303,44 +307,44 @@ export const DriverModeView: React.FC = () => {
 
       {/* Driver Daily Metrics Grid */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] text-slate-500 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-red-600" />
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E4ECE7] shadow-xs">
+          <span className="text-[10px] text-[#66736B] flex items-center gap-1">
+            <TrendingUp className="w-3 h-3 text-[#18B86A]" />
             Pendapatan Bersih
           </span>
-          <p className="text-base font-bold text-slate-900 font-mono mt-0.5">
+          <p className="text-base font-bold text-[#18B86A] font-mono mt-0.5">
             Rp {todayEarnings.toLocaleString('id-ID')}
           </p>
         </div>
 
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] text-slate-500 flex items-center gap-1">
-            <Bike className="w-3 h-3 text-sky-600" />
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E4ECE7] shadow-xs">
+          <span className="text-[10px] text-[#66736B] flex items-center gap-1">
+            <Bike className="w-3 h-3 text-[#18B86A]" />
             Trip Selesai
           </span>
-          <p className="text-base font-bold text-slate-900 font-mono mt-0.5">{todayTrips} Order</p>
+          <p className="text-base font-bold text-[#17211B] font-mono mt-0.5">{todayTrips} Order</p>
         </div>
 
-        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-[10px] text-slate-500 flex items-center gap-1">
-            <Award className="w-3 h-3 text-amber-500" />
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E4ECE7] shadow-xs">
+          <span className="text-[10px] text-[#66736B] flex items-center gap-1">
+            <Award className="w-3 h-3 text-[#F5A623]" />
             Performa Rating
           </span>
-          <p className="text-base font-bold text-slate-900 font-mono mt-0.5">4.95 ★</p>
+          <p className="text-base font-bold text-[#17211B] font-mono mt-0.5">4.95 ★</p>
         </div>
       </div>
 
-      {/* Incoming Order Alert Drawer */}
+      {/* Incoming Order Alert Drawer - Bright Clean Mobility UI */}
       {incomingOrder && !activeDriverTrip && (
-        <div className="bg-white p-4 rounded-2xl border-2 border-red-500 shadow-2xl space-y-3 relative overflow-hidden">
+        <div className="bg-white p-5 rounded-2xl border-2 border-[#18B86A] shadow-md space-y-4 relative overflow-hidden animate-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#18B86A] animate-ping" />
               <div>
-                <span className="text-xs font-black text-red-600 uppercase tracking-wider block">
-                  Order Masuk! (Kawai Ride)
+                <span className="text-xs font-bold text-[#18B86A] uppercase tracking-wider block">
+                  Order Masuk Baru! (Kawai Ride)
                 </span>
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-[#66736B]">
                   Keputusan cepat: Ambil atau lewati
                 </span>
               </div>
@@ -350,147 +354,144 @@ export const DriverModeView: React.FC = () => {
               <div
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-black border transition-colors ${
                   orderTimer <= 5
-                    ? 'bg-red-50 text-red-600 border-red-400 animate-pulse'
+                    ? 'bg-rose-50 text-[#E5484D] border-rose-300 animate-pulse'
                     : orderTimer <= 10
-                    ? 'bg-amber-50 text-amber-700 border-amber-300'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                    ? 'bg-amber-50 text-[#F5A623] border-amber-300'
+                    : 'bg-[#DDF8EA] text-[#0E8F52] border-[#18B86A]/40'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
                 <span>{orderTimer}s</span>
               </div>
-              <span className="text-xs font-bold text-emerald-600 font-mono bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+              <span className="text-xs font-bold text-[#0E8F52] font-mono bg-[#DDF8EA] px-2 py-1 rounded-lg border border-[#18B86A]/30">
                 + Rp {incomingOrder.fareNet.toLocaleString('id-ID')}
               </span>
             </div>
           </div>
 
-          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-[#F0F5F2] h-1.5 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-1000 ease-linear rounded-full ${
-                orderTimer <= 5 ? 'bg-red-600' : orderTimer <= 10 ? 'bg-amber-500' : 'bg-emerald-500'
+                orderTimer <= 5 ? 'bg-[#E5484D]' : orderTimer <= 10 ? 'bg-[#F5A623]' : 'bg-[#18B86A]'
               }`}
               style={{ width: `${(orderTimer / 15) * 100}%` }}
             />
           </div>
 
           {/* Mini-Map Preview */}
-          <div className="relative h-28 w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-inner">
+          <div className="relative h-28 w-full bg-[#F0F5F2] rounded-xl overflow-hidden border border-[#E4ECE7] shadow-inner">
             <svg
               className="w-full h-full"
               viewBox="0 0 100 60"
               preserveAspectRatio="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <rect x="5" y="5" width="35" height="22" rx="2" fill="#e2edf5" />
-              <rect x="45" y="8" width="50" height="20" rx="2" fill="#d9e9f5" />
-              <rect x="8" y="32" width="40" height="24" rx="2" fill="#e0ecf7" />
-              <rect x="52" y="32" width="42" height="24" rx="2" fill="#dbeef8" />
+              <rect x="5" y="5" width="35" height="22" rx="2" fill="#FFFFFF" />
+              <rect x="45" y="8" width="50" height="20" rx="2" fill="#FFFFFF" />
+              <rect x="8" y="32" width="40" height="24" rx="2" fill="#FFFFFF" />
+              <rect x="52" y="32" width="42" height="24" rx="2" fill="#FFFFFF" />
 
               <path
                 d="M 20 0 Q 30 25, 42 35 T 35 60"
                 fill="none"
-                stroke="#9ed0f5"
+                stroke="#C5E6F7"
                 strokeWidth="4"
               />
 
-              <line x1="0" y1="34" x2="100" y2="42" stroke="#ffffff" strokeWidth="2.5" />
-              <line x1="0" y1="34" x2="100" y2="42" stroke="#f1c40f" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
+              <line x1="0" y1="34" x2="100" y2="42" stroke="#FFFFFF" strokeWidth="2.5" />
+              <line x1="0" y1="34" x2="100" y2="42" stroke="#D7E2DB" strokeWidth="0.8" strokeDasharray="1.5,1.5" />
 
               <path
                 d="M 48 30 Q 42 22, 38 20"
                 fill="none"
-                stroke="#0284c7"
+                stroke="#18B86A"
                 strokeWidth="2.2"
                 strokeDasharray="2,1"
               />
 
-              <circle cx="48" cy="30" r="3.2" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
-              <circle cx="38" cy="20" r="3.2" fill="#ef4444" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="48" cy="30" r="3.2" fill="#18B86A" stroke="#ffffff" strokeWidth="1" />
+              <circle cx="38" cy="20" r="3.2" fill="#E5484D" stroke="#ffffff" strokeWidth="1" />
             </svg>
 
-            <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded shadow">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-[#17211B] text-[10px] px-2 py-0.5 rounded-lg shadow-xs border border-[#E4ECE7]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#18B86A]" />
               <span className="font-semibold">{incomingOrder.pickup.name}</span>
-              <span className="text-slate-400">→</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+              <span className="text-[#A8B2AC]">→</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E5484D]" />
               <span className="font-semibold">{incomingOrder.destination.name}</span>
             </div>
 
-            <div className="absolute bottom-2 right-2 bg-white/95 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded shadow border border-slate-200">
+            <div className="absolute bottom-2 right-2 bg-white/95 text-[#17211B] text-[10px] font-bold px-2 py-0.5 rounded shadow-xs border border-[#E4ECE7]">
               {incomingOrder.distanceKm} km · ± 8 mnt
             </div>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-xl text-xs space-y-2.5">
-            <div className="flex items-center justify-between font-semibold text-slate-900">
+          <div className="bg-[#F7FAF8] p-3 rounded-2xl text-xs space-y-2.5 border border-[#E4ECE7]">
+            <div className="flex items-center justify-between font-semibold text-[#17211B]">
               <span>Penumpang: {incomingOrder.passengerName}</span>
-              <span className="text-slate-500">{incomingOrder.distanceKm} km perjalanan</span>
+              <span className="text-[#66736B]">{incomingOrder.distanceKm} km perjalanan</span>
             </div>
 
-            <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
-              <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#E4ECE7]">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#18B86A] mt-1 shrink-0" />
                 <div className="truncate">
-                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Jemput di:</span>
-                  <span className="font-bold text-slate-900 block truncate">{incomingOrder.pickup.name}</span>
-                  <span className="text-[10px] text-slate-400 truncate block">{incomingOrder.pickup.address}</span>
+                  <span className="text-[10px] uppercase font-bold text-[#0E8F52] block">Jemput di:</span>
+                  <span className="font-bold text-[#17211B] block truncate">{incomingOrder.pickup.name}</span>
+                  <span className="text-[10px] text-[#66736B] truncate block">{incomingOrder.pickup.address}</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => openDirectGoogleMaps(incomingOrder.pickup.name, incomingOrder.pickup.address)}
-                className="px-2 py-1.5 rounded-lg bg-[#4285F4]/10 hover:bg-[#4285F4]/20 text-[#1a73e8] text-[11px] font-bold flex items-center gap-1 shrink-0 border border-[#4285F4]/30 transition-colors"
-                title="Buka Navigasi Google Maps Langsung"
+                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F0F5F2] text-[#18B86A] text-[11px] font-bold flex items-center gap-1 shrink-0 border border-[#D7E2DB] transition-colors cursor-pointer"
+                title="Buka Navigasi Lokasi"
               >
-                <svg className="w-3.5 h-3.5 fill-[#1a73e8]" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
+                <Navigation className="w-3.5 h-3.5 text-[#18B86A]" />
                 <span>Navigasi</span>
               </button>
             </div>
 
-            <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
-              <div className="flex items-start gap-1.5 flex-1 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 mt-1 shrink-0" />
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#E4ECE7]">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#E5484D] mt-1 shrink-0" />
                 <div className="truncate">
-                  <span className="text-[10px] uppercase font-bold text-red-700 block">Tujuan ke:</span>
-                  <span className="font-bold text-slate-900 block truncate">{incomingOrder.destination.name}</span>
-                  <span className="text-[10px] text-slate-400 truncate block">{incomingOrder.destination.address}</span>
+                  <span className="text-[10px] uppercase font-bold text-[#E5484D] block">Tujuan ke:</span>
+                  <span className="font-bold text-[#17211B] block truncate">{incomingOrder.destination.name}</span>
+                  <span className="text-[10px] text-[#66736B] truncate block">{incomingOrder.destination.address}</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => openDirectGoogleMaps(incomingOrder.destination.name, incomingOrder.destination.address)}
-                className="px-2 py-1.5 rounded-lg bg-[#4285F4]/10 hover:bg-[#4285F4]/20 text-[#1a73e8] text-[11px] font-bold flex items-center gap-1 shrink-0 border border-[#4285F4]/30 transition-colors"
-                title="Buka Navigasi Google Maps Langsung"
+                className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F0F5F2] text-[#18B86A] text-[11px] font-bold flex items-center gap-1 shrink-0 border border-[#D7E2DB] transition-colors cursor-pointer"
+                title="Buka Navigasi Lokasi"
               >
-                <svg className="w-3.5 h-3.5 fill-[#1a73e8]" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
+                <Navigation className="w-3.5 h-3.5 text-[#18B86A]" />
                 <span>Navigasi</span>
               </button>
             </div>
 
             {incomingOrder.notes && (
-              <p className="text-[10px] text-slate-600 italic bg-amber-50/60 p-1.5 rounded border border-amber-200">
+              <p className="text-[10px] text-[#66736B] italic bg-amber-50/70 p-2 rounded-xl border border-amber-200">
                 Catatan Penumpang: "{incomingOrder.notes}"
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          {/* Action Buttons: Secondary (White + border #D7E2DB) & Primary (#18B86A) */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <button
               type="button"
               onClick={declineOrder}
-              className="py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-100 transition-colors"
+              className="py-3 rounded-2xl bg-white hover:bg-[#F0F5F2] border border-[#D7E2DB] text-[#66736B] hover:text-[#17211B] text-xs font-bold transition-colors cursor-pointer"
             >
               Lewatkan ({orderTimer}s)
             </button>
             <button
               type="button"
               onClick={acceptOrder}
-              className="py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-md shadow-red-600/30 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
+              className="py-3 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] text-white text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Terima Orderan Ini</span>
@@ -501,16 +502,16 @@ export const DriverModeView: React.FC = () => {
 
       {/* Active Trip Navigation State */}
       {activeDriverTrip && (
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-lg space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="bg-white p-5 rounded-2xl border border-[#E4ECE7] shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E4ECE7]">
             <div>
-              <span className="text-[10px] uppercase font-bold text-slate-400">Order Sedang Berjalan</span>
-              <h4 className="font-bold text-sm text-slate-900">
+              <span className="text-[10px] uppercase font-bold text-[#66736B]">Order Sedang Berjalan</span>
+              <h4 className="font-bold text-sm text-[#17211B]">
                 {activeDriverTrip.passengerName} · Rp {activeDriverTrip.fareNet.toLocaleString('id-ID')}
               </h4>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">
+              <span className="text-xs font-bold text-[#0E8F52] bg-[#DDF8EA] px-2.5 py-1 rounded-full border border-[#18B86A]/20">
                 {tripStage === 'to_pickup' && 'Menuju Penjemputan'}
                 {tripStage === 'arrived' && 'Tiba di Titik Jemput'}
                 {tripStage === 'delivering' && 'Sedang Mengantar'}
@@ -519,22 +520,22 @@ export const DriverModeView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+          <div className="bg-[#F7FAF8] p-3.5 rounded-2xl border border-[#E4ECE7] space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5 text-xs">
-                <Navigation className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                <Navigation className="w-4 h-4 text-[#18B86A] mt-0.5 shrink-0" />
                 <div>
-                  <span className="font-semibold text-slate-800 text-[11px] uppercase">
+                  <span className="font-semibold text-[#66736B] text-[11px] uppercase">
                     {tripStage === 'to_pickup' || tripStage === 'arrived'
                       ? 'Titik Penjemputan Penumpang:'
                       : 'Alamat Tujuan Penumpang:'}
                   </span>
-                  <p className="font-bold text-slate-900 text-sm mt-0.5">
+                  <p className="font-bold text-[#17211B] text-sm mt-0.5">
                     {tripStage === 'to_pickup' || tripStage === 'arrived'
                       ? activeDriverTrip.pickup.name
                       : activeDriverTrip.destination.name}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#66736B]">
                     {tripStage === 'to_pickup' || tripStage === 'arrived'
                       ? activeDriverTrip.pickup.address
                       : activeDriverTrip.destination.address}
@@ -554,11 +555,9 @@ export const DriverModeView: React.FC = () => {
                       : activeDriverTrip.destination.address
                   )
                 }
-                className="px-3 py-2 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 shrink-0 transition-transform active:scale-95"
+                className="px-3 py-2 bg-white hover:bg-[#F0F5F2] text-[#18B86A] border border-[#D7E2DB] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs shrink-0 transition-transform active:scale-95 cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5 fill-white" viewBox="0 0 24 24">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
+                <Navigation className="w-3.5 h-3.5" />
                 <span>Buka Navigasi</span>
               </button>
             </div>
@@ -567,7 +566,7 @@ export const DriverModeView: React.FC = () => {
           <button
             type="button"
             onClick={advanceTripStage}
-            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all"
+            className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm active:scale-[0.99] transition-all cursor-pointer"
           >
             {tripStage === 'to_pickup' && 'Konfirmasi Sudah Tiba di Lokasi Jemput'}
             {tripStage === 'arrived' && 'Mulai Perjalanan Mengantar'}
@@ -578,13 +577,13 @@ export const DriverModeView: React.FC = () => {
       )}
 
       {!incomingOrder && !activeDriverTrip && isOnline && networkStatus !== 'offline' && (
-        <div className="bg-sky-50/80 p-4 rounded-2xl border border-sky-200 text-center space-y-2">
-          <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center mx-auto">
+        <div className="bg-[#DDF8EA]/60 p-4 rounded-2xl border border-[#18B86A]/30 text-center space-y-2">
+          <div className="w-9 h-9 rounded-full bg-[#18B86A] text-white flex items-center justify-center mx-auto shadow-xs">
             <Bell className="w-4 h-4 animate-pulse" />
           </div>
-          <h4 className="font-bold text-xs text-sky-950">Mencari Orderan di Sekitar Banjarmasin</h4>
-          <p className="text-[11px] text-sky-800 max-w-sm mx-auto">
-            Orderan baru akan muncul dengan timer 15 detik dan tombol navigasi langsung ke lokasi penjemputan.
+          <h4 className="font-bold text-xs text-[#0E8F52]">ONLINE — SIAP MENERIMA ORDER</h4>
+          <p className="text-[11px] text-[#66736B] max-w-sm mx-auto">
+            Orderan baru di sekitar Banjarmasin akan muncul otomatis dengan opsi navigasi dan konfirmasi 15 detik.
           </p>
         </div>
       )}

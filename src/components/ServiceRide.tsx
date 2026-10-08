@@ -151,14 +151,14 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
       </div>
 
       {/* Vehicle Type Tabs */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+      <div className="grid grid-cols-2 gap-2 p-1 bg-[#F0F5F2] rounded-xl border border-[#E4ECE7]">
         <button
           type="button"
           onClick={() => setVehicleType('motor')}
           className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
             vehicleType === 'motor'
-              ? 'bg-white text-red-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white text-[#18B86A] shadow-xs font-bold'
+              : 'text-[#66736B] hover:text-[#17211B]'
           }`}
         >
           <Bike className="w-4 h-4" />
@@ -169,8 +169,8 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           onClick={() => setVehicleType('car')}
           className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
             vehicleType === 'car'
-              ? 'bg-white text-red-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white text-[#18B86A] shadow-xs font-bold'
+              : 'text-[#66736B] hover:text-[#17211B]'
           }`}
         >
           <Car className="w-4 h-4" />
@@ -350,12 +350,12 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
 
       {/* Ride Options / Notes */}
       <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2.5">
-        <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+        <label className="flex items-center gap-2 text-xs text-[#17211B] cursor-pointer">
           <input
             type="checkbox"
             checked={needExtraHelmet}
             onChange={(e) => setNeedExtraHelmet(e.target.checked)}
-            className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+            className="rounded border-[#D7E2DB] text-[#18B86A] focus:ring-[#18B86A]"
           />
           <span>Minta driver siapkan helm bersih dengan hairnet higienis</span>
         </label>
@@ -365,23 +365,23 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
             placeholder="Catatan untuk driver (cth: Tunggu di pos satpam gerbang depan)"
             value={tripNotes}
             onChange={(e) => setTripNotes(e.target.value)}
-            className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full text-xs p-2.5 rounded-xl border border-[#D7E2DB] bg-[#F7FAF8] focus:outline-none focus:ring-1 focus:ring-[#18B86A] text-[#17211B]"
           />
         </div>
       </div>
 
       {/* Payment & Promo */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-white p-3.5 rounded-2xl border border-[#E4ECE7] shadow-xs space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-800">Metode Pembayaran</span>
+          <span className="text-xs font-semibold text-[#17211B]">Metode Pembayaran</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPaymentMethod('kawaipay')}
-              className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                 paymentMethod === 'kawaipay'
-                  ? 'bg-sky-50 border-sky-400 text-sky-700 font-semibold'
-                  : 'bg-slate-50 border-slate-200 text-slate-600'
+                  ? 'bg-[#DDF8EA] border-[#18B86A]/40 text-[#0E8F52]'
+                  : 'bg-[#F0F5F2] border-[#D7E2DB] text-[#66736B]'
               }`}
             >
               KawaiPay (Saldo Rp {walletBalance.toLocaleString('id-ID')})
@@ -389,10 +389,10 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
             <button
               type="button"
               onClick={() => setPaymentMethod('cash')}
-              className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+              className={`px-2.5 py-1 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                 paymentMethod === 'cash'
-                  ? 'bg-amber-50 border-amber-400 text-amber-800 font-semibold'
-                  : 'bg-slate-50 border-slate-200 text-slate-600'
+                  ? 'bg-amber-50 border-amber-300 text-[#F5A623]'
+                  : 'bg-[#F0F5F2] border-[#D7E2DB] text-[#66736B]'
               }`}
             >
               Tunai / Cash
@@ -400,15 +400,15 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-700">
-            <Tag className="w-3.5 h-3.5 text-red-600" />
+        <div className="flex items-center justify-between pt-2 border-t border-[#E4ECE7] text-xs">
+          <div className="flex items-center gap-1.5 text-[#17211B]">
+            <Tag className="w-3.5 h-3.5 text-[#F5A623]" />
             <span>Voucher Promo:</span>
           </div>
           <select
             value={appliedPromo}
             onChange={(e) => setAppliedPromo(e.target.value)}
-            className="text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded p-1"
+            className="text-xs font-semibold text-[#0E8F52] bg-[#DDF8EA] border border-[#18B86A]/30 rounded-xl px-2 py-1"
           >
             <option value="">Tanpa Voucher</option>
             {PROMO_VOUCHERS.map((v) => (
@@ -430,9 +430,9 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
               <span className="font-mono tabular-nums">-Rp {discount.toLocaleString('id-ID')}</span>
             </div>
           )}
-          <div className="flex justify-between items-baseline pt-1 border-t border-slate-200 font-bold text-slate-900">
+          <div className="flex justify-between items-baseline pt-1 border-t border-[#E4ECE7] font-bold text-[#17211B]">
             <span>Total Bayar</span>
-            <span className="text-base text-red-600 font-mono tabular-nums">
+            <span className="text-base text-[#18B86A] font-mono tabular-nums">
               Rp {totalPay.toLocaleString('id-ID')}
             </span>
           </div>
@@ -443,7 +443,7 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
       <button
         type="button"
         onClick={handleBook}
-        className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 transition-all"
+        className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] active:bg-[#0E8F52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
       >
         <Bike className="w-4 h-4" />
         <span>Pesan Kawai {vehicleType === 'motor' ? 'Ojek' : 'Mobil'} Sekarang</span>
