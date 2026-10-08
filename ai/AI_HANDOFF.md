@@ -1,6 +1,6 @@
 # KAWAI 0511 — AI Handoff Document
 
-> **Dokumen Transisi & Konteks AI (Updated: Phase 5B Complete)**  
+> **Dokumen Transisi & Konteks AI (Updated: Phase 6C Complete)**  
 > Dokumen ini mencatat kondisi arsitektur, implementasi nyata, dependensi, dan batasan teknis saat ini pada repository KAWAI 0511.
 
 ---
@@ -13,15 +13,127 @@
   - Phase 3 (Driver Management & Verification): **FROZEN**
   - Phase 4 (Geospatial & Location Engine): **FROZEN**
   - Phase 5A (Ride Ordering & State Machine): **FROZEN**
-  - Phase 5B (Driver Matching & Dispatch Engine): **COMPLETE / FROZEN**
+  - Phase 5B (Driver Matching & Dispatch Engine): **FROZEN**
+  - Phase 6A (Payment DB & Double-Entry Ledger): **FROZEN**
+  - Phase 6B (Payment Service & Webhook Security): **FROZEN**
+  - Phase 6C (Settlement & Driver Earnings): **COMPLETE / VALIDATED**
 - **Boundary**:
-  - Dilarang membongkar / refactor besar arsitektur Phase 1 s/d Phase 4.
-  - Phase 5B berfokus pada integrasi Driver Matching, Radar Radius 1500m, Multi-criteria Ranking deterministik, 30s Dispatch Offer, Atomic Assignment & Concurrency Lock, State Transitions, dan Dispatch Attempt Logging.
-  - Jangan implementasikan Payment, Wallet, KawaiPay, QRIS, Food, Send, Chat, FCM, SOS, atau Surge Pricing (direncanakan untuk fase berikutnya).
+  - Dilarang membongkar / refactor arsitektur Phase 1 s/d Phase 6B.
+  - Core payment engine provider-independent.
+  - Tidak mengintegrasikan provider nyata (DANA, OVO, QRIS riil, Bank) pada tahap ini; gunakan `MockDigitalPaymentProvider` & `CashPaymentProvider`.
+  - Tidak membuat KAWAI menjadi penerbit uang elektronik tanpa lisensi (ledger adalah internal clearing & record of truth).
+  - Tidak membuat mutable separate driver balance table sebagai sumber kebenaran; ledger adalah authoritative source of truth.
+  - Tidak membuat fitur withdrawal pada tahap ini.
 
 ---
 
-## 2. Implementasi Aktual Phase 5B
+## 2. Implementasi Aktual Phase 6C (Settlement & Driver Earnings)
+- **8-Step Atomic Settlement Workflow (`backend/src/payment/settlement.service.ts`)**:
+  1. Validasi payment: Harus berstatus `PAID`, nominal bulat positif IDR, payee driver terverifikasi, dan belum diselesaikan (`isSettled === false`).
+  2. Ambil fare snapshot: Snapshot tarif terkunci dari ride order atau snapshot payment record.
+  3. Ambil konfigurasi revenue share: Default 85% Mitra Driver / 15% Platform, dinamis & dapat diperbarui via API.
+  4. Hitung driver share: `driverShare = Math.round(fare * (driverSharePercent / 100))` (Integer arithmetic IDR Rupiah).
+  5. Hitung platform share: `platformShare = fare - driverShare` (Menjamin tidak ada sisa kebocoran desimal / pembulatan).
+  6. Buat transaksi buku besar berpasangan:
+     - CASH: Debit `CASH_RECEIVABLE_IDR` (gross fare), Credit `DRIVER_PAYABLE_<driverId>` (driver share), Credit `PLATFORM_REVENUE_IDR` (platform fee).
+     - DIGITAL: Debit `PAYMENT_CLEARING_IDR` (gross fare), Credit `DRIVER_PAYABLE_<driverId>` (driver share), Credit `PLATFORM_REVENUE_IDR` (platform fee).
+  7. Pastikan debit = credit: `SUM(debit) === SUM(credit)`.
+  8. Commit transaksi atomik buku besar: Menghasilkan `ledger_transaction` dan entri berpasangan. Jika terjadi kegagalan sistemik, rollback otomatis dieksekusi dan payment tetap berstatus `isSettled: false`.
+- **Proteksi Duplikasi Settlement**:
+  - Eksekusi penyelesaian ulang pada payment yang telah diselesaikan (`payment.isSettled: true`) langsung ditolak dengan `ConflictException` (HTTP 409).
+- **Authoritative Driver Earnings (`GET /drivers/me/earnings`)**:
+  - Read-only endpoint untuk driver (`Role.DRIVER`).
+  - Nilai saldo / pendapatan mitra dihitung secara langsung dari buku besar: `balance = totalCredit - totalDebit` dari akun `DRIVER_PAYABLE_<driverId>`.
+  - Mengembalikan:
+    - `totalCompletedRides`: Jumlah order yang telah diselesaikan dan dicatat di buku besar.
+    - `grossFare`: Total tarif kotor perjalanan.
+    - `driverEarnings`: Hak bersih mitra driver (sesuai saldo buku besar).
+    - `platformFee`: Total potongan komisi platform.
+    - `period`: Rentang waktu ('all-time', 'today', 'week', 'month').
+    - `currency`: 'IDR'.
+    - `authoritativeSource`: 'LEDGER'.
+    - `ledgerAccountId`: ID akun buku besar milik mitra driver.
+    - `ledgerBalance`: Saldo riil buku besar.
+- **Database Migration (`database/migrations/006c_settlement_and_earnings.sql`)**:
+  - Skema tabel `payment_settlements`, ekstensi kolom settlement pada `payments`, dan view `view_driver_earnings_authoritative_ledger`.
+
+---
+
+## 3. Implementasi Aktual Phase 6B (Payment Service & Webhooks)
+- **Provider Abstraction (`backend/src/payment/payment-provider.interface.ts`)**:
+  - `PaymentProvider`: `createPayment()`, `getPaymentStatus()`, `verifyWebhook()`, `refundPayment()`.
+  - `CashPaymentProvider`: COMPLETED RIDE → create CASH payment → PAID langsung dengan ledger instan.
+  - `MockDigitalPaymentProvider`: COMPLETED → PENDING → provider URL/ref → webhook callback → verify signature & replay → PAID + ledger settlement.
+- **Webhook Security**:
+  - HMAC-SHA256 signature verification abstraction.
+  - Replay protection & timestamp drift validation (max 300s).
+  - Idempotency & duplicate event ID tracking (mencegah double-settlement).
+- **Concurrency & Locking**:
+  - Key-based in-memory mutex (`withLock`) per `paymentId` mencegah race condition antara cancel dan webhook callback, serta serialisasi concurrent webhook (`Promise.all`).
+- **Otorisasi RBAC**:
+  - Passenger hanya dapat melihat transaksi miliknya (`payerId === user.id`).
+  - Driver hanya dapat melihat transaksi ordernya (`payeeDriverId === user.id`).
+  - Admin memiliki akses audit penuh ke seluruh riwayat pembayaran.
+- **REST Endpoints (`backend/src/payment/payment.controller.ts`)**:
+  - `POST /payments`
+  - `GET /payments/:id`
+  - `GET /payments/:id/status`
+  - `POST /payments/:id/cancel`
+  - `POST /payments/:id/refund`
+  - `POST /payments/webhook/:provider`
+
+---
+
+## 2. Implementasi Aktual Phase 6A (Payment & Double-Entry Ledger)
+
+### A. Skema Database (`database/migrations/006_payment_and_ledger.sql`)
+- **Tabel `payments`**:
+  - `id`: UUID Primary Key.
+  - `ride_id`: UUID Unique (Integritas 1 Ride = 1 Payment).
+  - `payer_id`, `payee_driver_id`: UUID.
+  - `amount`: Integer Rupiah (IDR).
+  - `currency`: 'IDR'.
+  - `method`: 'CASH' | 'DIGITAL'.
+  - `status`: 'PENDING', 'AUTHORIZED', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED'.
+  - `provider`: Abstraksi nama provider.
+  - `provider_payment_id`: Nullable ID dari gateway provider.
+  - `idempotency_key`: Unik untuk idempotency guarantee.
+  - Timestamps: `paid_at`, `failed_at`, `refunded_at`, `created_at`, `updated_at`.
+- **Tabel `ledger_accounts`**:
+  - Tipe akun: `DRIVER_PAYABLE`, `PLATFORM_REVENUE`, `PAYMENT_CLEARING`, `CASH_RECEIVABLE`, `REFUND_PAYABLE`.
+- **Tabel `ledger_transactions`**:
+  - `reference_type`, `reference_id` (Unique constraint), `description`.
+- **Tabel `ledger_entries`**:
+  - Relasi ke transaksi dan akun, `debit` (>= 0), `credit` (>= 0).
+  - Constraint: `SUM(debit) = SUM(credit)`.
+- **Tabel `payment_split_configs`**:
+  - Konfigurasi bagi hasil dinamis: default `driver_share_percent = 85.00`, `platform_share_percent = 15.00`.
+
+### B. Double-Entry Ledger Engine (`backend/src/payment/ledger.service.ts`)
+- Menerapkan prinsip akuntansi double-entry murni:
+  - Setiap transaksi wajib memiliki minimal 2 entri dan seimbang secara mutlak `SUM(debit) === SUM(credit)`.
+  - Entri bernilai negatif ditolak keras (`BadRequestException`).
+  - Pencegahan duplikasi transaksi via pasangan referensi `(referenceType, referenceId)`.
+  - Perhitungan saldo buku besar per akun (`getAccountBalance`).
+
+### C. Payment Service (`backend/src/payment/payment.service.ts`)
+- Idempotency handling: Request berulang dengan `idempotencyKey` yang sama mengembalikan record pembayaran yang sudah ada tanpa menduplikasi ledger.
+- Single Payment Enforcement: Menolak double payment untuk order perjalanan yang sama (`ConflictException`).
+- Ride Eligibility: Menolak pembayaran untuk perjalanan yang belum `COMPLETED` (`incomplete ride rejected`).
+- Split calculation: Pembagian 85% pengemudi dan 15% platform dihitung secara presisi dalam integer Rupiah.
+- Atomicity & Rollback: Jika pencatatan buku besar gagal, status pembayaran tidak disimpan (database rollback semantics).
+
+### D. Provider Abstraction (`backend/src/payment/payment-provider.interface.ts`)
+- Interface `PaymentProvider`:
+  - `createPayment()`
+  - `getPaymentStatus()`
+  - `verifyWebhook()`
+  - `refundPayment()`
+- Implementasi `MockPaymentProvider` sebagai gateway mock development.
+
+---
+
+## 3. Implementasi Aktual Phase 5B
 
 ### A. Driver Eligibility
 Implementasi ketat pada `DriverEligibilityService` (`backend/src/driver/driver-eligibility.service.ts`):

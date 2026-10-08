@@ -7,6 +7,8 @@ import { DriverModule } from './driver/driver.module';
 import { LocationModule } from './location/location.module';
 import { RideModule } from './ride/ride.module';
 import { WalletModule } from './wallet/wallet.module';
+import { PaymentModule } from './payment/payment.module';
+import { LedgerModule } from './payment/ledger.module';
 import { FoodModule } from './food/food.module';
 import { ChatModule } from './chat/chat.module';
 import { AdminModule } from './admin/admin.module';
@@ -20,6 +22,8 @@ import { TestingModule } from './testing/testing.module';
     LocationModule,
     RideModule,
     WalletModule,
+    PaymentModule,
+    LedgerModule,
     FoodModule,
     ChatModule,
     AdminModule,

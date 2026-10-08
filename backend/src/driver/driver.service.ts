@@ -11,6 +11,8 @@ import { UploadDocumentDto } from './dto/upload-document.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { DriverEligibilityService, EligibilityResult } from './driver-eligibility.service';
 import { LocalDocumentStorageProvider } from './storage/local-document-storage.provider';
+import { SettlementService } from '../payment/settlement.service';
+import { DriverEarningsSummary } from '../payment/payment.types';
 
 export interface DriverEntity {
   id: string;
@@ -98,9 +100,32 @@ export class DriverService {
 
   constructor(
     private readonly eligibilityService: DriverEligibilityService,
-    private readonly storageProvider: LocalDocumentStorageProvider
+    private readonly storageProvider: LocalDocumentStorageProvider,
+    private readonly settlementService?: SettlementService
   ) {
     this.seedDefaultDriver();
+  }
+
+  /**
+   * Phase 6C Driver Earnings Query derived directly from Double-Entry Ledger
+   */
+  getDriverEarnings(userIdOrDriverId: string, period?: string): DriverEarningsSummary {
+    const driverId = this.driverUserIndex.get(userIdOrDriverId) || userIdOrDriverId;
+    if (this.settlementService) {
+      return this.settlementService.getDriverEarnings(driverId, period);
+    }
+    return {
+      driverId,
+      totalCompletedRides: 0,
+      grossFare: 0,
+      driverEarnings: 0,
+      platformFee: 0,
+      period: period || 'all-time',
+      currency: 'IDR',
+      ledgerAccountId: `DRIVER_PAYABLE_${driverId}`,
+      ledgerBalance: 0,
+      authoritativeSource: 'LEDGER',
+    };
   }
 
   private seedDefaultDriver() {

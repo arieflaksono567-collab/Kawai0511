@@ -7,6 +7,7 @@ import {
   UseGuards,
   Req,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -105,6 +106,17 @@ export class DriverController {
   async goOffline(@Req() req: any) {
     return this.driverService.goOffline(req.user.id);
   }
+
+  /**
+   * GET /drivers/me/earnings
+   * Read-only Driver Earnings endpoint derived from Double-Entry Ledger (Phase 6C)
+   */
+  @Get('me/earnings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DRIVER)
+  async getMyEarnings(@Req() req: any, @Query('period') period?: string) {
+    return this.driverService.getDriverEarnings(req.user.id, period);
+  }
 }
 
 // Controller terpisah khusus Admin Operasional Driver KYC
@@ -117,6 +129,11 @@ export class DriverAdminController {
   @Get()
   async listDrivers() {
     return this.driverService.adminListDrivers();
+  }
+
+  @Get(':id/earnings')
+  async getDriverEarningsAdmin(@Param('id') id: string, @Query('period') period?: string) {
+    return this.driverService.getDriverEarnings(id, period);
   }
 
   @Get(':id')
