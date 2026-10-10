@@ -25,6 +25,7 @@ import {
 } from './payment-provider.interface';
 import { RideService } from '../ride/ride.service';
 import { Role } from '../auth/roles.enum';
+import { DriverEarningsService } from './driver-earnings.service';
 
 export interface UserContext {
   id: string;
@@ -55,15 +56,18 @@ export class PaymentService {
 
   // Phase 6C Settlement Engine
   private readonly settlementService: SettlementService;
+  private driverEarningsService?: DriverEarningsService;
 
   constructor(
     private readonly ledgerService: LedgerService,
     private readonly rideService?: RideService,
     customProvider?: PaymentProvider,
-    settlementService?: SettlementService
+    settlementService?: SettlementService,
+    driverEarningsService?: DriverEarningsService
   ) {
     this.settlementService =
       settlementService || new SettlementService(this.ledgerService, this.rideService);
+    this.driverEarningsService = driverEarningsService;
 
     this.defaultCashProvider = new CashPaymentProvider();
     this.defaultDigitalProvider =
@@ -71,6 +75,10 @@ export class PaymentService {
 
     this.registerProvider(this.defaultCashProvider);
     this.registerProvider(this.defaultDigitalProvider);
+  }
+
+  setDriverEarningsService(service: DriverEarningsService) {
+    this.driverEarningsService = service;
   }
 
   registerProvider(provider: PaymentProvider) {
@@ -790,6 +798,20 @@ export class PaymentService {
   async settlePaymentRecord(payment: PaymentRecord, fareSnapshot?: any): Promise<SettlementResult> {
     const result = await this.settlementService.settlePayment(payment, fareSnapshot);
     this.payments.set(payment.id, payment);
+
+    // Phase 7.3: Sync ke Driver Earnings Ledger (idempotent)
+    if (this.driverEarningsService) {
+      try {
+        await this.driverEarningsService.recordEarningsFromPayment(payment, {
+          driverAmount: result.driverAmount,
+          platformAmount: result.platformAmount,
+          ledgerTransactionId: result.ledgerTransactionId,
+        });
+      } catch (err: any) {
+        this.logger.debug(`Could not auto-record driver earnings from settlement: ${err.message}`);
+      }
+    }
+
     return result;
   }
 

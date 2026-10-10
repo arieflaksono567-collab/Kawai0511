@@ -13,6 +13,11 @@ import { DriverEligibilityService, EligibilityResult } from './driver-eligibilit
 import { LocalDocumentStorageProvider } from './storage/local-document-storage.provider';
 import { SettlementService } from '../payment/settlement.service';
 import { DriverEarningsSummary } from '../payment/payment.types';
+import { DriverEarningsService } from '../payment/driver-earnings.service';
+import {
+  DriverEarningsDashboardResponse,
+  DriverEarningsMultiPeriodSummary,
+} from '../payment/driver-earnings-ledger.types';
 
 export interface DriverEntity {
   id: string;
@@ -101,9 +106,14 @@ export class DriverService {
   constructor(
     private readonly eligibilityService: DriverEligibilityService,
     private readonly storageProvider: LocalDocumentStorageProvider,
-    private readonly settlementService?: SettlementService
+    private readonly settlementService?: SettlementService,
+    private driverEarningsService?: DriverEarningsService
   ) {
     this.seedDefaultDriver();
+  }
+
+  setDriverEarningsService(service: DriverEarningsService) {
+    this.driverEarningsService = service;
   }
 
   /**
@@ -126,6 +136,82 @@ export class DriverService {
       ledgerBalance: 0,
       authoritativeSource: 'LEDGER',
     };
+  }
+
+  /**
+   * Phase 7.3 Driver Earnings Dashboard Query derived from Database Ledger
+   */
+  async getDriverEarningsDashboard(
+    userIdOrDriverId: string,
+    period?: string,
+    currentUser?: any
+  ): Promise<DriverEarningsDashboardResponse | DriverEarningsSummary> {
+    const driverId = this.driverUserIndex.get(userIdOrDriverId) || userIdOrDriverId;
+    if (this.driverEarningsService) {
+      return this.driverEarningsService.getDriverEarningsDashboard(driverId, { period }, currentUser);
+    }
+    return this.getDriverEarnings(userIdOrDriverId, period);
+  }
+
+  /**
+   * Phase 7.3 Driver Earnings Multi-Period Summary Query
+   */
+  async getDriverEarningsSummary(
+    userIdOrDriverId: string,
+    currentUser?: any
+  ): Promise<DriverEarningsMultiPeriodSummary | DriverEarningsSummary> {
+    const driverId = this.driverUserIndex.get(userIdOrDriverId) || userIdOrDriverId;
+    if (this.driverEarningsService) {
+      return this.driverEarningsService.getDriverEarningsMultiPeriodSummary(driverId, currentUser);
+    }
+    return this.getDriverEarnings(userIdOrDriverId, 'all-time');
+  }
+
+  /**
+   * Phase 7.2 Driver Rating Aggregation Update
+   */
+  updateDriverRatingAggregation(
+    driverIdOrUserId: string,
+    newScore: number
+  ): { ratingAverage: number; ratingCount: number } {
+    const driverId = this.driverUserIndex.get(driverIdOrUserId) || driverIdOrUserId;
+    const driver = this.drivers.get(driverId);
+    if (!driver) {
+      return { ratingAverage: 5.0, ratingCount: 0 };
+    }
+
+    const oldCount = driver.ratingCount || 0;
+    const oldAvg = driver.ratingAverage || 5.0;
+
+    let newCount: number;
+    let newAvg: number;
+
+    if (oldCount === 0) {
+      newCount = 1;
+      newAvg = Math.round(newScore * 100) / 100;
+    } else {
+      newCount = oldCount + 1;
+      // Formula pembobotan rata-rata inkremental
+      newAvg = Math.round(((oldAvg * oldCount + newScore) / newCount) * 100) / 100;
+    }
+
+    driver.ratingCount = newCount;
+    driver.ratingAverage = newAvg;
+    driver.updatedAt = new Date().toISOString();
+
+    return {
+      ratingAverage: driver.ratingAverage,
+      ratingCount: driver.ratingCount,
+    };
+  }
+
+  /**
+   * Cari profil driver berdasarkan driverId atau userId
+   */
+  getDriverById(driverIdOrUserId?: string): DriverEntity | undefined {
+    if (!driverIdOrUserId) return undefined;
+    const driverId = this.driverUserIndex.get(driverIdOrUserId) || driverIdOrUserId;
+    return this.drivers.get(driverId);
   }
 
   private seedDefaultDriver() {

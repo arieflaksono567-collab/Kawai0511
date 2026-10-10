@@ -109,13 +109,24 @@ export class DriverController {
 
   /**
    * GET /drivers/me/earnings
-   * Read-only Driver Earnings endpoint derived from Double-Entry Ledger (Phase 6C)
+   * Read-only Driver Earnings endpoint derived from Database Ledger (Phase 6C & Phase 7.3)
    */
   @Get('me/earnings')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.DRIVER)
   async getMyEarnings(@Req() req: any, @Query('period') period?: string) {
-    return this.driverService.getDriverEarnings(req.user.id, period);
+    return this.driverService.getDriverEarningsDashboard(req.user.id, period, req.user);
+  }
+
+  /**
+   * GET /drivers/me/earnings/summary
+   * Ringkasan multi-periode (hari ini, minggu ini, bulan ini, all-time)
+   */
+  @Get('me/earnings/summary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DRIVER)
+  async getMyEarningsSummary(@Req() req: any) {
+    return this.driverService.getDriverEarningsSummary(req.user.id, req.user);
   }
 }
 
@@ -132,8 +143,17 @@ export class DriverAdminController {
   }
 
   @Get(':id/earnings')
-  async getDriverEarningsAdmin(@Param('id') id: string, @Query('period') period?: string) {
-    return this.driverService.getDriverEarnings(id, period);
+  async getDriverEarningsAdmin(
+    @Param('id') id: string,
+    @Query('period') period?: string,
+    @Req() req?: any
+  ) {
+    return this.driverService.getDriverEarningsDashboard(id, period, req?.user);
+  }
+
+  @Get(':id/earnings/summary')
+  async getDriverEarningsSummaryAdmin(@Param('id') id: string, @Req() req?: any) {
+    return this.driverService.getDriverEarningsSummary(id, req?.user);
   }
 
   @Get(':id')

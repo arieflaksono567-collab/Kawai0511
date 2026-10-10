@@ -13,6 +13,7 @@ import { FoodModule } from './food/food.module';
 import { ChatModule } from './chat/chat.module';
 import { AdminModule } from './admin/admin.module';
 import { TestingModule } from './testing/testing.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TestingModule } from './testing/testing.module';
     ChatModule,
     AdminModule,
     TestingModule,
+    RatingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

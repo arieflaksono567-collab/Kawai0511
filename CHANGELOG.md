@@ -4,6 +4,61 @@ Semua perubahan pada repositori KAWAI 0511 dicatat secara kronologis berdasarkan
 
 ---
 
+## [Phase 7.2] - 2026-10-10
+### Added
+- **Rating System Service & Endpoints (`backend/src/rating/rating.service.ts` & `backend/src/rating/rating.controller.ts`)**:
+  - Dukungan dua arah penilaian pasca-perjalanan: Passenger $\rightarrow$ Driver dan Driver $\rightarrow$ Passenger.
+  - Validasi skor ketat 1–5 (angka/integer non-negatif dan non-NaN).
+  - Validasi status order: HANYA perjalanan berstatus `COMPLETED` yang diizinkan untuk dinilai; status lainnya (`SEARCHING`, `ASSIGNED`, `ARRIVED`, `IN_TRIP`, `CANCELLED`) ditolak keras (`BadRequestException`).
+  - Proteksi otorisasi hubungan perjalanan: Hanya penumpang atau driver yang terkait dengan perjalanan tersebut yang dapat memberikan penilaian; pihak ketiga ditolak (`ForbiddenException` HTTP 403).
+  - Proteksi rating ganda backend: Satu reviewer hanya dapat memberikan satu kali penilaian untuk satu perjalanan (`ConflictException` HTTP 409).
+  - Proteksi self-rating: Menolak keras pengguna yang mencoba menilai dirinya sendiri (`BadRequestException` HTTP 400).
+  - Validasi identitas aman: Reviewer dan reviewed user divalidasi langsung dari token JWT terautentikasi dan entitas `Ride`, bukan dari payload yang dikirim klien (mencegah identity spoofing).
+  - Zero state machine mutation: Status perjalanan `COMPLETED` tetap utuh dan terkunci.
+  - Endpoints: `POST /rides/:id/rating`, `POST /ratings`, `GET /rides/:id/ratings`, `GET /ratings/driver/:driverId/summary`, `GET /ratings/driver/:driverId`, `GET /ratings/me`.
+- **Driver Rating Aggregation Engine (`backend/src/driver/driver.service.ts`)**:
+  - Metode `updateDriverRatingAggregation(driverId, score)` menghitung rata-rata bintang baru (`ratingAverage`) dan akumulasi ulasan (`ratingCount`) secara otomatis saat penumpang menilai driver.
+  - Sinkronisasi snapshot rating pada armada driver.
+- **DTO & Module Integration**:
+  - `backend/src/rating/dto/create-rating.dto.ts`.
+  - `backend/src/rating/rating.module.ts` terdaftar pada `backend/src/app.module.ts`.
+- **Automated Acceptance Test Suite (`backend/test/phase7-rating-system.spec.ts`)**:
+  - 10 skenario pengujian komprehensif mencakup seluruh 7 kriteria wajib (valid passenger rating, valid driver rating, invalid score, rating sebelum COMPLETED, unauthorized user rejection, duplicate rating rejection, self-rating rejection) ditambah agregasi rating driver, anti-spoofing identity check, dan hak akses kueri ulasan (100% Passed).
+
+---
+
+## [Phase 7.1] - 2026-10-10
+### Added
+- **Database Foundation: Rating, Earnings Ledger & Trip History (`database/migrations/010_rating_earnings_history.sql`)**:
+  - **Tabel `ride_ratings`**:
+    - Relasi referensial penuh ke `rides(id)`, `users(id)` (reviewer & reviewed user), dan `drivers(id)`.
+    - Batasan nilai `score` dari 1.0 sampai 5.0 (`CHECK (score >= 1.0 AND score <= 5.0)`).
+    - Kolom ulasan tekstual opsional `comment TEXT`, array tag kategori feedback `tags VARCHAR(64)[]`, dan `tip_amount NUMERIC(12, 2)`.
+    - Proteksi integritas unik: `CONSTRAINT uq_ride_reviewer UNIQUE (ride_id, reviewer_id)` untuk mencegah rating ganda pada perjalanan yang sama.
+    - Proteksi self-review: `CONSTRAINT check_distinct_reviewer CHECK (reviewer_id <> reviewed_user_id)`.
+    - Indeks pencarian: `idx_ratings_ride`, `idx_ratings_reviewer`, `idx_ratings_reviewed_user`, `idx_ratings_driver`, `idx_ratings_created_at`, `idx_ratings_score`.
+  - **Tabel `driver_earnings_ledger`**:
+    - Pencatatan pendapatan per perjalanan: `driver_id`, `ride_id`, `payment_id`, `gross_amount`, `platform_fee`, `net_amount`, `tip_amount`, `currency: 'IDR'`, `status`.
+    - Presisi moneter mutlak menggunakan `NUMERIC(12, 2)` (menghindari error floating-point).
+    - Integritas pembagian komisi: `CONSTRAINT check_earnings_math_balance CHECK (net_amount + platform_fee = gross_amount)`.
+    - Proteksi duplikasi entri pendapatan per trip: `CONSTRAINT uq_driver_ride_earning UNIQUE (driver_id, ride_id)`.
+    - Indeks performa query pendapatan: `idx_driver_earnings_driver_date`, `idx_driver_earnings_ride`, `idx_driver_earnings_status`, `idx_driver_earnings_created_at`.
+  - **Trip History Composite Indexes & Unified View**:
+    - Indeks komposit pada tabel `rides`: `idx_rides_passenger_status_created`, `idx_rides_driver_status_created`, `idx_rides_completed_at_desc`.
+    - View terpadu `view_trip_history_details` menggabungkan data perjalanan, ulasan rating, status pembayaran, dan rincian buku besar pendapatan driver.
+- **Backend Repositories & Type Definitions**:
+  - `backend/src/rating/rating.types.ts` & `backend/src/rating/rating.repository.ts`.
+  - `backend/src/payment/driver-earnings-ledger.types.ts` & `backend/src/payment/driver-earnings-ledger.repository.ts`.
+  - `backend/src/ride/trip-history.types.ts` & `backend/src/ride/trip-history.repository.ts`.
+- **Authorization & Data Scoping Layer**:
+  - Penumpang hanya dapat mengakses rating dan riwayat perjalanan miliknya sendiri (`CUSTOMER`).
+  - Mitra pengemudi hanya dapat mengakses ringkasan pendapatan dan ulasan miliknya (`DRIVER`).
+  - Admin memiliki akses audit menyeluruh (`ADMIN`).
+- **Automated Acceptance Test Suite (`backend/test/phase7-database-foundation.spec.ts`)**:
+  - 10 skenario pengujian komprehensif menguji sintaks SQL migrasi, batasan relasional, pencegahan rating ganda, presisi integer Rupiah, integritas pembagian komisi, dan otorisasi akses (100% Passed).
+
+---
+
 ## [Phase 6C] - 2026-10-08
 ### Added
 - **8-Step Atomic Settlement Engine (`backend/src/payment/settlement.service.ts`)**:

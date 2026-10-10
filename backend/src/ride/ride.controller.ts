@@ -8,10 +8,14 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  Optional,
+  BadRequestException,
 } from '@nestjs/common';
 import { RideService, RideOrder } from './ride.service';
 import { CreateRideDto } from './dto/create-ride.dto';
 import { CancelRideDto } from './dto/cancel-ride.dto';
+import { CreateRatingDto } from '../rating/dto/create-rating.dto';
+import { RatingService } from '../rating/rating.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -19,7 +23,10 @@ import { Role } from '../auth/roles.enum';
 
 @Controller('rides')
 export class RideController {
-  constructor(private readonly rideService: RideService) {}
+  constructor(
+    private readonly rideService: RideService,
+    @Optional() private readonly ratingService?: RatingService
+  ) {}
 
   // 1. PASSENGER CREATES RIDE ORDER (SEARCHING)
   @Post('order')
@@ -142,5 +149,38 @@ export class RideController {
   @UseGuards(JwtAuthGuard)
   async getRideLogs(@Param('id') id: string) {
     return this.rideService.getStateLogs(id);
+  }
+
+  // 13. SUBMIT RIDE RATING (POST /rides/:id/rating)
+  @Post(':id/rating')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async submitRating(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: CreateRatingDto
+  ) {
+    if (!this.ratingService) {
+      throw new BadRequestException('Rating service is not initialized');
+    }
+    const authenticatedUser = req.user || {
+      id: 'b0000000-0000-0000-0000-000000000002',
+      role: 'CUSTOMER',
+    };
+    return this.ratingService.submitRating(id, authenticatedUser, dto);
+  }
+
+  // 14. GET RIDE RATINGS (GET /rides/:id/ratings)
+  @Get(':id/ratings')
+  @UseGuards(JwtAuthGuard)
+  async getRideRatings(@Req() req: any, @Param('id') id: string) {
+    if (!this.ratingService) {
+      throw new BadRequestException('Rating service is not initialized');
+    }
+    const authenticatedUser = req.user || {
+      id: 'b0000000-0000-0000-0000-000000000002',
+      role: 'CUSTOMER',
+    };
+    return this.ratingService.getRatingsForRide(id, authenticatedUser);
   }
 }

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { LedgerService } from './ledger.service';
+import { DriverEarningsService } from './driver-earnings.service';
 import {
   CreatePaymentDto,
   CancelPaymentDto,
@@ -24,7 +25,8 @@ import {
 export class PaymentController {
   constructor(
     private readonly paymentService: PaymentService,
-    private readonly ledgerService: LedgerService
+    private readonly ledgerService: LedgerService,
+    private readonly driverEarningsService?: DriverEarningsService
   ) {}
 
   /**
@@ -211,6 +213,47 @@ export class PaymentController {
       message: 'Konfigurasi bagi hasil berhasil diperbarui',
       data: updated,
     };
+  }
+
+  /**
+   * GET /payments/driver-earnings/:driverId
+   * Dashboard pendapatan driver dari Database Ledger (Phase 7.3)
+   */
+  @Get('driver-earnings/:driverId')
+  async getDriverEarningsDashboard(
+    @Param('driverId') driverId: string,
+    @Req() req: any
+  ) {
+    if (this.driverEarningsService) {
+      const data = await this.driverEarningsService.getDriverEarningsDashboard(
+        driverId,
+        { period: req?.query?.period },
+        req?.user
+      );
+      return { statusCode: HttpStatus.OK, data };
+    }
+    const data = this.paymentService.getDriverEarnings(driverId, req?.query?.period);
+    return { statusCode: HttpStatus.OK, data };
+  }
+
+  /**
+   * GET /payments/driver-earnings/:driverId/summary
+   * Ringkasan multi-periode pendapatan driver
+   */
+  @Get('driver-earnings/:driverId/summary')
+  async getDriverEarningsSummary(
+    @Param('driverId') driverId: string,
+    @Req() req: any
+  ) {
+    if (this.driverEarningsService) {
+      const data = await this.driverEarningsService.getDriverEarningsMultiPeriodSummary(
+        driverId,
+        req?.user
+      );
+      return { statusCode: HttpStatus.OK, data };
+    }
+    const data = this.paymentService.getDriverEarnings(driverId, 'all-time');
+    return { statusCode: HttpStatus.OK, data };
   }
 }
 
