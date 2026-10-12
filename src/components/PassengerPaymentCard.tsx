@@ -10,7 +10,8 @@ import {
   Sparkles,
   Info,
   RefreshCw,
-  Receipt
+  Receipt,
+  Star,
 } from 'lucide-react';
 import { KAWAI_COLORS } from '../constants/theme';
 
@@ -21,6 +22,8 @@ interface PassengerPaymentCardProps {
   driverName?: string;
   onPaymentSuccess?: (payment: any) => void;
   onResetOrder?: () => void;
+  onOpenRating?: () => void;
+  onViewDetail?: () => void;
 }
 
 export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
@@ -30,6 +33,8 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
   driverName = 'Ahmad Gazali',
   onPaymentSuccess,
   onResetOrder,
+  onOpenRating,
+  onViewDetail,
 }) => {
   const [method, setMethod] = useState<'CASH' | 'DIGITAL'>('CASH');
   const [digitalProvider, setDigitalProvider] = useState<string>('QRIS_MOCK');

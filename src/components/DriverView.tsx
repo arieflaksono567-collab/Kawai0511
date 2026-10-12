@@ -14,11 +14,14 @@ import {
   ShieldCheck,
   ChevronRight,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Star,
 } from 'lucide-react';
 import { LocationPoint } from '../types';
 import { BanjarmasinMap } from './BanjarmasinMap';
 import { DriverEarningsCard } from './DriverEarningsCard';
+import { TripHistoryModal } from './TripHistoryModal';
+import { TripDetailModal } from './TripDetailModal';
 import { KAWAI_COLORS } from '../constants/theme';
 
 interface DriverViewProps {
@@ -52,6 +55,8 @@ export const DriverView: React.FC<DriverViewProps> = ({
   const [countdown, setCountdown] = useState(30);
   const [todayEarnings, setTodayEarnings] = useState(185500);
   const [completedTrips, setCompletedTrips] = useState(12);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedDetailRideId, setSelectedDetailRideId] = useState<string | null>(null);
 
   const isOfferPending = activeRide && activeRide.status === 'SEARCHING' && isOnline;
 
@@ -124,18 +129,30 @@ export const DriverView: React.FC<DriverViewProps> = ({
           </div>
         </div>
 
-        {/* ONLINE / OFFLINE TOGGLE */}
-        <button
-          onClick={() => setIsOnline(!isOnline)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
-            isOnline
-              ? 'bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/40 hover:bg-[#DDF8EA]'
-              : 'bg-[#F0F5F2] text-[#66736B] border border-[#D7E2DB] hover:text-[#17211B]'
-          }`}
-        >
-          <Power className="w-3.5 h-3.5" />
-          <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F0F5F2] hover:bg-[#E4ECE7] text-[#17211B] border border-[#D7E2DB] transition cursor-pointer"
+            title="Riwayat Trip Driver"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#18B86A]" />
+            <span>Riwayat</span>
+          </button>
+
+          {/* ONLINE / OFFLINE TOGGLE */}
+          <button
+            onClick={() => setIsOnline(!isOnline)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-xs ${
+              isOnline
+                ? 'bg-[#DDF8EA] text-[#0E8F52] border border-[#18B86A]/40 hover:bg-[#DDF8EA]'
+                : 'bg-[#F0F5F2] text-[#66736B] border border-[#D7E2DB] hover:text-[#17211B]'
+            }`}
+          >
+            <Power className="w-3.5 h-3.5" />
+            <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+          </button>
+        </div>
       </header>
 
       {/* GPS STATUS BAR */}
@@ -349,6 +366,63 @@ export const DriverView: React.FC<DriverViewProps> = ({
           activeRide.status === 'CANCELLED') &&
           !isOfferPending && (
             <div className="space-y-4">
+              {/* COMPLETED TRIP ACTION CARD FOR DRIVER */}
+              {activeRide && activeRide.status === 'COMPLETED' && (
+                <div className="bg-[#DDF8EA] border-2 border-[#18B86A] rounded-2xl p-4 shadow-sm space-y-3 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-[#18B86A]" />
+                      <span className="text-xs font-bold text-[#0E8F52] uppercase tracking-wider">
+                        Perjalanan Selesai
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold bg-white text-[#0E8F52] border border-[#18B86A]/20 px-2 py-0.5 rounded-full">
+                      Bagi Hasil 85%
+                    </span>
+                  </div>
+
+                  <div className="bg-white rounded-xl p-3 border border-[#18B86A]/20 space-y-1.5 text-xs">
+                    <div className="flex justify-between text-[#66736B]">
+                      <span>Pendapatan Bersih Masuk Saldo:</span>
+                      <strong className="text-sm font-extrabold text-[#0E8F52]">
+                        Rp {driverNetShare.toLocaleString('id-ID')}
+                      </strong>
+                    </div>
+                    <div className="flex justify-between text-[#66736B] text-[11px]">
+                      <span>Rute:</span>
+                      <span className="font-semibold text-[#17211B] line-clamp-1">
+                        {pickup.name} → {destination.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[#66736B] text-[11px]">
+                      <span>Pelanggan:</span>
+                      <span className="font-semibold text-[#17211B]">
+                        {activeRide.passengerName || 'Arief Laksono'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetailRideId(activeRide.id || 'ride-0511-102')}
+                      className="py-2.5 px-2 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-white" />
+                      <span>Detail & Rating</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowHistoryModal(true)}
+                      className="py-2.5 px-2 bg-white hover:bg-[#F0F5F2] text-[#17211B] border border-[#D7E2DB] font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-[#18B86A]" />
+                      <span>Riwayat Trip</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Standby Status Banner (Requirement 10: ONLINE — SIAP MENERIMA ORDER) */}
               <div
                 className={`p-4 rounded-2xl border flex items-center justify-between ${
@@ -385,10 +459,28 @@ export const DriverView: React.FC<DriverViewProps> = ({
                 initialTodayEarnings={todayEarnings || 185500}
                 initialTodayRides={completedTrips || 12}
                 initialWeekEarnings={1240000}
+                onViewHistory={() => setShowHistoryModal(true)}
               />
             </div>
           )}
       </div>
+
+      {/* TRIP HISTORY MODAL (DRIVER) */}
+      <TripHistoryModal
+        role="DRIVER"
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+      />
+
+      {/* SINGLE TRIP DETAIL MODAL (DRIVER) */}
+      {selectedDetailRideId && (
+        <TripDetailModal
+          rideId={selectedDetailRideId}
+          role="DRIVER"
+          isOpen={Boolean(selectedDetailRideId)}
+          onClose={() => setSelectedDetailRideId(null)}
+        />
+      )}
     </div>
   );
 };

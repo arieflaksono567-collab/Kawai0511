@@ -341,6 +341,11 @@ export class AuthService {
     return user;
   }
 
+  // Safe lookup without throwing
+  findUserById(userId: string): UserEntity | undefined {
+    return Array.from(this.users.values()).find((u) => u.id === userId);
+  }
+
   // Token Generation Helper
   private generateTokens(user: UserEntity): AuthTokens {
     const nowSeconds = Math.floor(Date.now() / 1000);

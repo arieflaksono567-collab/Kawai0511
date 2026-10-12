@@ -4,6 +4,76 @@ Semua perubahan pada repositori KAWAI 0511 dicatat secara kronologis berdasarkan
 
 ---
 
+## [Phase 7.5] - 2026-10-12
+### Added
+- **Single Trip Detail Service (`backend/src/ride/trip-detail.service.ts`)**:
+  - Implementasi service komprehensif untuk mengambil detail satu perjalanan dengan verifikasi otorisasi ketat dan proteksi IDOR (*Insecure Direct Object Reference*).
+  - **Passenger Authorization & IDOR Protection**: Penumpang hanya dapat membuka rincian perjalanan miliknya sendiri (`ride.passengerId === currentUser.id`). Permintaan membuka perjalanan milik orang lain ditolak keras (`ForbiddenException` HTTP 403). Buku besar pendapatan mitra (`earnings`) disembunyikan secara mutlak dari penumpang.
+  - **Driver Authorization & IDOR Protection**: Pengemudi hanya dapat membuka rincian perjalanan yang ditugaskan kepadanya (`ride.driverId === currentUser.driverId || ride.driverId === currentUser.id`). Permintaan membuka perjalanan pengemudi lain atau order perjalanan yang belum ditugaskan (status `SEARCHING`) ditolak keras (`ForbiddenException` HTTP 403). Pengemudi dapat melihat catatan pendapatannya sendiri.
+  - **Admin Full Audit Access**: Admin memiliki hak audit penuh untuk membuka detail perjalanan mana pun.
+  - **Unauthenticated Protection**: Permintaan tanpa konteks pengguna yang valid ditolak dengan `UnauthorizedException` (HTTP 401).
+  - **Explicit Nullable / Unavailable State (Zero Fake Data)**:
+    - Tidak membuat data palsu: jika ulasan ulasan belum ada, `rating: null` (tanpa mengarang rating 5.0 atau 4.9).
+    - Jika pembayaran belum tercatat di `PaymentService` (misal perjalanan belum selesai), `payment: null` (tanpa mengarang status CASH atau PAID palsu).
+    - Jika pengemudi belum ditugaskan, `driver: null` dan `driverId: null` (tanpa mengarang nama atau ulasan driver 4.9).
+    - Jika route polyline belum dikalkulasi, `route: null` (tanpa mengarang koordinat rute palsu).
+    - Timestamps lifecycle yang belum tercapai (`assignedAt`, `arrivedAt`, `startedAt`, `completedAt`, `cancelledAt`) bernilai `null`.
+  - **Data Composition**: Menggabungkan data nyata dari `RideService`, `PaymentService`, `RatingRepository`, `DriverEarningsLedgerRepository`, `AuthService`, dan `DriverService`.
+  - **Safe Summaries**: Menyediakan `SafePassengerSummary` dengan nomor telepon termasker (`+62812****0987`) dan `SafeDriverSummary` tanpa mengekspos kredensial, token, OTP, atau rahasia apa pun.
+- **DTOs & Types (`backend/src/ride/trip-detail.types.ts`)**:
+  - Tipe `TripDetailResponseDto`, `TripLocationDetail`, `TripRouteDetail`, `TripFareDetail`, `TripPaymentDetail`, `TripRatingDetail`, dan `TripTimestamps`.
+- **API Endpoints (`backend/src/ride/ride.controller.ts`)**:
+  - `GET /rides/:id/detail`: Endpoint REST terproteksi JWT untuk detail satu perjalanan dengan proteksi IDOR.
+  - `GET /rides/history/:id`: Menghubungkan ke `TripDetailService` untuk respon detail perjalanan terintegrasi.
+- **Module Wiring (`backend/src/ride/ride.module.ts`)**:
+  - Mendaftarkan dan mengekspor `TripDetailService` di `RideModule`.
+- **Automated Acceptance Test Suite (`backend/test/phase7-trip-detail.spec.ts`)**:
+  - 10 skenario pengujian komprehensif (100% Passed):
+    1. Passenger authorization & IDOR: Penumpang hanya membuka perjalanannya sendiri; IDOR ditolak dengan 403.
+    2. Driver authorization & IDOR: Driver hanya membuka perjalanan yang ditugaskan; IDOR armada lain ditolak dengan 403.
+    3. Driver unassigned trip rejection: Driver ditolak membuka order yang belum ditugaskan (status SEARCHING) dengan 403.
+    4. Unauthenticated access: Penolakan request tanpa identitas pengguna dengan 401.
+    5. Non-existent trip handling: Penolakan ride ID yang tidak ditemukan dengan 404.
+    6. Admin audit capability: Admin dapat mengaudit seluruh detail perjalanan.
+    7. Composite data aggregation: Menggabungkan data nyata Ride, pickup, destination, fare, payment, rating, timestamps, dan summaries.
+    8. Zero fake data enforcement: Verifikasi eksplisit field bernilai null saat data belum tersedia (unrated, unpaid, unassigned, unreached).
+    9. Sensitive data isolation: Anti-bocor kredensial dan pendapatan driver disembunyikan dari penumpang.
+    10. Controller integration: Verifikasi endpoint `GET /rides/:id/detail` & `GET /rides/history/:id` dengan proteksi IDOR.
+
+---
+
+## [Phase 7.4] - 2026-10-10
+### Added
+- **Passenger & Driver Trip History Engine (`backend/src/ride/trip-history.service.ts` & `backend/src/ride/trip-history.repository.ts`)**:
+  - Implementasi riwayat perjalanan terisolasi multi-peran dengan otorisasi berbasis identitas JWT.
+  - **Passenger Isolation**: Penumpang hanya dapat melihat riwayat perjalanan miliknya sendiri (`passengerId === req.user.id`). Akses ke perjalanan penumpang lain diblokir (`ForbiddenException` HTTP 403). Catatan buku besar pendapatan mitra (`earnings`) tidak diekspos kepada penumpang.
+  - **Driver Isolation**: Pengemudi hanya dapat melihat perjalanan yang ditugaskan kepadanya (`driverId === req.user.driverId || driverId === req.user.id`). Akses ke perjalanan driver lain diblokir (`ForbiddenException` HTTP 403). Pengemudi dapat melihat catatan pendapatannya sendiri.
+  - **Zero Sensitive Leakage**: Memblokir seluruh potensi kebocoran data sensitif (OTP, `otpHash`, password, `passwordHash`, `tokenHash`, `refreshToken`, `accessToken`, `secret`).
+  - **Safe Summaries**: Menyediakan `SafePassengerSummary` (nama lengkap, nomor telepon termasker, avatar) untuk pengemudi dan `SafeDriverSummary` (nama pengemudi, plat nomor, model kendaraan, rating rata-rata) untuk penumpang.
+  - **Data History Lengkap**: Menyajikan minimal ride ID, timestamp pembuatan dan penyelesaian, koordinat & alamat jemput/tujuan (`pickup` & `destination`), jarak tempuh (`distanceKm`), durasi (`durationMinutes`), tarif & rincian dasar (`fare`), status & metode pembayaran (`payment`), status perjalanan (`rideStatus`), dan ulasan terhubung (`rating`).
+  - **Paginasi & Pengurutan**: Default pengurutan terbaru lebih dulu (*newest first* / `createdAt DESC`), mendukung paginasi multi-halaman (`page`, `limit`, `offset`, `totalPages`, `hasNextPage`, `hasPrevPage`), dan penanganan riwayat kosong (*empty history*) yang aman (`items: []`, `total: 0`).
+  - **Filter Status & Rentang Tanggal**: Mendukung filter perjalanan berstatus `COMPLETED` dan `CANCELLED`, serta filter rentang tanggal `startDate` dan `endDate`.
+- **DTO & Response Models (`backend/src/ride/trip-history.types.ts` & `backend/src/ride/dto/trip-history-query.dto.ts`)**:
+  - DTO `TripHistoryQueryDto` untuk validasi query parameters (`page`, `limit`, `offset`, `status`, `startDate`, `endDate`, `sortBy`, `sortOrder`).
+  - Model respon `TripHistoryResponseDto`, `TripHistoryDetail`, `SafePassengerSummary`, `SafeDriverSummary`, `TripLocationDto`, `TripPaymentSummary`, dan `TripFareSummary`.
+- **API Endpoints (`backend/src/ride/ride.controller.ts`)**:
+  - `GET /rides/history`: Mengambil riwayat perjalanan pengguna terotentikasi (penumpang, pengemudi, atau admin) dengan paginasi dan filter.
+  - `GET /rides/history/:id`: Mengambil rincian lengkap riwayat perjalanan tertentu dengan verifikasi otorisasi kepemilikan.
+- **Automated Acceptance Test Suite (`backend/test/phase7-trip-history.spec.ts`)**:
+  - 10 skenario pengujian komprehensif (100% Passed):
+    1. Passenger isolation: Penumpang hanya melihat perjalanannya sendiri; earnings disembunyikan.
+    2. Driver isolation: Driver hanya melihat perjalanan yang ditugaskan; melihat pendapatan sendiri.
+    3. Pagination: Menghitung pembagian halaman, total count, totalPages, dan flag batas (hasNextPage, hasPrevPage).
+    4. Sorting: Default pengurutan terbaru lebih dulu (newest first) dan dukungan asc/desc.
+    5. Empty history: Mengembalikan list kosong tanpa error untuk pengguna tanpa perjalanan.
+    6. Unauthorized access: Penolakan request tanpa otentikasi (401) dan akses perjalanan orang lain (403).
+    7. Zero sensitive leakage: Anti-bocor OTP, password, token, dan rahasia.
+    8. Status & Date filtering: Filter akurat berdasarkan status (COMPLETED, CANCELLED) dan rentang tanggal.
+    9. Composite joins: Pengecekan gabungan data pembayaran, rating, dan rincian tarif.
+    10. Controller integration & Admin audit: Verifikasi kontrak response DTO dan kemampuan audit Admin.
+
+---
+
 ## [Phase 7.3] - 2026-10-10
 ### Added
 - **Driver Earnings Ledger Service & Integration (`backend/src/payment/driver-earnings.service.ts`)**:

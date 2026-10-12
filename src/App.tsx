@@ -9,7 +9,11 @@ import {
   Info,
   Shield,
   Phone,
-  CreditCard
+  CreditCard,
+  X,
+  SlidersHorizontal,
+  Terminal,
+  Navigation,
 } from 'lucide-react';
 import { BANJARMASIN_LOCATIONS } from './data/mockData';
 import { LocationPoint } from './types';
@@ -18,11 +22,19 @@ import { DriverView } from './components/DriverView';
 import { E2ESimulationRunner } from './components/E2ESimulationRunner';
 import { PassengerPaymentCard } from './components/PassengerPaymentCard';
 import { DriverEarningsCard } from './components/DriverEarningsCard';
+import { LiveMapSimulator } from './components/LiveMapSimulator';
 import { KAWAI_COLORS } from './constants/theme';
 
 export default function App() {
-  // Current active mode: 'passenger' | 'driver' | 'dual' | 'e2e' | 'payment'
-  const [viewMode, setViewMode] = useState<'passenger' | 'driver' | 'dual' | 'e2e' | 'payment'>('passenger');
+  // Current active mode: 'passenger' | 'driver' | 'dual' | 'payment' | 'simulator'
+  const [viewMode, setViewMode] = useState<'passenger' | 'driver' | 'dual' | 'payment' | 'simulator'>('passenger');
+
+  // Developer mode configuration (nonaktif secara default)
+  const [isDevMode, setIsDevMode] = useState<boolean>(false);
+  // Manual dialog/drawer visibility for E2E simulation (tertutup secara default)
+  const [isSimModalOpen, setIsSimModalOpen] = useState<boolean>(false);
+  // Administration & settings menu visibility
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState<boolean>(false);
 
   // Selected Pickup & Destination
   const [pickup, setPickup] = useState<LocationPoint>(BANJARMASIN_LOCATIONS[0]); // Duta Mall
@@ -320,17 +332,29 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setViewMode('e2e')}
+              onClick={() => setViewMode('simulator')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
-                viewMode === 'e2e'
+                viewMode === 'simulator'
                   ? 'bg-[#18B86A] text-white shadow-xs'
                   : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
               }`}
-              title="Jalankan simulasi otomatis siklus lengkap 15 tahap"
+              title="Peta Interaktif & Simulator Perjalanan KAWAI 0511 (Leaflet / OpenStreetMap)"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Simulasi E2E (15 Tahap)</span>
+              <Navigation className="w-3.5 h-3.5" />
+              <span>Peta & Simulator Live</span>
             </button>
+
+            {/* Developer Tools manual invocation (hanya muncul jika Developer Mode aktif dan BUKAN di halaman pelanggan umum) */}
+            {isDevMode && viewMode !== 'passenger' && (
+              <button
+                onClick={() => setIsSimModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold bg-[#17211B] hover:bg-black text-white transition shadow-xs cursor-pointer"
+                title="Buka panel Acceptance Test End-to-End Simulation"
+              >
+                <Terminal className="w-3.5 h-3.5 text-[#18B86A]" />
+                <span>Developer Tools</span>
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -358,6 +382,7 @@ export default function App() {
               onOrderRide={handleOrderRide}
               onCancelRide={handleCancelRide}
               driverPosition={driverPosition}
+              onOpenLiveMap={() => setViewMode('simulator')}
             />
           </div>
         )}
@@ -495,20 +520,189 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 5: E2E SIMULATION ACCEPTANCE TEST */}
-        {viewMode === 'e2e' && (
-          <div className="w-full py-2 animate-fadeIn">
-            <E2ESimulationRunner />
+        {/* VIEW 5: LIVE MAP & TRIP SIMULATOR (LEAFLET & OPENSTREETMAP) */}
+        {viewMode === 'simulator' && (
+          <div className="w-full flex justify-center py-2 animate-fadeIn">
+            <LiveMapSimulator onClose={() => setViewMode('passenger')} />
           </div>
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-white border-t border-[#E4ECE7] px-4 py-3 text-center text-[11px] text-[#66736B]">
-        <p>
-          KAWAI 0511 Banjarmasin • Kode Wilayah 0511 Kalimantan Selatan • Bright Clean Mobility UI
-        </p>
+      {/* FOOTER & SYSTEM ADMINISTRATION ENTRY */}
+      <footer className="bg-white border-t border-[#E4ECE7] px-4 py-3 text-[11px] text-[#66736B]">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <p className="text-center sm:text-left">
+            KAWAI 0511 Banjarmasin • Kode Wilayah 0511 Kalimantan Selatan • Bright Clean Mobility UI
+          </p>
+
+          <div className="flex items-center gap-3">
+            {/* Quick Developer Tools invocation on non-passenger pages when dev mode is active */}
+            {isDevMode && viewMode !== 'passenger' && (
+              <button
+                type="button"
+                onClick={() => setIsSimModalOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-[#17211B] hover:bg-black text-white rounded-lg text-[11px] font-semibold transition shadow-xs cursor-pointer"
+                title="Buka panel Acceptance Test End-to-End Simulation"
+              >
+                <Terminal className="w-3 h-3 text-[#18B86A]" />
+                <span>Developer Tools</span>
+              </button>
+            )}
+
+            {/* Administrasi & Pengaturan menu */}
+            <button
+              type="button"
+              onClick={() => setIsAdminMenuOpen(true)}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] text-[#66736B] hover:text-[#17211B] hover:bg-[#F0F5F2] rounded-lg transition font-medium cursor-pointer"
+              title="Buka Menu Administrasi & Pengaturan Sistem"
+            >
+              <SlidersHorizontal className="w-3 h-3 text-[#18B86A]" />
+              <span>Administrasi & Pengaturan</span>
+            </button>
+          </div>
+        </div>
       </footer>
+
+      {/* MODAL: ADMINISTRASI & PENGATURAN SISTEM */}
+      {isAdminMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-dialog-title"
+        >
+          <div className="bg-white rounded-2xl border border-[#E4ECE7] shadow-xl max-w-md w-full p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E4ECE7] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#DDF8EA] text-[#0E8F52] flex items-center justify-center">
+                  <SlidersHorizontal className="w-4 h-4 text-[#18B86A]" />
+                </div>
+                <h3 id="admin-dialog-title" className="font-bold text-sm text-[#17211B]">
+                  Administrasi & Pengaturan Sistem
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAdminMenuOpen(false)}
+                className="p-1.5 text-[#66736B] hover:text-[#17211B] hover:bg-[#F0F5F2] rounded-lg transition cursor-pointer"
+                aria-label="Tutup pengaturan"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs text-[#66736B]">
+              {/* Developer Mode Toggle Configuration */}
+              <div className="bg-[#F7FAF8] p-3.5 rounded-xl border border-[#E4ECE7] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-[#17211B]">Developer Mode</span>
+                    <span className="ml-2 text-[10px] px-1.5 py-0.2 rounded font-mono bg-[#E4ECE7] text-[#66736B]">
+                      {isDevMode ? 'AKTIF' : 'NONAKTIF'}
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isDevMode}
+                      onChange={(e) => {
+                        const nextVal = e.target.checked;
+                        setIsDevMode(nextVal);
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-[#D7E2DB] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#A8B2AC] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#18B86A]"></div>
+                  </label>
+                </div>
+                <p className="text-[11px] leading-relaxed text-[#66736B]">
+                  Konfigurasi mode pengembang internal (nonaktif secara default). Catatan: perkakas ini belum terlindungi autentikasi server.
+                </p>
+              </div>
+
+              {/* Developer Tools manual invocation */}
+              {isDevMode ? (
+                <div className="p-3 bg-[#DDF8EA]/50 rounded-xl border border-[#18B86A]/30 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#0E8F52] font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#18B86A]" />
+                    <span>Developer Mode aktif. Perkakas pengembang siap digunakan.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      setIsSimModalOpen(true);
+                    }}
+                    className="w-full py-2.5 px-3 bg-[#17211B] hover:bg-black text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-[#18B86A]" />
+                    <span>Developer Tools (Simulasi E2E)</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3 bg-[#F0F5F2] rounded-xl border border-[#E4ECE7] text-[11px] text-[#66736B] leading-relaxed">
+                  Aktifkan tombol <strong>Developer Mode</strong> di atas untuk menampilkan tombol pemanggilan manual <em>Developer Tools</em> dan panel simulasi E2E.
+                </div>
+              )}
+            </div>
+
+            <div className="pt-1 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsAdminMenuOpen(false)}
+                className="px-4 py-2 bg-[#F0F5F2] hover:bg-[#E4ECE7] text-[#17211B] rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DIALOG / DRAWER: ACCEPTANCE TEST E2E SIMULATION (PEMANGGILAN MANUAL) */}
+      <div
+        className={
+          isSimModalOpen
+            ? 'fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn'
+            : 'hidden'
+        }
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="simulation-dialog-title"
+      >
+        <div className="bg-[#F7FAF8] rounded-3xl border border-[#E4ECE7] shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto">
+          {/* DIALOG HEADER */}
+          <div className="bg-white border-b border-[#E4ECE7] px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#DDF8EA] text-[#0E8F52] flex items-center justify-center font-bold">
+                <Terminal className="w-4 h-4 text-[#18B86A]" />
+              </div>
+              <div>
+                <h3 id="simulation-dialog-title" className="font-bold text-sm text-[#17211B]">
+                  Developer Tools — Acceptance Test End-to-End Simulation
+                </h3>
+                <p className="text-[11px] text-[#66736B]">
+                  Simulasi pipeline 15 tahap siklus perjalanan KAWAI 0511 Banjarmasin
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsSimModalOpen(false)}
+              className="px-3.5 py-1.5 bg-[#F0F5F2] hover:bg-[#E4ECE7] text-[#17211B] border border-[#D7E2DB] rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              title="Kembali ke tampilan normal"
+            >
+              <X className="w-4 h-4 text-[#66736B]" />
+              <span>Tutup</span>
+            </button>
+          </div>
+
+          {/* DIALOG BODY - MEMPERTAHANKAN SELURUH STATE & LOGIKA SIMULASI */}
+          <div className="overflow-y-auto p-4 sm:p-6 flex-1">
+            <E2ESimulationRunner />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

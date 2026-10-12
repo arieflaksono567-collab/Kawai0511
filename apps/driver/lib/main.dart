@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const KawaiDriverApp());
@@ -83,6 +84,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () => _openTripHistoryScreen(),
+            tooltip: 'Riwayat Trip Driver (Trip History API)',
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet),
+            onPressed: () => _openEarningsScreen(),
+            tooltip: 'Buku Besar Pendapatan (Earnings API)',
+          ),
           IconButton(
             icon: const Icon(Icons.two_wheeler),
             onPressed: () => _openVehicleScreen(),

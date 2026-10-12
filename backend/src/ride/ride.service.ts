@@ -676,7 +676,7 @@ export class RideService {
   }
 
   // 11. GET USER RIDES
-  async getUserRides(userId: string, role: string): Promise<RideOrder[]> {
+  async getUserRides(userId: string, role: string, driverProfileId?: string): Promise<RideOrder[]> {
     const all = Array.from(this.rides.values());
     if (role === 'CUSTOMER') {
       return all
@@ -684,7 +684,7 @@ export class RideService {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } else if (role === 'DRIVER') {
       return all
-        .filter((r) => r.driverId === userId)
+        .filter((r) => r.driverId === userId || (driverProfileId && r.driverId === driverProfileId))
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

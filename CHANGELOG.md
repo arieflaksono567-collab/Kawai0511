@@ -4,6 +4,43 @@ Semua perubahan pada repositori KAWAI 0511 dicatat secara kronologis berdasarkan
 
 ---
 
+## [Live Map Simulator V1] - 2026-10-11
+### Added
+- **Peta Interaktif & Simulator Perjalanan KAWAI 0511 (`src/components/LiveMapSimulator.tsx`)**:
+  - Peta interaktif berbasis **Leaflet** & **OpenStreetMap** tanpa dependensi Google Maps SDK atau Google Maps API Key.
+  - Pusat awal Kota Banjarmasin, Kalimantan Selatan (`lat: -3.3194, lng: 114.5908`) menampilkan sungai Martapura, jalan protokol, dan persimpangan kota.
+  - Sedia 3 rute contoh riil Banjarmasin:
+    - Rute 1: Duta Mall (Jl. A. Yani) $\rightarrow$ Siring Menara Pandang & Bekantan $\rightarrow$ ULM Kayutangi (5.4 km).
+    - Rute 2: Pasar Terapung Muara Kuin $\rightarrow$ Masjid Raya Sabilal Muhtadin $\rightarrow$ RSUD Ulin (6.2 km).
+    - Rute 3: Kawasan Bisnis & Kuliner Kuripan $\rightarrow$ Menara Pandang Siring Martapura (3.1 km).
+  - Animasi kendaraan motor KAWAI halus (*smooth sub-tick interpolation*) dengan `requestAnimationFrame` dan perhitungan Great-Circle heading/bearing derajat rotasi CSS ikon motor `DA 5110 KAW`.
+  - Kontrol simulasi lengkap: Mulai Simulasi, Jeda, Lanjutkan, Reset, Ikuti Kendaraan (Auto-camera pan on/off), dan Kecepatan Multiplier (1x, 2x, 4x).
+  - Tampilan metrik real-time: Status simulasi, Jarak tempuh (terlalui/total km), Kecepatan (km/jam), dan ETA estimasi sisa waktu.
+  - Isolasi tegas `SIMULATION_MODE` dan `LIVE_GPS_MODE`:
+    - Simulasi rute tidak pernah diklaim sebagai GPS nyata.
+    - Live GPS fisik hanya menggunakan HTML5 Geolocation API dengan izin eksplisit pengguna, marker pulsing dot biru, akurasi radius circle, dan zero-server transmission.
+  - Penanganan kegagalan tile peta (*OpenStreetMap tileerror listener*) dengan banner peringatan informatif, tombol retry, dan fallback visualisasi vektor.
+  - Dock kontrol yang collapsible dan ramah layar mobile Android.
+- **Integrasi Aplikasi & Main UI (`src/App.tsx`, `src/main.tsx`, `src/components/PassengerView.tsx`)**:
+  - Import CSS resmi Leaflet di `src/main.tsx`.
+  - Tab navigasi `Peta & Simulator Live` pada header utama KAWAI 0511.
+  - Tombol cepat akses langsung simulator peta dari `PassengerView`.
+
+---
+
+## [Phase 7.4] - 2026-10-10
+### Added
+- **Passenger & Driver Trip History Engine (`backend/src/ride/ride.controller.ts`, `backend/src/ride/trip-history.repository.ts`, `backend/src/ride/trip-history.types.ts`)**:
+  - Isolasi ketat: Penumpang hanya dapat melihat perjalanannya sendiri (`passengerId`), buku besar pendapatan disembunyikan.
+  - Driver isolation: Pengemudi hanya dapat melihat perjalanan yang ditugaskan kepadanya (`driverId`), dapat melihat catatan pendapatannya sendiri.
+  - Keamanan tanpa kebocoran (*Zero Sensitive Leakage*): Tidak mengekspos OTP, password, token, atau secret.
+  - Safe User Summaries: Ringkasan penumpang aman (nama, nomor telepon termasker, avatar) dan ringkasan driver aman (nama, nomor telepon termasker, plat motor, model motor, rating).
+  - Paginasi komprehensif (`page`, `limit`, `offset`, `total`, `totalPages`, `hasNextPage`, `hasPrevPage`) & pengurutan terbaru lebih dulu (*newest first* / `createdAt DESC`).
+  - Penanganan riwayat kosong (*empty history*) mengembalikan `items: []` tanpa error.
+  - Test suite otomatis: 10 / 10 tests passed (`backend/test/phase7-trip-history.spec.ts`).
+
+---
+
 ## [Phase 7.2] - 2026-10-10
 ### Added
 - **Rating System Service & Endpoints (`backend/src/rating/rating.service.ts` & `backend/src/rating/rating.controller.ts`)**:

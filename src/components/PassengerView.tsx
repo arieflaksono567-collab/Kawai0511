@@ -16,11 +16,14 @@ import {
   Search,
   Sparkles,
   ChevronDown,
-  Info
+  Info,
+  Star,
 } from 'lucide-react';
 import { LocationPoint, Driver } from '../types';
 import { BanjarmasinMap } from './BanjarmasinMap';
 import { PassengerPaymentCard } from './PassengerPaymentCard';
+import { TripHistoryModal } from './TripHistoryModal';
+import { TripDetailModal } from './TripDetailModal';
 import { KAWAI_COLORS } from '../constants/theme';
 
 interface PassengerViewProps {
@@ -33,6 +36,7 @@ interface PassengerViewProps {
   onOrderRide: () => void;
   onCancelRide: () => void;
   driverPosition?: { x: number; y: number; heading?: number; name?: string };
+  onOpenLiveMap?: () => void;
 }
 
 export const PassengerView: React.FC<PassengerViewProps> = ({
@@ -45,12 +49,15 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   onOrderRide,
   onCancelRide,
   driverPosition,
+  onOpenLiveMap,
 }) => {
   const [showPickupPicker, setShowPickupPicker] = useState(false);
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'DIGITAL'>('CASH');
   const [showFareDetail, setShowFareDetail] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedDetailRideId, setSelectedDetailRideId] = useState<string | null>(null);
 
   // Calculate distance based on landmark coordinates or default
   const dx = pickup.x - destination.x;
@@ -90,9 +97,21 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-[#0E8F52] bg-[#DDF8EA] px-2.5 py-1 rounded-full border border-[#18B86A]/20 font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#18B86A] animate-pulse" />
-          <span>Online</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center gap-1.5 text-[11px] text-[#17211B] bg-[#F0F5F2] hover:bg-[#E4ECE7] px-2.5 py-1 rounded-full border border-[#D7E2DB] font-semibold transition cursor-pointer"
+            title="Buka Riwayat Perjalanan Penumpang"
+          >
+            <Clock className="w-3.5 h-3.5 text-[#18B86A]" />
+            <span>Riwayat</span>
+          </button>
+
+          <div className="flex items-center gap-1 text-[11px] text-[#0E8F52] bg-[#DDF8EA] px-2.5 py-1 rounded-full border border-[#18B86A]/20 font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#18B86A] animate-pulse" />
+            <span>Online</span>
+          </div>
         </div>
       </header>
 
@@ -103,7 +122,20 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             <Compass className="w-3.5 h-3.5 text-[#18B86A]" />
             Peta Banjarmasin
           </span>
-          <span className="text-[10px] text-[#A8B2AC]">Sentuh pin untuk ganti rute</span>
+          <div className="flex items-center gap-1.5">
+            {onOpenLiveMap && (
+              <button
+                type="button"
+                onClick={onOpenLiveMap}
+                className="text-[10px] text-[#0E8F52] bg-[#DDF8EA] hover:bg-[#18B86A] hover:text-white border border-[#18B86A]/30 px-2 py-0.5 rounded-md font-bold transition flex items-center gap-1 cursor-pointer"
+                title="Buka Peta Interaktif & Simulator Perjalanan KAWAI 0511"
+              >
+                <Navigation className="w-2.5 h-2.5" />
+                <span>Peta & Simulator Live</span>
+              </button>
+            )}
+            <span className="text-[10px] text-[#A8B2AC]">Sentuh pin</span>
+          </div>
         </div>
 
         <BanjarmasinMap
@@ -465,6 +497,14 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 driverName={activeRide.driver?.name || 'Ahmad Gazali'}
                 onResetOrder={onCancelRide}
               />
+              <button
+                type="button"
+                onClick={() => setSelectedDetailRideId(activeRide.id || 'ride-0511-102')}
+                className="w-full py-2.5 bg-white hover:bg-[#F0F5F2] text-[#0E8F52] border border-[#18B86A]/40 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <Star className="w-3.5 h-3.5 fill-[#18B86A]" />
+                <span>Lihat Detail Perjalanan & Beri Rating</span>
+              </button>
             </div>
           )}
 
@@ -564,6 +604,23 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* TRIP HISTORY MODAL (PASSENGER) */}
+      <TripHistoryModal
+        role="CUSTOMER"
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+      />
+
+      {/* SINGLE TRIP DETAIL MODAL (PASSENGER) */}
+      {selectedDetailRideId && (
+        <TripDetailModal
+          rideId={selectedDetailRideId}
+          role="CUSTOMER"
+          isOpen={Boolean(selectedDetailRideId)}
+          onClose={() => setSelectedDetailRideId(null)}
+        />
       )}
     </div>
   );

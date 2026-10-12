@@ -1,0 +1,53 @@
+name: KAWAI 0511 CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/**'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Lint, Typecheck, Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci || npm install
+
+      - name: Frontend Typecheck
+        run: npm run lint
+
+      - name: Frontend Build
+        run: npm run build
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci || npm install
+
+      - name: Backend Typecheck
+        run: |
+          cd backend
+          npx tsc --noEmit
+
+      - name: Run Backend Acceptance Test Suites
+        run: |
+          cd backend
+          npx tsx test/phase7-trip-detail.spec.ts
+          npx tsx test/phase7-trip-history.spec.ts
+          npx tsx test/phase7-driver-earnings.spec.ts
+          npx tsx test/phase7-rating-system.spec.ts

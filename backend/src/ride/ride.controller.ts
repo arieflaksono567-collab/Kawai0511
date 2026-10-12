@@ -4,16 +4,21 @@ import {
   Get,
   Body,
   Param,
+  Query,
   UseGuards,
   Req,
   HttpCode,
   HttpStatus,
-  Optional,
   BadRequestException,
 } from '@nestjs/common';
 import { RideService, RideOrder } from './ride.service';
 import { CreateRideDto } from './dto/create-ride.dto';
 import { CancelRideDto } from './dto/cancel-ride.dto';
+import { TripHistoryQueryDto } from './dto/trip-history-query.dto';
+import { TripHistoryResponseDto, TripHistoryDetail } from './trip-history.types';
+import { TripHistoryService } from './trip-history.service';
+import { TripDetailService } from './trip-detail.service';
+import { TripDetailResponseDto } from './trip-detail.types';
 import { CreateRatingDto } from '../rating/dto/create-rating.dto';
 import { RatingService } from '../rating/rating.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -25,7 +30,9 @@ import { Role } from '../auth/roles.enum';
 export class RideController {
   constructor(
     private readonly rideService: RideService,
-    @Optional() private readonly ratingService?: RatingService
+    private readonly ratingService?: RatingService,
+    private readonly tripHistoryService?: TripHistoryService,
+    private readonly tripDetailService?: TripDetailService
   ) {}
 
   // 1. PASSENGER CREATES RIDE ORDER (SEARCHING)
@@ -45,6 +52,63 @@ export class RideController {
     const userId = req.user?.id || 'b0000000-0000-0000-0000-000000000002';
     const role = req.user?.role || 'CUSTOMER';
     return this.rideService.getUserRides(userId, role);
+  }
+
+  // 2b. GET TRIP HISTORY (Passenger & Driver with strict data isolation, pagination & sorting)
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getTripHistory(
+    @Req() req: any,
+    @Query() query: TripHistoryQueryDto
+  ): Promise<TripHistoryResponseDto> {
+    if (!this.tripHistoryService) {
+      throw new BadRequestException('Trip history service is not initialized');
+    }
+    const user = req.user || {
+      id: 'b0000000-0000-0000-0000-000000000002',
+      role: 'CUSTOMER',
+    };
+    return this.tripHistoryService.getTripHistory(user, query);
+  }
+
+  // 2c. GET SINGLE TRIP HISTORY DETAIL BY ID
+  @Get('history/:id')
+  @UseGuards(JwtAuthGuard)
+  async getTripHistoryDetail(
+    @Req() req: any,
+    @Param('id') id: string
+  ): Promise<TripDetailResponseDto | TripHistoryDetail> {
+    const user = req.user || {
+      id: 'b0000000-0000-0000-0000-000000000002',
+      role: 'CUSTOMER',
+    };
+    if (this.tripDetailService) {
+      return this.tripDetailService.getTripDetail(id, user);
+    }
+    if (this.tripHistoryService) {
+      return this.tripHistoryService.getTripDetail(id, user);
+    }
+    throw new BadRequestException('Trip history service is not initialized');
+  }
+
+  // 2d. GET SINGLE TRIP DETAIL (PHASE 7.5: Endpoint detail satu perjalanan)
+  @Get(':id/detail')
+  @UseGuards(JwtAuthGuard)
+  async getTripDetail(
+    @Req() req: any,
+    @Param('id') id: string
+  ): Promise<TripDetailResponseDto> {
+    const user = req.user || {
+      id: 'b0000000-0000-0000-0000-000000000002',
+      role: 'CUSTOMER',
+    };
+    if (this.tripDetailService) {
+      return this.tripDetailService.getTripDetail(id, user);
+    }
+    if (this.tripHistoryService) {
+      return this.tripHistoryService.getTripDetail(id, user) as any;
+    }
+    throw new BadRequestException('Trip detail service is not initialized');
   }
 
   // 3. GET SPECIFIC RIDE BY ID

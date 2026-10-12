@@ -882,31 +882,75 @@ function kawaiApiPlugin(): Plugin {
           return;
         }
 
-        // 11. GET /drivers/me/earnings & /drivers/earnings (Phase 6C Authoritative Ledger)
+        // 11. GET /drivers/me/earnings & /drivers/earnings (Phase 6C & Phase 7.3 Authoritative Ledger)
         if (
           url.startsWith('/drivers/me/earnings') ||
           url.startsWith('/api/drivers/me/earnings') ||
           url === '/drivers/earnings' ||
           url === '/api/drivers/earnings'
         ) {
+          const urlObj = new URL(url, 'http://localhost');
+          const isSummary = urlObj.pathname.includes('/summary');
+          const period = urlObj.searchParams.get('period') || 'today';
+
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
+
+          if (isSummary) {
+            res.end(
+              JSON.stringify({
+                driverId: 'd0000000-0000-0000-0000-000000000001',
+                today: { totalTrips: 12, totalGross: 218235, totalFee: 32735, totalNet: 185500 },
+                week: { totalTrips: 74, totalGross: 1458823, totalFee: 218823, totalNet: 1240000 },
+                month: { totalTrips: 280, totalGross: 5529412, totalFee: 829412, totalNet: 4700000 },
+                allTime: { totalTrips: 342, totalGross: 6764706, totalFee: 1014706, totalNet: 5750000 },
+                ledgerBalance: 5750000,
+                authoritativeSource: 'LEDGER',
+                ledgerAccountId: 'DRIVER_PAYABLE_d0000000',
+                currency: 'IDR',
+              })
+            );
+            return;
+          }
+
+          let grossFare = 218235;
+          let netFare = 185500;
+          let platformFee = 32735;
+          let totalTrips = 12;
+
+          if (period === 'week') {
+            grossFare = 1458823;
+            netFare = 1240000;
+            platformFee = 218823;
+            totalTrips = 74;
+          } else if (period === 'month') {
+            grossFare = 5529412;
+            netFare = 4700000;
+            platformFee = 829412;
+            totalTrips = 280;
+          } else if (period === 'all-time') {
+            grossFare = 6764706;
+            netFare = 5750000;
+            platformFee = 1014706;
+            totalTrips = 342;
+          }
+
           res.end(
             JSON.stringify({
               driverId: 'd0000000-0000-0000-0000-000000000001',
-              totalCompletedRides: 12,
-              grossFare: 218235,
-              driverEarnings: 185500,
-              platformFee: 32735,
+              totalCompletedRides: totalTrips,
+              grossFare,
+              driverEarnings: netFare,
+              platformFee,
               todayEarnings: 185500,
               todayRides: 12,
               weekEarnings: 1240000,
               weekRides: 74,
               currency: 'IDR',
-              period: 'today',
+              period,
               authoritativeSource: 'LEDGER',
               ledgerAccountId: 'DRIVER_PAYABLE_d0000000',
-              ledgerBalance: 185500,
+              ledgerBalance: netFare,
             })
           );
           return;
@@ -1297,10 +1341,171 @@ function kawaiApiPlugin(): Plugin {
           cancelledAt?: string;
           currentAttemptNumber?: number;
           lastRejectedReason?: string;
+          payment?: any;
+          rating?: any;
         }
 
         if (!(globalThis as any).__devRides) {
-          (globalThis as any).__devRides = new Map<string, DevRideItem>();
+          const store = new Map<string, DevRideItem>();
+          // Seed realistic initial Banjarmasin historical trips for passenger and driver
+          store.set('ride-0511-101', {
+            id: 'ride-0511-101',
+            passengerId: 'b0000000-0000-0000-0000-000000000002',
+            passengerName: 'Arief Laksono',
+            pickupAddress: 'Duta Mall Banjarmasin, Jl. A. Yani Km 2',
+            pickupLat: -3.319437,
+            pickupLng: 114.590822,
+            destinationAddress: 'RSUD Ulin Banjarmasin, Jl. A. Yani Km 2.5',
+            destinationLat: -3.3225,
+            destinationLng: 114.5942,
+            distanceKm: 2.4,
+            durationMinutes: 9,
+            totalFare: 14500,
+            fareSnapshot: { baseFare: 7000, distanceKm: 2.4, durationMinutes: 9, totalFare: 14500 },
+            status: 'COMPLETED',
+            version: 5,
+            driverId: 'd0000000-0000-0000-0000-000000000001',
+            driver: {
+              id: 'd0000000-0000-0000-0000-000000000001',
+              name: 'Ahmad Gazali',
+              phone: '+6281390511200',
+              vehiclePlate: 'DA 5110 KAW',
+              vehicleModel: 'Honda Vario 160',
+              rating: 4.9,
+            },
+            createdAt: '2026-10-11T06:30:00.000Z',
+            assignedAt: '2026-10-11T06:31:00.000Z',
+            arrivedAt: '2026-10-11T06:33:00.000Z',
+            startedAt: '2026-10-11T06:35:00.000Z',
+            completedAt: '2026-10-11T06:44:00.000Z',
+            payment: {
+              id: 'pay-0511-101',
+              method: 'DIGITAL',
+              status: 'PAID',
+              amount: 14500,
+              isSettled: true,
+              paidAt: '2026-10-11T06:44:30.000Z',
+            },
+            rating: {
+              id: 'rat-0511-101',
+              score: 5,
+              comment: 'Driver sangat ramah, helm bersih dan wangi!',
+              createdAt: '2026-10-11T06:45:00.000Z',
+            },
+          });
+
+          store.set('ride-0511-102', {
+            id: 'ride-0511-102',
+            passengerId: 'b0000000-0000-0000-0000-000000000002',
+            passengerName: 'Arief Laksono',
+            pickupAddress: 'Siring Menara Pandang, Jl. Pierre Tendean',
+            pickupLat: -3.3182,
+            pickupLng: 114.5912,
+            destinationAddress: 'Kampus ULM Banjarmasin, Kayu Tangi',
+            destinationLat: -3.2985,
+            destinationLng: 114.5880,
+            distanceKm: 4.8,
+            durationMinutes: 16,
+            totalFare: 20500,
+            fareSnapshot: { baseFare: 7000, distanceKm: 4.8, durationMinutes: 16, totalFare: 20500 },
+            status: 'COMPLETED',
+            version: 5,
+            driverId: 'd0000000-0000-0000-0000-000000000001',
+            driver: {
+              id: 'd0000000-0000-0000-0000-000000000001',
+              name: 'Ahmad Gazali',
+              phone: '+6281390511200',
+              vehiclePlate: 'DA 5110 KAW',
+              vehicleModel: 'Honda Vario 160',
+              rating: 4.9,
+            },
+            createdAt: '2026-10-11T03:00:00.000Z',
+            assignedAt: '2026-10-11T03:01:00.000Z',
+            arrivedAt: '2026-10-11T03:03:00.000Z',
+            startedAt: '2026-10-11T03:05:00.000Z',
+            completedAt: '2026-10-11T03:21:00.000Z',
+            payment: {
+              id: 'pay-0511-102',
+              method: 'CASH',
+              status: 'PAID',
+              amount: 20500,
+              isSettled: true,
+              paidAt: '2026-10-11T03:21:00.000Z',
+            },
+            // unrated: ready to be rated via UI!
+            rating: null,
+          });
+
+          store.set('ride-0511-103', {
+            id: 'ride-0511-103',
+            passengerId: 'b0000000-0000-0000-0000-000000000002',
+            passengerName: 'Arief Laksono',
+            pickupAddress: 'Pasar Terapung Lok Baintan, Sungai Martapura',
+            pickupLat: -3.3082,
+            pickupLng: 114.6150,
+            destinationAddress: 'Swiss-Belhotel Borneo, Jl. Pangeran Antasari',
+            destinationLat: -3.3250,
+            destinationLng: 114.5950,
+            distanceKm: 6.5,
+            durationMinutes: 22,
+            totalFare: 25000,
+            fareSnapshot: { baseFare: 7000, distanceKm: 6.5, durationMinutes: 22, totalFare: 25000 },
+            status: 'COMPLETED',
+            version: 5,
+            driverId: 'd0000000-0000-0000-0000-000000000001',
+            driver: {
+              id: 'd0000000-0000-0000-0000-000000000001',
+              name: 'Ahmad Gazali',
+              phone: '+6281390511200',
+              vehiclePlate: 'DA 5110 KAW',
+              vehicleModel: 'Honda Vario 160',
+              rating: 4.9,
+            },
+            createdAt: '2026-10-10T08:45:00.000Z',
+            assignedAt: '2026-10-10T08:46:00.000Z',
+            arrivedAt: '2026-10-10T08:49:00.000Z',
+            startedAt: '2026-10-10T08:52:00.000Z',
+            completedAt: '2026-10-10T09:14:00.000Z',
+            payment: {
+              id: 'pay-0511-103',
+              method: 'DIGITAL',
+              status: 'PAID',
+              amount: 25000,
+              isSettled: true,
+              paidAt: '2026-10-10T09:14:30.000Z',
+            },
+            rating: {
+              id: 'rat-0511-103',
+              score: 5,
+              comment: 'Paham jalan tikus, bebas macet!',
+              createdAt: '2026-10-10T09:15:00.000Z',
+            },
+          });
+
+          store.set('ride-0511-104', {
+            id: 'ride-0511-104',
+            passengerId: 'b0000000-0000-0000-0000-000000000002',
+            passengerName: 'Arief Laksono',
+            pickupAddress: 'Kuripan, Jl. Veteran',
+            pickupLat: -3.3220,
+            pickupLng: 114.6010,
+            destinationAddress: 'Patung Bekantan Siring Tendean',
+            destinationLat: -3.3190,
+            destinationLng: 114.5920,
+            distanceKm: 3.1,
+            durationMinutes: 11,
+            totalFare: 10000,
+            fareSnapshot: { baseFare: 7000, distanceKm: 3.1, durationMinutes: 11, totalFare: 10000 },
+            status: 'CANCELLED',
+            cancellationReason: 'Penumpang membatalkan karena perubahan rencana',
+            version: 2,
+            createdAt: '2026-10-09T04:10:00.000Z',
+            cancelledAt: '2026-10-09T04:12:00.000Z',
+            payment: null,
+            rating: null,
+          });
+
+          (globalThis as any).__devRides = store;
         }
         const devRides: Map<string, DevRideItem> = (globalThis as any).__devRides;
 
@@ -1370,6 +1575,282 @@ function kawaiApiPlugin(): Plugin {
             res.statusCode = 201;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(rideItem));
+          });
+          return;
+        }
+
+        // 18a. GET /rides/history (Phase 7.4 Trip History Engine)
+        if (req.method === 'GET' && (url.startsWith('/rides/history') || url.startsWith('/api/rides/history'))) {
+          const urlObj = new URL(url, 'http://localhost');
+          const pathname = urlObj.pathname.replace(/^\/api/, '');
+          if (pathname === '/rides/history') {
+            const role = urlObj.searchParams.get('role') || 'CUSTOMER';
+            const statusFilter = urlObj.searchParams.get('status');
+            const page = parseInt(urlObj.searchParams.get('page') || '1', 10);
+            const limit = parseInt(urlObj.searchParams.get('limit') || '20', 10);
+
+            let allRides = Array.from(devRides.values()).sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            if (statusFilter) {
+              allRides = allRides.filter((r) => r.status === statusFilter);
+            }
+
+            const total = allRides.length;
+            const totalPages = Math.ceil(total / limit) || 1;
+            const offset = (page - 1) * limit;
+            const paged = allRides.slice(offset, offset + limit);
+
+            const items = paged.map((r) => {
+              const driverShare = Math.round(r.totalFare * 0.85);
+              return {
+                id: r.id,
+                rideId: r.id,
+                passengerId: r.passengerId,
+                driverId: r.driverId || null,
+                status: r.status,
+                rideStatus: r.status,
+                cancellationReason: r.cancellationReason || null,
+                pickup: { address: r.pickupAddress, lat: r.pickupLat, lng: r.pickupLng },
+                destination: { address: r.destinationAddress, lat: r.destinationLat, lng: r.destinationLng },
+                distanceKm: r.distanceKm,
+                durationMinutes: r.durationMinutes,
+                fare: {
+                  totalFare: r.totalFare,
+                  baseFare: r.fareSnapshot?.baseFare || 7000,
+                  distanceFare: r.fareSnapshot?.distanceFare || Math.round(r.distanceKm * 2200),
+                  durationFare: r.fareSnapshot?.durationFare || Math.round(r.durationMinutes * 200),
+                },
+                totalFare: r.totalFare,
+                payment: r.payment || (r.status === 'COMPLETED' ? {
+                  id: 'pay-' + r.id.slice(-6),
+                  method: 'DIGITAL',
+                  status: 'PAID',
+                  amount: r.totalFare,
+                  isSettled: true,
+                  paidAt: r.completedAt || r.createdAt,
+                } : null),
+                rating: r.rating || null,
+                timestamps: {
+                  createdAt: r.createdAt,
+                  assignedAt: r.assignedAt || null,
+                  arrivedAt: r.arrivedAt || null,
+                  startedAt: r.startedAt || null,
+                  completedAt: r.completedAt || null,
+                  cancelledAt: r.cancelledAt || null,
+                  updatedAt: r.createdAt,
+                },
+                createdAt: r.createdAt,
+                completedAt: r.completedAt || null,
+                cancelledAt: r.cancelledAt || null,
+                passenger: {
+                  id: r.passengerId,
+                  fullName: r.passengerName || 'Arief Laksono',
+                  phoneNumber: '+62812****0987',
+                },
+                driver: r.driver ? {
+                  id: r.driver.id,
+                  name: r.driver.name,
+                  phone: '+62813****1200',
+                  vehiclePlate: r.driver.vehiclePlate,
+                  vehicleModel: r.driver.vehicleModel,
+                  rating: r.driver.rating || 4.9,
+                } : null,
+                earnings: role === 'DRIVER' && r.status === 'COMPLETED' ? {
+                  id: 'earn-' + r.id.slice(-6),
+                  driverId: r.driverId || 'd0000000-0000-0000-0000-000000000001',
+                  rideId: r.id,
+                  grossAmount: r.totalFare,
+                  platformFee: r.totalFare - driverShare,
+                  netAmount: driverShare,
+                  currency: 'IDR',
+                  status: 'SETTLED',
+                  settledAt: r.completedAt || r.createdAt,
+                } : undefined,
+                pickupAddress: r.pickupAddress,
+                pickupLat: r.pickupLat,
+                pickupLng: r.pickupLng,
+                destinationAddress: r.destinationAddress,
+                destinationLat: r.destinationLat,
+                destinationLng: r.destinationLng,
+              };
+            });
+
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                items,
+                total,
+                limit,
+                offset,
+                page,
+                totalPages,
+                pagination: {
+                  total,
+                  page,
+                  limit,
+                  totalPages,
+                  hasNextPage: page < totalPages,
+                  hasPrevPage: page > 1,
+                },
+              })
+            );
+            return;
+          }
+        }
+
+        // 18b. GET /rides/:id/detail & GET /rides/history/:id (Phase 7.5 Single Trip Detail)
+        if (
+          req.method === 'GET' &&
+          (url.match(/^\/(api\/)?rides\/[a-zA-Z0-9_-]+\/detail(\?.*)?$/) ||
+            url.match(/^\/(api\/)?rides\/history\/[a-zA-Z0-9_-]+(\?.*)?$/))
+        ) {
+          const urlObj = new URL(url, 'http://localhost');
+          const segments = urlObj.pathname.split('/').filter(Boolean);
+          let targetRideId = '';
+          if (segments[segments.length - 1] === 'detail') {
+            targetRideId = segments[segments.length - 2];
+          } else {
+            targetRideId = segments[segments.length - 1];
+          }
+
+          let r = devRides.get(targetRideId);
+          if (!r) {
+            r = devRides.values().next().value;
+          }
+
+          if (!r) {
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Detail perjalanan tidak ditemukan' }));
+            return;
+          }
+
+          const role = urlObj.searchParams.get('role') || 'CUSTOMER';
+          const driverShare = Math.round(r.totalFare * 0.85);
+
+          const detail = {
+            id: r.id,
+            rideId: r.id,
+            passengerId: r.passengerId,
+            driverId: r.driverId || null,
+            status: r.status,
+            rideStatus: r.status,
+            cancellationReason: r.cancellationReason || null,
+            pickup: { address: r.pickupAddress, lat: r.pickupLat, lng: r.pickupLng },
+            destination: { address: r.destinationAddress, lat: r.destinationLat, lng: r.destinationLng },
+            distanceKm: r.distanceKm,
+            durationMinutes: r.durationMinutes,
+            route: null,
+            fare: {
+              totalFare: r.totalFare,
+              baseFare: r.fareSnapshot?.baseFare || 7000,
+              distanceFare: r.fareSnapshot?.distanceFare || Math.round(r.distanceKm * 2200),
+              durationFare: r.fareSnapshot?.durationFare || Math.round(r.durationMinutes * 200),
+              perKmRate: 2200,
+              perMinuteRate: 200,
+              minimumFare: 10000,
+            },
+            totalFare: r.totalFare,
+            payment: r.payment || (r.status === 'COMPLETED' ? {
+              id: 'pay-' + r.id.slice(-6),
+              method: 'DIGITAL',
+              status: 'PAID',
+              amount: r.totalFare,
+              isSettled: true,
+              paidAt: r.completedAt || r.createdAt,
+            } : null),
+            rating: r.rating || null,
+            timestamps: {
+              createdAt: r.createdAt,
+              assignedAt: r.assignedAt || null,
+              arrivedAt: r.arrivedAt || null,
+              startedAt: r.startedAt || null,
+              completedAt: r.completedAt || null,
+              cancelledAt: r.cancelledAt || null,
+              updatedAt: r.createdAt,
+            },
+            createdAt: r.createdAt,
+            completedAt: r.completedAt || null,
+            cancelledAt: r.cancelledAt || null,
+            passenger: {
+              id: r.passengerId,
+              fullName: r.passengerName || 'Arief Laksono',
+              phoneNumber: '+62812****0987',
+            },
+            driver: r.driver ? {
+              id: r.driver.id,
+              name: r.driver.name,
+              phone: '+62813****1200',
+              vehiclePlate: r.driver.vehiclePlate,
+              vehicleModel: r.driver.vehicleModel,
+              rating: r.driver.rating || 4.9,
+            } : null,
+            earnings: role === 'DRIVER' && r.status === 'COMPLETED' ? {
+              id: 'earn-' + r.id.slice(-6),
+              driverId: r.driverId || 'd0000000-0000-0000-0000-000000000001',
+              rideId: r.id,
+              grossAmount: r.totalFare,
+              platformFee: r.totalFare - driverShare,
+              netAmount: driverShare,
+              currency: 'IDR',
+              status: 'SETTLED',
+              settledAt: r.completedAt || r.createdAt,
+            } : undefined,
+            pickupAddress: r.pickupAddress,
+            pickupLat: r.pickupLat,
+            pickupLng: r.pickupLng,
+            destinationAddress: r.destinationAddress,
+            destinationLat: r.destinationLat,
+            destinationLng: r.destinationLng,
+          };
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(detail));
+          return;
+        }
+
+        // 18c. POST /rides/:id/rating & POST /ratings (Phase 7.2 Rating System)
+        if (
+          req.method === 'POST' &&
+          (url.match(/^\/(api\/)?rides\/[a-zA-Z0-9_-]+\/rating(\?.*)?$/) ||
+            url === '/ratings' ||
+            url === '/api/ratings')
+        ) {
+          readBody((data) => {
+            let targetRideId = data.rideId;
+            if (!targetRideId && url.includes('/rides/')) {
+              const parts = url.split('/');
+              const ratingIdx = parts.indexOf('rating');
+              if (ratingIdx > 0) {
+                targetRideId = parts[ratingIdx - 1];
+              }
+            }
+
+            const r = devRides.get(targetRideId) || devRides.values().next().value;
+            const score = typeof data.score === 'number' ? Math.max(1, Math.min(5, data.score)) : 5;
+            const comment = data.comment || '';
+            const tipAmount = data.tipAmount || 0;
+
+            const ratingEntity = {
+              id: 'rat-' + Date.now().toString().slice(-6),
+              rideId: r ? r.id : targetRideId || 'ride-0511-demo',
+              score,
+              comment,
+              tipAmount,
+              createdAt: new Date().toISOString(),
+            };
+
+            if (r) {
+              r.rating = ratingEntity;
+            }
+
+            res.statusCode = 201;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(ratingEntity));
           });
           return;
         }

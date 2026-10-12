@@ -68,9 +68,12 @@ export const DriverEarningsCard: React.FC<DriverEarningsCardProps> = ({
   }, [driverId]);
 
   const handleOpenHistory = () => {
-    setShowHistoryModal(true);
     fetchEarnings();
-    if (onViewHistory) onViewHistory();
+    if (onViewHistory) {
+      onViewHistory();
+    } else {
+      setShowHistoryModal(true);
+    }
   };
 
   return (
