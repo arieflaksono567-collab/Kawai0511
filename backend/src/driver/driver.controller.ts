@@ -138,11 +138,14 @@ export class DriverAdminController {
   constructor(private readonly driverService: DriverService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async listDrivers() {
     return this.driverService.adminListDrivers();
   }
 
   @Get(':id/earnings')
+  @UseGuards(JwtAuthGuard)
   async getDriverEarningsAdmin(
     @Param('id') id: string,
     @Query('period') period?: string,
@@ -152,28 +155,37 @@ export class DriverAdminController {
   }
 
   @Get(':id/earnings/summary')
+  @UseGuards(JwtAuthGuard)
   async getDriverEarningsSummaryAdmin(@Param('id') id: string, @Req() req?: any) {
     return this.driverService.getDriverEarningsSummary(id, req?.user);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getDriverDetails(@Param('id') id: string) {
     return this.driverService.adminGetDriverDetails(id);
   }
 
   @Get(':id/documents')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getDriverDocuments(@Param('id') id: string) {
     const details = await this.driverService.adminGetDriverDetails(id);
     return details.documents;
   }
 
   @Get(':id/vehicles')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getDriverVehicles(@Param('id') id: string) {
     const details = await this.driverService.adminGetDriverDetails(id);
     return details.vehicles;
   }
 
   @Post(':id/documents/:documentId/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async approveDocument(
     @Req() req: any,
     @Param('id') driverId: string,
@@ -183,6 +195,8 @@ export class DriverAdminController {
   }
 
   @Post(':id/documents/:documentId/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async rejectDocument(
     @Req() req: any,
     @Param('id') driverId: string,
@@ -193,6 +207,8 @@ export class DriverAdminController {
   }
 
   @Post(':id/vehicles/:vehicleId/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async approveVehicle(
     @Req() req: any,
     @Param('id') driverId: string,
@@ -202,6 +218,8 @@ export class DriverAdminController {
   }
 
   @Post(':id/vehicles/:vehicleId/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async rejectVehicle(
     @Req() req: any,
     @Param('id') driverId: string,
@@ -212,21 +230,29 @@ export class DriverAdminController {
   }
 
   @Post(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async approveDriver(@Req() req: any, @Param('id') driverId: string) {
     return this.driverService.adminApproveDriver(req.user.id, driverId);
   }
 
   @Post(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async rejectDriver(@Req() req: any, @Param('id') driverId: string, @Body() dto: AdminRejectDto) {
     return this.driverService.adminRejectDriver(req.user.id, driverId, dto.reason);
   }
 
   @Post(':id/suspend')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async suspendDriver(@Req() req: any, @Param('id') driverId: string, @Body() dto: AdminSuspendDto) {
     return this.driverService.adminSuspendDriver(req.user.id, driverId, dto.reason);
   }
 
   @Post(':id/unsuspend')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async unsuspendDriver(@Req() req: any, @Param('id') driverId: string) {
     return this.driverService.adminUnsuspendDriver(req.user.id, driverId);
   }

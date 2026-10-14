@@ -47,6 +47,11 @@ jobs:
       - name: Run Backend Acceptance Test Suites
         run: |
           cd backend
+          npx tsx test/security-authorization.spec.ts
+          npx tsx test/phase6a-payment-ledger.spec.ts
+          npx tsx test/phase6b-payment-service.spec.ts
+          npx tsx test/phase6c-settlement-earnings.spec.ts
+          npx tsx test/phase7-database-foundation.spec.ts
           npx tsx test/phase7-trip-detail.spec.ts
           npx tsx test/phase7-trip-history.spec.ts
           npx tsx test/phase7-driver-earnings.spec.ts

@@ -122,7 +122,10 @@ describe('Phase 7.1: Database Foundation — Rating, Earnings Ledger & Trip Hist
   // TEST 1: MIGRATION 010 SQL FILE VALIDATION
   // ===========================================================================
   test('1. Migration 010 SQL: validates DDL syntax, constraints, foreign keys, and indexes', () => {
-    const migrationPath = path.resolve(process.cwd(), 'database/migrations/010_rating_earnings_history.sql');
+    let migrationPath = path.resolve(process.cwd(), 'database/migrations/010_rating_earnings_history.sql');
+    if (!fs.existsSync(migrationPath)) {
+      migrationPath = path.resolve(process.cwd(), '../database/migrations/010_rating_earnings_history.sql');
+    }
     assert.ok(fs.existsSync(migrationPath), 'Migration 010 file must exist in database/migrations');
 
     const sql = fs.readFileSync(migrationPath, 'utf8');

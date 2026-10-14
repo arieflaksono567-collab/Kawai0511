@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 /**
  * WebSocket Gateway Protocol Representation
@@ -13,15 +13,71 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class RealtimeGateway {
-  handleConnection(client: any) {
-    return { event: 'connected', timestamp: new Date().toISOString() };
+  private readonly logger = new Logger(RealtimeGateway.name);
+
+  authenticateSocket(client: any): { authenticated: boolean; user?: { id: string; role: string } } {
+    const rawToken =
+      client?.handshake?.auth?.token ||
+      client?.handshake?.headers?.authorization?.replace(/^Bearer\s+/i, '');
+
+    if (!rawToken) {
+      return { authenticated: false };
+    }
+
+    try {
+      const parts = rawToken.split('.');
+      if (parts.length !== 3) {
+        return { authenticated: false };
+      }
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+      if (payload.exp && Date.now() / 1000 > payload.exp) {
+        return { authenticated: false };
+      }
+      return {
+        authenticated: true,
+        user: { id: payload.sub, role: payload.role },
+      };
+    } catch {
+      return { authenticated: false };
+    }
   }
 
-  handleChatMessage(payload: { orderId: string; message: string; senderRole: string }) {
+  handleConnection(client: any) {
+    const auth = this.authenticateSocket(client);
+    if (!auth.authenticated) {
+      this.logger.warn('Unauthorized WebSocket connection attempt rejected');
+      if (typeof client?.disconnect === 'function') {
+        client.disconnect(true);
+      }
+      return { event: 'error', code: 'UNAUTHORIZED', message: 'Koneksi WebSocket ditolak: token tidak valid' };
+    }
+
+    if (client) {
+      client.user = auth.user;
+    }
+    return { event: 'connected', user: auth.user, timestamp: new Date().toISOString() };
+  }
+
+  handleChatMessage(
+    payload: { orderId: string; message: string; senderRole: string },
+    client?: any
+  ) {
+    if (!payload?.orderId || !payload?.message?.trim()) {
+      return { event: 'error', code: 'INVALID_PAYLOAD', message: 'Payload chat tidak lengkap' };
+    }
+
+    // Verify sender identity from authenticated socket if present
+    if (client?.user) {
+      if (client.user.role !== payload.senderRole && client.user.role !== 'ADMIN') {
+        return { event: 'error', code: 'FORBIDDEN', message: 'Role pengirim tidak sesuai dengan kredensial aktif' };
+      }
+    }
+
     return {
       event: 'chat:message',
       payload: {
         ...payload,
+        message: payload.message.trim(),
         timestamp: new Date().toISOString(),
       },
     };

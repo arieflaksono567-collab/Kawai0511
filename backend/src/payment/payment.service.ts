@@ -621,7 +621,11 @@ export class PaymentService {
       throw new NotFoundException(`Payment ${paymentId} not found`);
     }
 
-    if (user && user.role !== Role.ADMIN) {
+    if (!user) {
+      throw new UnauthorizedException('Konteks autentikasi pengguna dibutuhkan untuk refund');
+    }
+
+    if (user.role !== Role.ADMIN) {
       throw new ForbiddenException(
         'Hanya ADMIN yang memiliki hak akses untuk memproses refund pembayaran'
       );

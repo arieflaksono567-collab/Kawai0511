@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { TopUpDto } from './dto/topup.dto';
 import { PayRideDto } from './dto/pay-ride.dto';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('wallet')
+@UseGuards(JwtAuthGuard)
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 

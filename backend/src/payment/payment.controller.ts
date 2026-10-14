@@ -10,10 +10,15 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { LedgerService } from './ledger.service';
 import { DriverEarningsService } from './driver-earnings.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles.enum';
 import {
   CreatePaymentDto,
   CancelPaymentDto,
@@ -34,6 +39,7 @@ export class PaymentController {
    * Create payment for completed ride (CASH or DIGITAL)
    */
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     if (req.user && !dto.payerId) {
@@ -56,6 +62,7 @@ export class PaymentController {
    * Get payment details (authorized for passenger owner, driver payee, or admin)
    */
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getPayment(@Req() req: any, @Param('id') id: string) {
     const payment = this.paymentService.getPaymentById(id, req.user);
     if (!payment) {
@@ -69,6 +76,7 @@ export class PaymentController {
    * Normalized payment status view
    */
   @Get(':id/status')
+  @UseGuards(JwtAuthGuard)
   async getPaymentStatus(@Req() req: any, @Param('id') id: string) {
     const status = this.paymentService.getPaymentStatus(id, req.user);
     return { statusCode: HttpStatus.OK, data: status };
@@ -79,6 +87,7 @@ export class PaymentController {
    * Cancel pending payment
    */
   @Post(':id/cancel')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async cancelPayment(
     @Req() req: any,
@@ -102,6 +111,8 @@ export class PaymentController {
    * Refund a paid payment (Admin only)
    */
   @Post(':id/refund')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   async refundPayment(
     @Req() req: any,
@@ -123,9 +134,11 @@ export class PaymentController {
 
   /**
    * POST /payments/:id/settle
-   * Explicit Settlement trigger for PAID payments (Phase 6C)
+   * Explicit Settlement trigger for PAID payments (Phase 6C, Admin only)
    */
   @Post(':id/settle')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   async settlePayment(@Param('id') id: string) {
     const settlement = await this.paymentService.settlePayment(id);
@@ -138,9 +151,11 @@ export class PaymentController {
 
   /**
    * GET /payments/:id/settlement
-   * Get settlement details for a payment
+   * Get settlement details for a payment (Admin only)
    */
   @Get(':id/settlement')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getPaymentSettlement(@Param('id') id: string) {
     const settlement = this.paymentService.getSettlementByPaymentId(id);
     if (!settlement) {
@@ -180,6 +195,7 @@ export class PaymentController {
    * GET /payments/ride/:rideId
    */
   @Get('ride/:rideId')
+  @UseGuards(JwtAuthGuard)
   async getPaymentByRide(@Req() req: any, @Param('rideId') rideId: string) {
     const payment = this.paymentService.getPaymentByRideId(rideId, req.user);
     if (!payment) {
@@ -191,18 +207,22 @@ export class PaymentController {
   }
 
   /**
-   * GET /payments/config/split
+   * GET /payments/config/split (Admin only)
    */
   @Get('config/split')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getSplitConfig() {
     const config = this.paymentService.getSplitConfig();
     return { statusCode: HttpStatus.OK, data: config };
   }
 
   /**
-   * PUT /payments/config/split
+   * PUT /payments/config/split (Admin only)
    */
   @Put('config/split')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async updateSplitConfig(@Body() dto: UpdateSplitConfigDto) {
     const updated = this.paymentService.setSplitConfig(
       dto.driverSharePercent,
@@ -220,6 +240,7 @@ export class PaymentController {
    * Dashboard pendapatan driver dari Database Ledger (Phase 7.3)
    */
   @Get('driver-earnings/:driverId')
+  @UseGuards(JwtAuthGuard)
   async getDriverEarningsDashboard(
     @Param('driverId') driverId: string,
     @Req() req: any
@@ -241,6 +262,7 @@ export class PaymentController {
    * Ringkasan multi-periode pendapatan driver
    */
   @Get('driver-earnings/:driverId/summary')
+  @UseGuards(JwtAuthGuard)
   async getDriverEarningsSummary(
     @Param('driverId') driverId: string,
     @Req() req: any
@@ -258,6 +280,8 @@ export class PaymentController {
 }
 
 @Controller('ledger')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 export class LedgerController {
   constructor(private readonly ledgerService: LedgerService) {}
 
