@@ -30,10 +30,18 @@ function createMockExecutionContext(headers: Record<string, string> = {}, user?:
   } as unknown as ExecutionContext;
 }
 
-function generateMockJwt(payload: Record<string, any>): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64');
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const signature = Buffer.from('mock-signature-kawai0511').toString('base64');
+const TEST_JWT_SECRET = 'kawai0511_super_secure_access_secret_min_32_chars_banjarmasin';
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || TEST_JWT_SECRET;
+
+import * as crypto from 'crypto';
+
+function generateHS256Jwt(payload: Record<string, any>, secret: string = process.env.JWT_ACCESS_SECRET || TEST_JWT_SECRET): string {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(`${header}.${body}`)
+    .digest('base64url');
   return `${header}.${body}.${signature}`;
 }
 
@@ -54,20 +62,95 @@ describe('Security & Authorization Regression Suite', () => {
 
     const context2 = createMockExecutionContext({ authorization: 'Bearer not-a-valid-jwt' });
     assert.throws(() => jwtGuard.canActivate(context2), UnauthorizedException);
+
+    const context3 = createMockExecutionContext({ authorization: 'Bearer one.two' });
+    assert.throws(() => jwtGuard.canActivate(context3), UnauthorizedException);
   });
 
   test('3. JwtAuthGuard: rejects expired tokens', () => {
-    const expiredToken = generateMockJwt({
+    const expiredToken = generateHS256Jwt({
       sub: 'usr-123',
       role: Role.CUSTOMER,
+      phoneNumber: '+6281234567890',
       exp: Math.floor(Date.now() / 1000) - 3600, // expired 1 hour ago
     });
     const context = createMockExecutionContext({ authorization: `Bearer ${expiredToken}` });
     assert.throws(() => jwtGuard.canActivate(context), UnauthorizedException);
   });
 
-  test('4. JwtAuthGuard: authenticates valid token and injects user context into request', () => {
-    const validToken = generateMockJwt({
+  test('4. JwtAuthGuard: rejects tokens missing exp claim', () => {
+    const noExpToken = generateHS256Jwt({
+      sub: 'usr-123',
+      role: Role.CUSTOMER,
+      phoneNumber: '+6281234567890',
+    });
+    const context = createMockExecutionContext({ authorization: `Bearer ${noExpToken}` });
+    assert.throws(() => jwtGuard.canActivate(context), UnauthorizedException);
+  });
+
+  test('5. JwtAuthGuard: rejects tokens missing required claims (sub, role, phoneNumber/phone)', () => {
+    // Missing sub
+    const noSub = generateHS256Jwt({
+      role: Role.CUSTOMER,
+      phoneNumber: '+6281234567890',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    assert.throws(() => jwtGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${noSub}` })), UnauthorizedException);
+
+    // Missing role
+    const noRole = generateHS256Jwt({
+      sub: 'usr-1',
+      phoneNumber: '+6281234567890',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    assert.throws(() => jwtGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${noRole}` })), UnauthorizedException);
+
+    // Missing phoneNumber and phone
+    const noPhone = generateHS256Jwt({
+      sub: 'usr-1',
+      role: Role.CUSTOMER,
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    assert.throws(() => jwtGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${noPhone}` })), UnauthorizedException);
+  });
+
+  test('6. JwtAuthGuard: rejects tampered token payload with signature mismatch', () => {
+    const validToken = generateHS256Jwt({
+      sub: 'usr-normal',
+      role: Role.CUSTOMER,
+      phoneNumber: '+6281234567890',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    const [header, , sig] = validToken.split('.');
+    // Tamper payload to escalate role to ADMIN without resigning
+    const tamperedPayload = Buffer.from(
+      JSON.stringify({
+        sub: 'usr-normal',
+        role: Role.ADMIN,
+        phoneNumber: '+6281234567890',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      })
+    ).toString('base64url');
+
+    const tamperedToken = `${header}.${tamperedPayload}.${sig}`;
+    assert.throws(() => jwtGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${tamperedToken}` })), UnauthorizedException);
+  });
+
+  test('7. JwtAuthGuard: rejects tokens signed with wrong secret', () => {
+    const wrongSecretToken = generateHS256Jwt(
+      {
+        sub: 'usr-456',
+        role: Role.ADMIN,
+        phoneNumber: '+6281234567890',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      },
+      'attacker_secret_different_from_server_secret'
+    );
+    assert.throws(() => jwtGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${wrongSecretToken}` })), UnauthorizedException);
+  });
+
+  test('8. JwtAuthGuard: authenticates valid HS256 token and injects user context into request', () => {
+    const validToken = generateHS256Jwt({
       sub: 'usr-456',
       role: Role.ADMIN,
       phoneNumber: '+6281234567890',
@@ -80,7 +163,32 @@ describe('Security & Authorization Regression Suite', () => {
     const req = context.switchToHttp().getRequest();
     assert.equal(req.user.id, 'usr-456');
     assert.equal(req.user.role, Role.ADMIN);
+    assert.equal(req.user.phoneNumber, '+6281234567890');
   });
+
+  test('9. JwtAuthGuard: rejects with clear error when JWT_ACCESS_SECRET is unconfigured', () => {
+    const originalSecret = process.env.JWT_ACCESS_SECRET;
+    delete process.env.JWT_ACCESS_SECRET;
+    try {
+      const unconfiguredGuard = new JwtAuthGuard();
+      const validToken = generateHS256Jwt({
+        sub: 'usr-456',
+        role: Role.ADMIN,
+        phoneNumber: '+6281234567890',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      });
+      assert.throws(
+        () => unconfiguredGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${validToken}` })),
+        (err: any) =>
+          err instanceof UnauthorizedException &&
+          err.message.includes('JWT access secret belum dikonfigurasi')
+      );
+    } finally {
+      process.env.JWT_ACCESS_SECRET = originalSecret;
+    }
+  });
+
+
 
   // 2. ROLES AUTHORIZATION GUARD
   test('5. RolesGuard: blocks unauthorized roles and permits authorized roles', () => {
@@ -257,7 +365,7 @@ describe('Security & Authorization Regression Suite', () => {
     assert.equal(disconnected, true);
 
     // Connection with valid token -> accepted
-    const validToken = generateMockJwt({ sub: 'user-chat-01', role: Role.CUSTOMER, exp: Math.floor(Date.now() / 1000) + 3600 });
+    const validToken = generateHS256Jwt({ sub: 'user-chat-01', role: Role.CUSTOMER, phoneNumber: '+6281234567890', exp: Math.floor(Date.now() / 1000) + 3600 });
     const authClient = {
       handshake: { auth: { token: validToken } },
       disconnect: () => {},

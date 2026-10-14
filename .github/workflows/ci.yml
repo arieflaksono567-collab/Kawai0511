@@ -45,6 +45,8 @@ jobs:
           npx tsc --noEmit
 
       - name: Run Backend Acceptance Test Suites
+        env:
+          JWT_ACCESS_SECRET: 'kawai0511_ci_testing_secret_key_minimum_32_characters_long'
         run: |
           cd backend
           npx tsx test/security-authorization.spec.ts
