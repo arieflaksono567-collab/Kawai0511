@@ -1,8 +1,7 @@
 # KAWAI 0511 — Project Status & Roadmap
 
-> Status pembaruan: **Phase 5B Complete & Frozen** (Kondisi Aktual Repository)
+> **CATATAN REKONSILIASI KANONIS**: Sumber status resmi dan tunggal (Single Source of Truth / SSOT) untuk seluruh fase (Phase 0 s.d. Phase 10), hasil pengujian aktual, dan audit keamanan terletak di **`.ai/PROJECT_STATUS.md`**. Dokumen ini dipertahankan sebagai arsip historis status implementasi Phase 5B.
 
----
 
 ## 1. Tabel Ringkasan Fase
 

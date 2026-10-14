@@ -1,9 +1,7 @@
 # KAWAI 0511 — AI Handoff Document
 
-> **Dokumen Transisi & Konteks AI (Updated: Phase 6C Complete)**  
-> Dokumen ini mencatat kondisi arsitektur, implementasi nyata, dependensi, dan batasan teknis saat ini pada repository KAWAI 0511.
+> **CATATAN REKONSILIASI KANONIS**: Sumber status resmi dan tunggal (Single Source of Truth / SSOT) untuk seluruh fase (Phase 0 s.d. Phase 10), hasil pengujian aktual, dan audit keamanan terletak di **`.ai/PROJECT_STATUS.md`**. Dokumen ini dipertahankan sebagai arsip historis konteks Phase 6C.
 
----
 
 ## 1. Identitas Proyek & Status Terkini
 - **Nama Repository**: KAWAI 0511 (Aplikasi Ride-Hailing Kota Banjarmasin, Kalimantan Selatan)

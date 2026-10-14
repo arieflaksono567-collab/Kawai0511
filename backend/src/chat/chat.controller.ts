@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Role } from '../auth/roles.enum';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -14,7 +15,13 @@ export class ChatController {
   }
 
   @Post('send')
-  async sendMessage(@Body() dto: SendMessageDto) {
+  async sendMessage(@Req() req: any, @Body() dto: SendMessageDto) {
+    if (req?.user && req.user.role !== Role.ADMIN && req.user.role !== dto.senderRole) {
+      throw new ForbiddenException(
+        'Role pengirim pesan tidak sesuai dengan kredensial token aktif'
+      );
+    }
     return this.chatService.sendMessage(dto);
   }
 }
+

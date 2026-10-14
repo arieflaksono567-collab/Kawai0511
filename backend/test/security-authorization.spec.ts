@@ -282,4 +282,43 @@ describe('Security & Authorization Regression Suite', () => {
     assert.equal(legitMsg.event, 'chat:message');
     assert.equal((legitMsg as any).payload.message, 'Halo mang, posisinya di mana?');
   });
+
+  // 8. CHAT CONTROLLER AUTHENTICATION & ROLE SPOOFING PREVENTION
+  test('11. ChatController: class-level JwtAuthGuard and prevents sender role spoofing', async () => {
+    const chatService = {
+      sendMessage: async (dto: any) => ({ userMessage: { ...dto, id: 'msg-test', isRead: true } }),
+      getMessages: async () => [],
+    };
+    const { ChatController } = await import('../src/chat/chat.controller');
+    const controller = new ChatController(chatService as any);
+
+    // Verify @UseGuards metadata on ChatController class
+    const classGuards = Reflect.getMetadata('__guards__', ChatController);
+    assert.ok(Array.isArray(classGuards) && classGuards.includes(JwtAuthGuard), 'ChatController must have JwtAuthGuard');
+
+    // Customer trying to send as DRIVER -> ForbiddenException
+    await assert.rejects(
+      async () =>
+        controller.sendMessage(
+          { user: { id: 'cust-1', role: Role.CUSTOMER } },
+          { orderId: 'ord-1', orderType: 'RIDE', senderRole: 'DRIVER', message: 'I am driver' }
+        ),
+      ForbiddenException
+    );
+
+    // Customer sending as CUSTOMER -> Allowed
+    const res = await controller.sendMessage(
+      { user: { id: 'cust-1', role: Role.CUSTOMER } },
+      { orderId: 'ord-1', orderType: 'RIDE', senderRole: 'CUSTOMER', message: 'Halo driver' }
+    );
+    assert.equal(res.userMessage.senderRole, 'CUSTOMER');
+
+    // Admin sending as either -> Allowed
+    const adminRes = await controller.sendMessage(
+      { user: { id: 'admin-1', role: Role.ADMIN } },
+      { orderId: 'ord-1', orderType: 'RIDE', senderRole: 'DRIVER', message: 'System message' }
+    );
+    assert.equal(adminRes.userMessage.senderRole, 'DRIVER');
+  });
 });
+

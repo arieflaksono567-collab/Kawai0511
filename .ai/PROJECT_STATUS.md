@@ -51,9 +51,11 @@ Status dibagi menjadi 4 dimensi terpisah:
    - `LedgerController` (`backend/src/payment/payment.controller.ts`): Dilindungi di level kelas dengan `@Roles(Role.ADMIN)`.
    - `ChatController` (`backend/src/chat/chat.controller.ts`) dan `WalletController` (`backend/src/wallet/wallet.controller.ts`): Dilindungi dengan `JwtAuthGuard`.
    - `RealtimeGateway` (`backend/src/chat/chat.gateway.ts`): Dilengkapi dengan verifikasi token handshake koneksi dan otorisasi role pengirim pesan chat.
-   - Suite tes regresi baru: `backend/test/security-authorization.spec.ts` (10/10 test pass).
+   - `ChatController` (`backend/src/chat/chat.controller.ts`): Memvalidasi kecocokan role pengirim (`dto.senderRole`) dengan token autentikasi aktif (`req.user.role`), menolak pemalsuan identitas/spoofing dengan `ForbiddenException`.
+   - Suite tes regresi keamanan: `backend/test/security-authorization.spec.ts` (11/11 test pass).
 
 3. **Status Verifikasi Dependensi & Toolchain (P4)**:
    - Root Frontend: `npm run lint` (`tsc --noEmit`) lolos tanpa error, `npm run build` (`vite build`) berhasil menghasilkan bundle produksi di `dist/`.
    - Backend Core: `backend/node_modules` telah diisi dependensi (`@nestjs/common`, `@nestjs/core`, dsb.), `npx tsc --noEmit` lolos tanpa error.
    - Lockfile: `package-lock.json` dan `bun.lock` dipertahankan utuh tanpa dihapus atau diregenerasi sembarangan.
+   - Pengujian CI: Seluruh 9 test suite backend di `.github/workflows/ci.yml` (Security, Phase 6A/B/C, Phase 7.1/2/3/4/5) lulus 100% tanpa kegagalan.
