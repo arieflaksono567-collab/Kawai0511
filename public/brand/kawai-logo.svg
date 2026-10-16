@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Symbol-only Kawai logo: white K on red rounded square -->
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Kawai logo">
+  <rect width="100" height="100" x="10" y="10" rx="18" ry="18" fill="#E50914" />
+  <g transform="translate(10,10)">
+    <!-- White 'K' using paths for consistent rendering -->
+    <path d="M30 20 L42 20 L62 48 L62 74 L50 74 L50 54 L36 74 L24 74 Z" fill="#FFFFFF" transform="translate(6,0) scale(0.9)" />
+  </g>
+</svg>
