@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
 @theme {
-  --color-kawai-primary: #18B86A;
-  --color-kawai-primary-dark: #0E8F52;
-  --color-kawai-primary-light: #DDF8EA;
+  --color-kawai-primary: #E31E24;
+  --color-kawai-primary-dark: #B0101A;
+  --color-kawai-primary-light: #FEE5E6;
 
-  --color-kawai-bg: #F7FAF8;
+  --color-kawai-navy: #11274A;
+  --color-kawai-navy-dark: #0C1D36;
+  --color-kawai-navy-soft: #EAF1FF;
+
+  --color-kawai-bg: #F7F7F8;
   --color-kawai-surface: #FFFFFF;
-  --color-kawai-surface-secondary: #F0F5F2;
+  --color-kawai-surface-secondary: #F3F5F9;
 
-  --color-kawai-text-primary: #17211B;
-  --color-kawai-text-secondary: #66736B;
-  --color-kawai-text-disabled: #A8B2AC;
+  --color-kawai-text-primary: #111827;
+  --color-kawai-text-secondary: #5B6475;
+  --color-kawai-text-disabled: #A3ABBA;
 
-  --color-kawai-border: #E4ECE7;
-  --color-kawai-border-secondary: #D7E2DB;
+  --color-kawai-border: #E8ECF3;
+  --color-kawai-border-secondary: #D9DEE9;
 
-  --color-kawai-success: #18B86A;
+  --color-kawai-success: #1FAE6C;
   --color-kawai-warning: #F5A623;
-  --color-kawai-danger: #E5484D;
+  --color-kawai-danger: #E31E24;
   --color-kawai-info: #2F80ED;
 }
 
@@ -26,29 +30,37 @@
   color-scheme: light;
 }
 
+html {
+  background: #F7F7F8;
+}
+
 body {
-  background-color: #F7FAF8;
-  color: #17211B;
+  margin: 0;
+  background-color: #F7F7F8;
+  color: #111827;
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Light clean mobility scrollbar */
+* {
+  box-sizing: border-box;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F0F5F2;
+  background: #F3F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D7E2DB;
+  background: #D9DEE9;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #18B86A;
+  background: #E31E24;
 }

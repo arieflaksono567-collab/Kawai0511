@@ -1,55 +1,41 @@
-/**
- * KAWAI 0511 - Centralized Color & Theme Design System
- * Bright Clean Mobility UI
- * 
- * Rules:
- * 1. Primary: KAWAI Green (#18B86A), Primary Dark (#0E8F52), Primary Light (#DDF8EA)
- * 2. Background: Main (#F7FAF8), Surface (#FFFFFF), Secondary Surface (#F0F5F2)
- * 3. Text: Primary (#17211B), Secondary (#66736B), Disabled (#A8B2AC)
- * 4. Status: Success (#18B86A), Warning (#F5A623), Danger/SOS (#E5484D), Info (#2F80ED)
- * 5. Borders: Card Border (#E4ECE7), Secondary Border (#D7E2DB)
- */
-
 export const KAWAI_COLORS = {
-  // 1. Warna Utama Brand
-  primary: '#18B86A',
-  primaryDark: '#0E8F52',
-  primaryLight: '#DDF8EA',
+  primary: '#E31E24',
+  primaryDark: '#B0101A',
+  primaryLight: '#FEE5E6',
 
-  // 2. Background
-  background: '#F7FAF8',
+  navy: '#11274A',
+  navyDark: '#0C1D36',
+  navySoft: '#EAF1FF',
+
+  background: '#F7F7F8',
   surface: '#FFFFFF',
-  secondarySurface: '#F0F5F2',
+  secondarySurface: '#F3F5F9',
 
-  // 3. Text
-  textPrimary: '#17211B',
-  textSecondary: '#66736B',
-  textDisabled: '#A8B2AC',
+  textPrimary: '#111827',
+  textSecondary: '#5B6475',
+  textDisabled: '#A3ABBA',
 
-  // 4. Status Colors
-  success: '#18B86A',
+  success: '#1FAE6C',
   warning: '#F5A623',
-  danger: '#E5484D',
+  danger: '#E31E24',
   info: '#2F80ED',
 
-  // 5. Borders & Dividers
-  border: '#E4ECE7',
-  borderSecondary: '#D7E2DB',
+  border: '#E8ECF3',
+  borderSecondary: '#D9DEE9',
 
-  // 6. Map Specific Colors (Light & Clean Cartography)
   map: {
-    ground: '#F0F5F2',
-    water: '#C5E6F7',
-    waterDeep: '#98D1F2',
+    ground: '#F3F5F9',
+    water: '#DDEBFF',
+    waterDeep: '#AFCBFF',
     streetArtery: '#FFFFFF',
-    streetArteryBorder: '#D7E2DB',
-    streetLocal: '#EBF1ED',
-    bridge: '#94A3B8',
-    routePath: '#18B86A',
-    pickupMarker: '#18B86A',
-    destMarker: '#E5484D',
-    driverMarker: '#18B86A',
-    grid: '#E2EBE5',
+    streetArteryBorder: '#D9DEE9',
+    streetLocal: '#F7F9FC',
+    bridge: '#9AAAC2',
+    routePath: '#E31E24',
+    pickupMarker: '#E31E24',
+    destMarker: '#11274A',
+    driverMarker: '#E31E24',
+    grid: '#EEF2F7',
   },
 } as const;
 
