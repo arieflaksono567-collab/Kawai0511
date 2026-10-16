@@ -8,8 +8,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "test": "tsx test/security-authorization.spec.ts",
-    "test:all": "tsx test/security-authorization.spec.ts && tsx test/phase6a-payment-ledger.spec.ts && tsx test/phase6b-payment-service.spec.ts && tsx test/phase6c-settlement-earnings.spec.ts && tsx test/phase7-database-foundation.spec.ts && tsx test/phase7-trip-detail.spec.ts && tsx test/phase7-trip-history.spec.ts && tsx test/phase7-driver-earnings.spec.ts && tsx test/phase7-rating-system.spec.ts"
+    "test": "tsx test/jwt-auth.guard.spec.ts && tsx test/security-authorization.spec.ts",
+    "test:all": "tsx test/jwt-auth.guard.spec.ts && tsx test/security-authorization.spec.ts && tsx test/phase6a-payment-ledger.spec.ts && tsx test/phase6b-payment-service.spec.ts && tsx test/phase6c-settlement-earnings.spec.ts && tsx test/phase7-database-foundation.spec.ts && tsx test/phase7-trip-detail.spec.ts && tsx test/phase7-trip-history.spec.ts && tsx test/phase7-driver-earnings.spec.ts && tsx test/phase7-rating-system.spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

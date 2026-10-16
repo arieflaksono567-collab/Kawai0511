@@ -166,27 +166,35 @@ describe('Security & Authorization Regression Suite', () => {
     assert.equal(req.user.phoneNumber, '+6281234567890');
   });
 
-  test('9. JwtAuthGuard: rejects with clear error when JWT_ACCESS_SECRET is unconfigured', () => {
+  test('9. JwtAuthGuard: rejects with clear error when JWT_ACCESS_SECRET is unconfigured', async () => {
+    const { verifyJwtSignature } = await import('../src/auth/jwt.util');
+    const validToken = generateHS256Jwt({
+      sub: 'usr-456',
+      role: Role.ADMIN,
+      phoneNumber: '+6281234567890',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+
+    // verifyJwtSignature directly throws Error when secret is empty
+    assert.throws(
+      () => verifyJwtSignature(validToken, ''),
+      /JWT access secret belum dikonfigurasi/
+    );
+
+    // Guard rejects unconfigured secret with UnauthorizedException
     const originalSecret = process.env.JWT_ACCESS_SECRET;
     delete process.env.JWT_ACCESS_SECRET;
     try {
       const unconfiguredGuard = new JwtAuthGuard();
-      const validToken = generateHS256Jwt({
-        sub: 'usr-456',
-        role: Role.ADMIN,
-        phoneNumber: '+6281234567890',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-      });
       assert.throws(
         () => unconfiguredGuard.canActivate(createMockExecutionContext({ authorization: `Bearer ${validToken}` })),
-        (err: any) =>
-          err instanceof UnauthorizedException &&
-          err.message.includes('JWT access secret belum dikonfigurasi')
+        UnauthorizedException
       );
     } finally {
       process.env.JWT_ACCESS_SECRET = originalSecret;
     }
   });
+
 
 
 

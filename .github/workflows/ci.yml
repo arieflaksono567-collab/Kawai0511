@@ -49,6 +49,7 @@ jobs:
           JWT_ACCESS_SECRET: 'kawai0511_ci_testing_secret_key_minimum_32_characters_long'
         run: |
           cd backend
+          npx tsx test/jwt-auth.guard.spec.ts
           npx tsx test/security-authorization.spec.ts
           npx tsx test/phase6a-payment-ledger.spec.ts
           npx tsx test/phase6b-payment-service.spec.ts
