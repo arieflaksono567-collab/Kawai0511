@@ -1,42 +1,44 @@
 /**
- * KAWAI 0511 - Centralized Color & Theme Design System
- * Bright Clean Mobility UI
- * 
- * Rules:
- * 1. Primary: KAWAI Green (#18B86A), Primary Dark (#0E8F52), Primary Light (#DDF8EA)
- * 2. Background: Main (#F7FAF8), Surface (#FFFFFF), Secondary Surface (#F0F5F2)
- * 3. Text: Primary (#17211B), Secondary (#66736B), Disabled (#A8B2AC)
- * 4. Status: Success (#18B86A), Warning (#F5A623), Danger/SOS (#E5484D), Info (#2F80ED)
- * 5. Borders: Card Border (#E4ECE7), Secondary Border (#D7E2DB)
+ * KAWAI 0511 - Centralized Color & Theme Design System (BRAND RED UPDATE)
+ * Updated to use primary KAWAI red palette per design brief (Oct 2026)
  */
 
 export const KAWAI_COLORS = {
-  // 1. Warna Utama Brand
-  primary: '#18B86A',
-  primaryDark: '#0E8F52',
-  primaryLight: '#DDF8EA',
+  // Brand Reds (Primary identity)
+  primary: '#E50914',      // Primary Red (KAWAI)
+  primaryDark: '#C9151E',  // Deeper red for active / hover
+  primaryLight: '#FFF0F0', // Light red surface accents
 
-  // 2. Background
-  background: '#F7FAF8',
+  // Neutral / Surfaces
+  white: '#FFFFFF',
+  background: '#FFFFFF',
   surface: '#FFFFFF',
-  secondarySurface: '#F0F5F2',
+  secondarySurface: '#F7FAF8',
 
-  // 3. Text
-  textPrimary: '#17211B',
-  textSecondary: '#66736B',
+  // Text
+  textPrimary: '#202124', // darker text for accessibility
+  textSecondary: '#6B7280',
   textDisabled: '#A8B2AC',
 
-  // 4. Status Colors
-  success: '#18B86A',
-  warning: '#F5A623',
-  danger: '#E5484D',
+  // Borders
+  border: '#E5E7EB',
+  borderSecondary: '#EDEFF0',
+
+  // Semantic
+  success: '#15803D',
+  warning: '#D97706',
+  danger: '#B91C1C',
   info: '#2F80ED',
 
-  // 5. Borders & Dividers
-  border: '#E4ECE7',
-  borderSecondary: '#D7E2DB',
+  // Interaction states (derived suggestions)
+  action: {
+    hover: '#C9151E',
+    active: '#A30F15',
+    disabled: '#F3B8B8',
+    focusRing: 'rgba(229,9,20,0.16)',
+  },
 
-  // 6. Map Specific Colors (Light & Clean Cartography)
+  // Map-specific colors (keep previous tokens but adjust route/pickup markers)
   map: {
     ground: '#F0F5F2',
     water: '#C5E6F7',
@@ -45,10 +47,10 @@ export const KAWAI_COLORS = {
     streetArteryBorder: '#D7E2DB',
     streetLocal: '#EBF1ED',
     bridge: '#94A3B8',
-    routePath: '#18B86A',
-    pickupMarker: '#18B86A',
-    destMarker: '#E5484D',
-    driverMarker: '#18B86A',
+    routePath: '#E50914', // use brand red for route highlight
+    pickupMarker: '#E50914',
+    destMarker: '#B91C1C',
+    driverMarker: '#15803D',
     grid: '#E2EBE5',
   },
 } as const;
