@@ -157,11 +157,11 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           onClick={() => setVehicleType('motor')}
           className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
             vehicleType === 'motor'
-              ? 'bg-white text-[#18B86A] shadow-xs font-bold'
-              : 'text-[#66736B] hover:text-[#17211B]'
+              ? 'bg-white text-[#E1192E] shadow-xs font-bold'
+              : 'text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
-          <Bike className="w-4 h-4" />
+          <Bike className="w-4 h-4 text-[#E1192E]" />
           <span>Kawai Ride (Motor)</span>
         </button>
         <button
@@ -169,11 +169,11 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
           onClick={() => setVehicleType('car')}
           className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
             vehicleType === 'car'
-              ? 'bg-white text-[#18B86A] shadow-xs font-bold'
-              : 'text-[#66736B] hover:text-[#17211B]'
+              ? 'bg-white text-[#E1192E] shadow-xs font-bold'
+              : 'text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
-          <Car className="w-4 h-4" />
+          <Car className="w-4 h-4 text-[#E1192E]" />
           <span>Kawai Car (Mobil AC)</span>
         </button>
       </div>
@@ -430,9 +430,9 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
               <span className="font-mono tabular-nums">-Rp {discount.toLocaleString('id-ID')}</span>
             </div>
           )}
-          <div className="flex justify-between items-baseline pt-1 border-t border-[#E4ECE7] font-bold text-[#17211B]">
+          <div className="flex justify-between items-baseline pt-1 border-t border-[#E2E8F0] font-bold text-[#0F172A]">
             <span>Total Bayar</span>
-            <span className="text-base text-[#18B86A] font-mono tabular-nums">
+            <span className="text-base text-[#E1192E] font-mono tabular-nums">
               Rp {totalPay.toLocaleString('id-ID')}
             </span>
           </div>
@@ -443,7 +443,7 @@ export const ServiceRide: React.FC<ServiceRideProps> = ({
       <button
         type="button"
         onClick={handleBook}
-        className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] active:bg-[#0E8F52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+        className="w-full h-12 rounded-2xl bg-[#E1192E] hover:bg-[#C81023] active:bg-[#B91223] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
       >
         <Bike className="w-4 h-4" />
         <span>Pesan Kawai {vehicleType === 'motor' ? 'Ojek' : 'Mobil'} Sekarang</span>

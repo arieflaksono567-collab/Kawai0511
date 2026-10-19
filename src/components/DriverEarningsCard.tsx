@@ -97,71 +97,71 @@ export const DriverEarningsCard: React.FC<DriverEarningsCardProps> = ({
       */}
       <div className="w-full max-w-sm mx-auto bg-white border border-[#E4ECE7] rounded-3xl p-6 shadow-sm text-[#17211B] flex flex-col font-sans relative overflow-hidden">
         {/* HEADER: PENDAPATAN */}
-        <div className="border-b border-[#E4ECE7] pb-4 mb-5 flex items-center justify-between">
+        <div className="border-b border-[#E2E8F0] pb-4 mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#17211B] tracking-tight">Pendapatan</h2>
-            <p className="text-xs text-[#66736B] mt-0.5">Mitra Driver KAWAI 0511</p>
+            <h2 className="text-lg font-bold text-[#0F172A] tracking-tight">Pendapatan</h2>
+            <p className="text-xs text-[#64748B] mt-0.5">Mitra Driver KAWAI 0511</p>
           </div>
           <button
             onClick={fetchEarnings}
             disabled={isLoading}
             title="Sinkronisasi saldo buku besar (Double-Entry Ledger)"
-            className="p-2 text-[#66736B] hover:text-[#18B86A] hover:bg-[#F0F5F2] rounded-xl transition"
+            className="p-2 text-[#64748B] hover:text-[#E1192E] hover:bg-[#F1F5F9] rounded-xl transition cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#18B86A]' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#E1192E]' : ''}`} />
           </button>
         </div>
 
         {/* SECTION 1: HARI INI & PERJALANAN */}
         <div className="space-y-4 mb-6">
           <div className="space-y-1">
-            <span className="text-[11px] font-semibold tracking-wider uppercase text-[#66736B]">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-[#64748B]">
               Hari ini
             </span>
-            <div className="text-3xl font-black text-[#18B86A] font-mono tracking-tight">
+            <div className="text-3xl font-black text-[#0F172A] font-mono tracking-tight">
               Rp {todayEarnings.toLocaleString('id-ID')}
             </div>
-            <div className="text-xs text-[#66736B] pt-0.5 font-medium flex items-center gap-1.5">
+            <div className="text-xs text-[#64748B] pt-0.5 font-medium flex items-center gap-1.5">
               <span>{todayRides} perjalanan</span>
-              <span aria-hidden="true" className="text-[#A8B2AC]">·</span>
-              <span className="text-[#0E8F52] bg-[#DDF8EA] px-1.5 py-0.5 rounded text-[10px] font-semibold">
+              <span aria-hidden="true" className="text-[#94A3B8]">·</span>
+              <span className="text-[#E1192E] bg-[#FEE2E2] px-1.5 py-0.5 rounded text-[10px] font-bold">
                 Bagi hasil 85%
               </span>
             </div>
           </div>
 
           {/* SECTION 2: MINGGU INI */}
-          <div className="space-y-1 pt-3 border-t border-[#E4ECE7]">
-            <span className="text-[11px] font-semibold tracking-wider uppercase text-[#66736B]">
+          <div className="space-y-1 pt-3 border-t border-[#E2E8F0]">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-[#64748B]">
               Minggu ini
             </span>
-            <div className="text-xl font-bold text-[#17211B] font-mono tracking-tight">
+            <div className="text-xl font-bold text-[#0F172A] font-mono tracking-tight">
               Rp {weekEarnings.toLocaleString('id-ID')}
             </div>
-            <span className="text-[10px] text-[#A8B2AC] block">
+            <span className="text-[10px] text-[#94A3B8] block">
               Akumulasi 7 hari terakhir
             </span>
           </div>
         </div>
 
-        {/* ACTION: [ LIHAT RIWAYAT ] BUTTON (Secondary Button: White, border #D7E2DB, text #18B86A) */}
+        {/* ACTION: [ LIHAT RIWAYAT ] BUTTON (Mitra Navy Button) */}
         <div className="pt-2">
           <button
             onClick={handleOpenHistory}
-            className="w-full py-3.5 bg-white hover:bg-[#F0F5F2] active:bg-[#DDF8EA]/30 text-[#18B86A] font-bold rounded-2xl text-xs tracking-wider transition border border-[#D7E2DB] shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3.5 bg-[#0F172A] hover:bg-black text-white font-bold rounded-2xl text-xs tracking-wider transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>[ Lihat Riwayat ]</span>
-            <ChevronRight className="w-4 h-4" />
+            <span>[ Lihat Riwayat Trip ]</span>
+            <ChevronRight className="w-4 h-4 text-[#E1192E]" />
           </button>
         </div>
 
         {/* AUTHORITATIVE LEDGER INTEGRITY BADGE */}
-        <div className="mt-4 pt-3 border-t border-[#E4ECE7] flex items-center justify-between text-[10px] text-[#66736B]">
+        <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] text-[#64748B]">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#18B86A]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#E1192E]" />
             <span>Double-Entry Ledger</span>
           </div>
-          <span className="font-mono text-[#0E8F52] font-semibold">SUM(debit) = SUM(credit)</span>
+          <span className="font-mono text-emerald-700 font-semibold">SUM(debit) = SUM(credit)</span>
         </div>
       </div>
 

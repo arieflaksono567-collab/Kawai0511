@@ -198,7 +198,7 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
           <path
             d={driverToPickupD}
             fill="none"
-            stroke="#0E8F52"
+            stroke="#E1192E"
             strokeWidth="3"
             strokeDasharray="6,4"
             className="animate-pulse"
@@ -212,7 +212,7 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
               <animate attributeName="r" values="30;120" dur="2s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite" />
             </circle>
-            <circle cx={pickupSvg.x} cy={pickupSvg.y} r="50" fill="none" stroke="#18B86A" strokeWidth="2" opacity="0.6">
+            <circle cx={pickupSvg.x} cy={pickupSvg.y} r="50" fill="none" stroke="#E1192E" strokeWidth="2" opacity="0.6">
               <animate attributeName="r" values="10;80" dur="2s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.9;0" dur="2s" repeatCount="indefinite" />
             </circle>
@@ -236,60 +236,60 @@ export const BanjarmasinMap: React.FC<BanjarmasinMapProps> = ({
               className="absolute pointer-events-auto -translate-x-1/2 -translate-y-1/2 group transition-transform hover:scale-110 focus:outline-none"
               style={{ left: `${lm.x}%`, top: `${lm.y}%` }}
             >
-              <div className="w-2.5 h-2.5 rounded-full bg-[#A8B2AC] border border-white group-hover:bg-[#18B86A] transition-colors shadow-sm" />
-              <span className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-7 whitespace-nowrap bg-white text-[#17211B] text-[10px] px-2 py-0.5 rounded-lg border border-[#E4ECE7] shadow-md z-30 font-medium">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#94A3B8] border border-white group-hover:bg-[#E1192E] transition-colors shadow-sm" />
+              <span className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 -top-7 whitespace-nowrap bg-white text-[#0F172A] text-[10px] px-2 py-0.5 rounded-lg border border-[#E2E8F0] shadow-md z-30 font-medium">
                 {lm.name}
               </span>
             </button>
           );
         })}
 
-        {/* PICKUP PIN (KAWAI Green #18B86A) */}
+        {/* PICKUP PIN (KAWAI Navy Blue #0E45C9) */}
         <div
           className="absolute pointer-events-auto -translate-x-1/2 -translate-y-full z-20 transition-all duration-500 ease-out"
           style={{ left: `${pickup.x}%`, top: `${pickup.y}%` }}
         >
           <div className="flex flex-col items-center">
-            <span className="bg-[#18B86A] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+            <span className="bg-[#0F172A] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E1192E] animate-ping" />
               Pickup: {pickup.name.length > 18 ? pickup.name.slice(0, 16) + '..' : pickup.name}
             </span>
-            <div className="w-5 h-5 rounded-full bg-[#18B86A] border-2 border-white shadow-md flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-[#0F172A] border-2 border-white shadow-md flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-white" />
             </div>
-            <div className="w-1 h-2 bg-[#18B86A]" />
+            <div className="w-1 h-2 bg-[#0F172A]" />
           </div>
         </div>
 
-        {/* DESTINATION PIN (Status Danger / Destination Red #E5484D) */}
+        {/* DESTINATION PIN (Merah KAWAI #E1192E) */}
         <div
           className="absolute pointer-events-auto -translate-x-1/2 -translate-y-full z-20 transition-all duration-500 ease-out"
           style={{ left: `${destination.x}%`, top: `${destination.y}%` }}
         >
           <div className="flex flex-col items-center">
-            <span className="bg-[#E5484D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
+            <span className="bg-[#E1192E] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white whitespace-nowrap mb-0.5 flex items-center gap-1">
               <MapPin className="w-2.5 h-2.5" />
               Tujuan: {destination.name.length > 18 ? destination.name.slice(0, 16) + '..' : destination.name}
             </span>
-            <div className="w-5 h-5 rounded-full bg-[#E5484D] border-2 border-white shadow-md flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-[#E1192E] border-2 border-white shadow-md flex items-center justify-center">
               <div className="w-2 h-2 rounded-full bg-white" />
             </div>
-            <div className="w-1 h-2 bg-[#E5484D]" />
+            <div className="w-1 h-2 bg-[#E1192E]" />
           </div>
         </div>
 
-        {/* DRIVER POSITION PIN (KAWAI Brand Driver #18B86A) */}
+        {/* DRIVER POSITION PIN (KAWAI Brand Driver #E1192E) */}
         {driverPosition && (
           <div
             className="absolute pointer-events-auto -translate-x-1/2 -translate-y-1/2 z-25 transition-all duration-700 ease-out"
             style={{ left: `${driverPosition.x}%`, top: `${driverPosition.y}%` }}
           >
             <div className="relative flex items-center justify-center group">
-              <div className="absolute w-9 h-9 rounded-full bg-[#18B86A]/20 animate-ping" />
-              <div className="w-8 h-8 rounded-full bg-white border-2 border-[#18B86A] shadow-md flex items-center justify-center text-[#18B86A]">
+              <div className="absolute w-9 h-9 rounded-full bg-[#E1192E]/20 animate-ping" />
+              <div className="w-8 h-8 rounded-full bg-white border-2 border-[#E1192E] shadow-md flex items-center justify-center text-[#E1192E]">
                 <Bike className="w-4 h-4" />
               </div>
-              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white text-[9px] font-mono font-bold text-[#17211B] px-1.5 py-0.2 rounded border border-[#E4ECE7] shadow-sm">
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white text-[9px] font-mono font-bold text-[#0F172A] px-1.5 py-0.2 rounded border border-[#E2E8F0] shadow-sm">
                 DA 5110 KAW
               </span>
             </div>

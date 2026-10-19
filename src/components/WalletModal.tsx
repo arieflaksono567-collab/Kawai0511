@@ -56,10 +56,10 @@ export const WalletModal: React.FC<WalletModalProps> = ({
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto">
-          {/* Balance Card - KAWAI Green */}
-          <div className="bg-[#18B86A] text-white p-4 rounded-2xl shadow-xs">
-            <span className="text-[11px] text-[#DDF8EA] uppercase tracking-wider font-semibold">
-              Saldo Aktif
+          {/* Balance Card - Official KAWAI Red & Navy */}
+          <div className="bg-[#E1192E] text-white p-4 rounded-2xl shadow-xs">
+            <span className="text-[11px] text-white/80 uppercase tracking-wider font-semibold">
+              Saldo KawaiPay Aktif
             </span>
             <p className="text-2xl font-black font-mono mt-1">
               Rp {balance.toLocaleString('id-ID')}
@@ -72,42 +72,42 @@ export const WalletModal: React.FC<WalletModalProps> = ({
 
           {isSuccess ? (
             <div className="py-8 text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-[#DDF8EA] text-[#0E8F52] flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-[#FEE2E2] text-[#E1192E] flex items-center justify-center mx-auto">
                 <Check className="w-6 h-6" />
               </div>
-              <h4 className="font-bold text-sm text-[#17211B]">Top-Up Berhasil!</h4>
-              <p className="text-xs text-[#66736B]">
+              <h4 className="font-bold text-sm text-[#0F172A]">Top-Up Berhasil!</h4>
+              <p className="text-xs text-[#64748B]">
                 Saldo +Rp {selectedTopUp.toLocaleString('id-ID')} telah ditambahkan ke KawaiPay kamu.
               </p>
             </div>
           ) : (
             <>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#17211B]">Pilih Nominal Top-Up</label>
+                <label className="text-xs font-bold text-[#0F172A]">Pilih Nominal Top-Up</label>
                 <div className="grid grid-cols-2 gap-2">
                   {topUpPresets.map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setSelectedTopUp(amt)}
-                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         selectedTopUp === amt
-                          ? 'border-[#18B86A] bg-[#DDF8EA] text-[#0E8F52] font-bold'
-                          : 'border-[#D7E2DB] bg-[#F7FAF8] text-[#17211B] hover:bg-white'
+                          ? 'border-[#E1192E] bg-[#FEE2E2] text-[#E1192E] font-bold shadow-2xs'
+                          : 'border-[#CBD5E1]/70 bg-[#F8FAFC] text-[#0F172A] hover:bg-white'
                       }`}
                     >
-                      <span className="font-mono text-xs">Rp {amt.toLocaleString('id-ID')}</span>
+                      <span className="font-mono text-xs font-bold">Rp {amt.toLocaleString('id-ID')}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#17211B]">Metode Pengisian</label>
+                <label className="text-xs font-bold text-[#0F172A]">Metode Pengisian</label>
                 <select
                   value={paymentChannel}
                   onChange={(e) => setPaymentChannel(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-[#D7E2DB] bg-[#F0F5F2] text-[#17211B] focus:outline-none focus:border-[#18B86A]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] text-[#0F172A] focus:outline-none focus:border-[#E1192E]"
                 >
                   <option value="QRIS Instant (Bebas Biaya)">QRIS Instant Seluruh Bank & e-Wallet</option>
                   <option value="BCA Virtual Account">BCA Virtual Account</option>
@@ -121,7 +121,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({
               <button
                 type="button"
                 onClick={handleTopUpConfirm}
-                className="w-full h-11 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                className="w-full h-11 bg-[#E1192E] hover:bg-[#C81023] text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
               >
                 Isi Saldo Rp {selectedTopUp.toLocaleString('id-ID')}
               </button>

@@ -145,11 +145,11 @@ export const TripHistoryModal: React.FC<TripHistoryModalProps> = ({
           </div>
 
           {/* FILTER TABS */}
-          <div className="px-4 py-2.5 bg-white border-b border-[#E4ECE7] flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-white border-b border-[#E2E8F0] flex items-center gap-2">
             {(
               [
                 { id: 'ALL', label: 'Semua' },
-                { id: 'COMPLETED', label: 'Selesai (COMPLETED)' },
+                { id: 'COMPLETED', label: 'Selesai' },
                 { id: 'CANCELLED', label: 'Dibatalkan' },
               ] as const
             ).map((tab) => (
@@ -158,8 +158,8 @@ export const TripHistoryModal: React.FC<TripHistoryModalProps> = ({
                 onClick={() => setStatusFilter(tab.id)}
                 className={`text-[11px] font-bold px-3 py-1.5 rounded-xl transition cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-[#18B86A] text-white shadow-2xs'
-                    : 'bg-[#F0F5F2] text-[#66736B] hover:bg-[#E4ECE7]'
+                    ? 'bg-[#E1192E] text-white shadow-2xs'
+                    : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
                 }`}
               >
                 {tab.label}

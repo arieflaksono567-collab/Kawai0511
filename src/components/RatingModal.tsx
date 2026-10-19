@@ -264,13 +264,13 @@ export const RatingModal: React.FC<RatingModalProps> = ({
 
             {/* TIP SELECTION (CUSTOMER ONLY) */}
             {role === 'CUSTOMER' && (
-              <div className="space-y-2 pt-1 border-t border-[#E4ECE7]">
-                <label className="text-[11px] font-bold text-[#17211B] flex items-center justify-between">
+              <div className="space-y-2 pt-1 border-t border-[#E2E8F0]">
+                <label className="text-[11px] font-bold text-[#0F172A] flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Banknote className="w-3.5 h-3.5 text-[#18B86A]" />
+                    <Banknote className="w-3.5 h-3.5 text-[#E1192E]" />
                     <span>Beri Tip Tambahan untuk Mitra</span>
                   </span>
-                  <span className="text-[10px] text-[#0E8F52] font-semibold">100% untuk Driver</span>
+                  <span className="text-[10px] text-emerald-700 font-semibold">100% untuk Driver</span>
                 </label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[0, 2000, 5000, 10000].map((amount) => (
@@ -280,8 +280,8 @@ export const RatingModal: React.FC<RatingModalProps> = ({
                       onClick={() => setTipAmount(amount)}
                       className={`py-2 text-xs font-semibold rounded-xl border transition cursor-pointer ${
                         tipAmount === amount
-                          ? 'bg-[#DDF8EA] text-[#0E8F52] border-[#18B86A]'
-                          : 'bg-[#F7FAF8] text-[#66736B] border-[#E4ECE7] hover:border-[#D7E2DB]'
+                          ? 'bg-[#FEE2E2] text-[#E1192E] border-[#E1192E] font-bold'
+                          : 'bg-[#F8FAFC] text-[#64748B] border-[#CBD5E1]/60 hover:border-[#E1192E]'
                       }`}
                     >
                       {amount === 0 ? 'Tanpa Tip' : `Rp ${amount.toLocaleString('id-ID')}`}
@@ -303,14 +303,14 @@ export const RatingModal: React.FC<RatingModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 bg-[#F0F5F2] hover:bg-[#E4ECE7] text-[#66736B] font-bold rounded-xl text-xs transition cursor-pointer"
+                className="flex-1 py-3 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#64748B] font-bold rounded-xl text-xs transition cursor-pointer"
               >
                 Nanti Saja
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-2 py-3 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="flex-2 py-3 bg-[#E1192E] hover:bg-[#C81023] active:bg-[#B91223] text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSubmitting ? 'Mengirim...' : 'Kirim Penilaian'}</span>

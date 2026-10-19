@@ -1,6 +1,7 @@
 import React from 'react';
 import { ServiceType } from '../types';
 import { Wallet, Smartphone, Monitor, Car, UserCheck, Shield } from 'lucide-react';
+import { KawaiLogo, KawaiBadge } from './KawaiLogo';
 import { KAWAI_COLORS } from '../constants/theme';
 
 interface KawaiHeaderProps {
@@ -25,32 +26,27 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
   activeOrderCount,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E4ECE7]">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Zone 1: Single text element wordmark */}
+        {/* Zone 1: Official Logo wordmark */}
         <a
           href="#"
           onClick={(e) => {
             e.preventDefault();
             onSelectTab('ride');
           }}
-          className="text-xl sm:text-2xl font-black tracking-tight text-[#17211B] hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 flex items-center gap-2"
+          className="hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 flex items-center"
         >
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[#18B86A] text-white font-black text-sm shadow-xs">
-            0511
-          </span>
-          <span className="font-extrabold text-[#17211B]">
-            KAWAI <span className="text-[#18B86A]">0511</span>
-          </span>
+          <KawaiLogo size="sm" showTagline={false} />
         </a>
 
         {/* Zone 2: clean text navigation links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#66736B]">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#64748B]">
           <button
             type="button"
             onClick={() => onSelectTab('ride')}
-            className={`hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 ${
-              activeTab === 'ride' ? 'text-[#18B86A] border-[#18B86A] font-semibold' : 'border-transparent'
+            className={`hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 cursor-pointer ${
+              activeTab === 'ride' ? 'text-[#E1192E] border-[#E1192E] font-bold' : 'border-transparent'
             }`}
           >
             Transport
@@ -58,8 +54,8 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab('delivery')}
-            className={`hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 ${
-              activeTab === 'delivery' ? 'text-[#18B86A] border-[#18B86A] font-semibold' : 'border-transparent'
+            className={`hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 cursor-pointer ${
+              activeTab === 'delivery' ? 'text-[#E1192E] border-[#E1192E] font-bold' : 'border-transparent'
             }`}
           >
             Kurir Kilat
@@ -67,8 +63,8 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab('food')}
-            className={`hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 ${
-              activeTab === 'food' ? 'text-[#18B86A] border-[#18B86A] font-semibold' : 'border-transparent'
+            className={`hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 cursor-pointer ${
+              activeTab === 'food' ? 'text-[#E1192E] border-[#E1192E] font-bold' : 'border-transparent'
             }`}
           >
             Kawai Food
@@ -76,8 +72,8 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab('mart')}
-            className={`hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 ${
-              activeTab === 'mart' ? 'text-[#18B86A] border-[#18B86A] font-semibold' : 'border-transparent'
+            className={`hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 cursor-pointer ${
+              activeTab === 'mart' ? 'text-[#E1192E] border-[#E1192E] font-bold' : 'border-transparent'
             }`}
           >
             Titip Belanja
@@ -85,13 +81,13 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab('orders')}
-            className={`hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 relative ${
-              activeTab === 'orders' ? 'text-[#18B86A] border-[#18B86A] font-semibold' : 'border-transparent'
+            className={`hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 relative cursor-pointer ${
+              activeTab === 'orders' ? 'text-[#E1192E] border-[#E1192E] font-bold' : 'border-transparent'
             }`}
           >
             Aktivitas
             {activeOrderCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-[#18B86A] text-white rounded-full font-bold">
+              <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-[#E1192E] text-white rounded-full font-bold">
                 {activeOrderCount}
               </span>
             )}
@@ -99,7 +95,7 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onOpenPromo()}
-            className="hover:text-[#18B86A] transition-colors whitespace-nowrap pb-1 border-b-2 border-transparent text-[#F5A623] font-semibold"
+            className="hover:text-[#E1192E] transition-colors whitespace-nowrap pb-1 border-b-2 border-transparent text-[#E1192E] font-bold cursor-pointer"
           >
             Promo Banua
           </button>
@@ -111,12 +107,12 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={onOpenWallet}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#DDF8EA] hover:bg-[#cbf5de] text-[#0E8F52] border border-[#18B86A]/20 transition-colors text-xs font-semibold whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEE2E2] hover:bg-[#FCD2D2] text-[#E1192E] border border-[#E1192E]/20 transition-colors text-xs font-bold whitespace-nowrap cursor-pointer"
             title="Buka Dompet KawaiPay"
           >
-            <Wallet className="w-3.5 h-3.5 text-[#18B86A]" />
-            <span className="hidden sm:inline text-[#66736B] font-normal">KawaiPay:</span>
-            <span className="font-bold text-[#0E8F52] font-mono tabular-nums">
+            <Wallet className="w-3.5 h-3.5 text-[#E1192E]" />
+            <span className="hidden sm:inline text-[#64748B] font-normal">KawaiPay:</span>
+            <span className="font-bold text-[#E1192E] font-mono tabular-nums">
               Rp {walletBalance.toLocaleString('id-ID')}
             </span>
           </button>
@@ -125,13 +121,13 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab(activeTab === 'driver_mode' ? 'ride' : 'driver_mode')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'driver_mode'
-                ? 'bg-[#18B86A] hover:bg-[#0E8F52] text-white shadow-xs'
-                : 'bg-[#17211B] hover:bg-slate-800 text-white'
+                ? 'bg-[#0F172A] hover:bg-black text-white shadow-xs'
+                : 'bg-[#0F172A] hover:bg-black text-white'
             }`}
           >
-            <Car className="w-3.5 h-3.5" />
+            <Car className="w-3.5 h-3.5 text-[#E1192E]" />
             <span className="hidden sm:inline">
               {activeTab === 'driver_mode' ? 'Mode Driver (Aktif)' : 'Mode Driver'}
             </span>
@@ -144,7 +140,7 @@ export const KawaiHeader: React.FC<KawaiHeaderProps> = ({
           <button
             type="button"
             onClick={onToggleFrame}
-            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl border border-[#E4ECE7] text-[#66736B] hover:bg-[#F0F5F2] hover:text-[#17211B] transition-colors"
+            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl border border-[#CBD5E1]/60 text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0F172A] transition-colors cursor-pointer"
             title={isMobileFrame ? 'Tampilan Layar Penuh' : 'Tampilan Mode Smartphone (Mobile View)'}
             aria-label="Toggle device frame"
           >

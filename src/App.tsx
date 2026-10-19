@@ -23,6 +23,7 @@ import { E2ESimulationRunner } from './components/E2ESimulationRunner';
 import { PassengerPaymentCard } from './components/PassengerPaymentCard';
 import { DriverEarningsCard } from './components/DriverEarningsCard';
 import { LiveMapSimulator } from './components/LiveMapSimulator';
+import { KawaiBadge, KawaiLogo } from './components/KawaiLogo';
 import { KAWAI_COLORS } from './constants/theme';
 
 export default function App() {
@@ -255,104 +256,92 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAF8] text-[#17211B] flex flex-col font-sans selection:bg-[#DDF8EA] selection:text-[#0E8F52]">
-      {/* GLOBAL TOP NAVIGATION & ROLE SWITCHER - Bright Clean Header */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E4ECE7] px-4 py-3 shadow-xs">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#FEE2E2] selection:text-[#E1192E]">
+      {/* GLOBAL TOP NAVIGATION & ROLE SWITCHER - Official KAWAI Red & Navy Header */}
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 py-2.5 shadow-xs">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#18B86A] flex items-center justify-center text-white font-black text-xs tracking-tight shadow-xs">
-              0511
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm tracking-wide text-[#17211B]">
-                  KAWAI 0511
-                </span>
-                <span className="text-[10px] font-semibold text-[#0E8F52] bg-[#DDF8EA] border border-[#18B86A]/20 px-1.5 py-0.2 rounded">
-                  Banjarmasin
-                </span>
-              </div>
-              <p className="text-[10px] text-[#66736B]">
-                Layanan Ojek & Transportasi Lokal Kalimantan Selatan
-              </p>
-            </div>
+          {/* Official Brand Logo with Bekantan Mascot Badge */}
+          <div className="flex items-center gap-3">
+            <KawaiLogo size="sm" showTagline={true} />
+            <span className="hidden sm:inline-block text-[10px] font-bold text-[#E1192E] bg-[#FEE2E2] border border-[#E1192E]/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Banjarmasin
+            </span>
           </div>
 
           {/* Role & View Mode Switcher */}
-          <div className="flex items-center bg-[#F0F5F2] p-1 rounded-xl border border-[#D7E2DB] text-xs">
+          <div className="flex items-center bg-[#F1F5F9] p-1 rounded-xl border border-[#CBD5E1]/60 text-xs">
             <button
               onClick={() => setViewMode('passenger')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 viewMode === 'passenger'
-                  ? 'bg-[#18B86A] text-white shadow-xs'
-                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+                  ? 'bg-[#E1192E] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/80'
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Penumpang (Passenger)</span>
+              <span>Penumpang</span>
             </button>
 
             <button
               onClick={() => setViewMode('driver')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 viewMode === 'driver'
-                  ? 'bg-[#18B86A] text-white shadow-xs'
-                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+                  ? 'bg-[#0F172A] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/80'
               }`}
             >
-              <Bike className="w-3.5 h-3.5" />
-              <span>Driver (Mitra)</span>
+              <Bike className="w-3.5 h-3.5 text-[#E1192E]" />
+              <span>Mitra Driver</span>
             </button>
 
             <button
               onClick={() => setViewMode('dual')}
-              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 viewMode === 'dual'
-                  ? 'bg-[#18B86A] text-white shadow-xs'
-                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+                  ? 'bg-[#0F172A] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/80'
               }`}
               title="Tampilkan kedua aplikasi berdampingan untuk menguji simulasi secara langsung"
             >
               <Split className="w-3.5 h-3.5" />
-              <span>Simulasi Berdampingan</span>
+              <span>Berdampingan</span>
             </button>
 
             <button
               onClick={() => setViewMode('payment')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 viewMode === 'payment'
-                  ? 'bg-[#18B86A] text-white shadow-xs'
-                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+                  ? 'bg-[#E1192E] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/80'
               }`}
-              title="Tampilkan UI Pembayaran Penumpang & Pendapatan Driver (Langkah 6)"
+              title="Tampilkan UI Pembayaran Penumpang & Pendapatan Driver"
             >
               <CreditCard className="w-3.5 h-3.5" />
-              <span>UI Pembayaran (Langkah 6)</span>
+              <span>Pembayaran</span>
             </button>
 
             <button
               onClick={() => setViewMode('simulator')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
                 viewMode === 'simulator'
-                  ? 'bg-[#18B86A] text-white shadow-xs'
-                  : 'text-[#66736B] hover:text-[#17211B] hover:bg-white/80'
+                  ? 'bg-[#0E45C9] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/80'
               }`}
-              title="Peta Interaktif & Simulator Perjalanan KAWAI 0511 (Leaflet / OpenStreetMap)"
+              title="Peta Interaktif & Simulator Perjalanan KAWAI 0511"
             >
               <Navigation className="w-3.5 h-3.5" />
-              <span>Peta & Simulator Live</span>
+              <span>Peta Live</span>
             </button>
 
-            {/* Developer Tools manual invocation (hanya muncul jika Developer Mode aktif dan BUKAN di halaman pelanggan umum) */}
+            {/* Developer Tools manual invocation */}
             {isDevMode && viewMode !== 'passenger' && (
               <button
                 onClick={() => setIsSimModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold bg-[#17211B] hover:bg-black text-white transition shadow-xs cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold bg-[#0F172A] hover:bg-black text-white transition shadow-xs cursor-pointer ml-1"
                 title="Buka panel Acceptance Test End-to-End Simulation"
               >
-                <Terminal className="w-3.5 h-3.5 text-[#18B86A]" />
-                <span>Developer Tools</span>
+                <Terminal className="w-3.5 h-3.5 text-[#E1192E]" />
+                <span>Dev Tools</span>
               </button>
             )}
           </div>
@@ -361,8 +350,8 @@ export default function App() {
 
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#18B86A] text-white font-bold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 border border-white/20 animate-bounce text-xs">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border border-[#E1192E]/40 text-xs">
+          <CheckCircle2 className="w-4 h-4 text-[#E1192E] shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

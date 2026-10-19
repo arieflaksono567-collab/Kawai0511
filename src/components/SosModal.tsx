@@ -35,7 +35,7 @@ export const SosModal: React.FC<SosModalProps> = ({
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col border border-[#E4ECE7] animate-in slide-in-from-bottom-4 text-[#17211B]">
         {/* Header - Danger Red for SOS Center */}
-        <div className="p-4 bg-[#E5484D] text-white flex items-center justify-between">
+        <div className="p-4 bg-[#E1192E] text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center animate-pulse">
               <Siren className="w-5 h-5 text-white" />
@@ -58,14 +58,14 @@ export const SosModal: React.FC<SosModalProps> = ({
         </div>
 
         {/* Tab switch between emergency & breakdown */}
-        <div className="grid grid-cols-2 p-1.5 bg-[#F0F5F2] border-b border-[#E4ECE7]">
+        <div className="grid grid-cols-2 p-1.5 bg-[#F8FAFC] border-b border-[#E2E8F0]">
           <button
             type="button"
             onClick={() => setActiveTab('darurat')}
             className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'darurat'
-                ? 'bg-[#E5484D] text-white shadow-xs'
-                : 'text-[#66736B] hover:text-[#17211B]'
+                ? 'bg-[#E1192E] text-white shadow-xs'
+                : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
           >
             <ShieldAlert className="w-4 h-4" />
@@ -76,8 +76,8 @@ export const SosModal: React.FC<SosModalProps> = ({
             onClick={() => setActiveTab('kendaraan')}
             className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'kendaraan'
-                ? 'bg-[#F5A623] text-white shadow-xs'
-                : 'text-[#66736B] hover:text-[#17211B]'
+                ? 'bg-[#0F172A] text-white shadow-xs'
+                : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
           >
             <Wrench className="w-4 h-4" />
@@ -87,18 +87,18 @@ export const SosModal: React.FC<SosModalProps> = ({
 
         <div className="p-4 space-y-4 overflow-y-auto">
           {/* Location info */}
-          <div className="bg-[#F0F5F2] p-3 rounded-2xl border border-[#E4ECE7] text-xs flex items-start gap-2.5">
-            <MapPin className="w-4 h-4 text-[#E5484D] shrink-0 mt-0.5" />
+          <div className="bg-[#F8FAFC] p-3 rounded-2xl border border-[#E2E8F0] text-xs flex items-start gap-2.5">
+            <MapPin className="w-4 h-4 text-[#E1192E] shrink-0 mt-0.5" />
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#66736B]">Koordinat GPS Terdeteksi:</span>
-              <p className="font-semibold text-[#17211B]">{currentLocationName}</p>
-              <p className="text-[11px] text-[#66736B] font-mono">Mitra / Pengguna: {driverName}</p>
+              <span className="text-[10px] uppercase font-bold text-[#64748B]">Koordinat GPS Terdeteksi:</span>
+              <p className="font-semibold text-[#0F172A]">{currentLocationName}</p>
+              <p className="text-[11px] text-[#64748B] font-mono">Mitra / Pengguna: {driverName}</p>
             </div>
           </div>
 
           {bantuanMsg && (
-            <div className="bg-[#DDF8EA] border border-[#18B86A]/40 text-[#0E8F52] p-3 rounded-2xl text-xs flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-[#18B86A] shrink-0" />
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-2xl text-xs flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span className="font-medium">{bantuanMsg}</span>
             </div>
           )}
@@ -106,15 +106,15 @@ export const SosModal: React.FC<SosModalProps> = ({
           {activeTab === 'darurat' ? (
             <>
               {sosSent ? (
-                <div className="bg-[#DDF8EA] border border-[#18B86A]/30 p-4 rounded-2xl text-center space-y-2">
-                  <div className="w-12 h-12 rounded-full bg-[#18B86A] text-white flex items-center justify-center mx-auto shadow-sm">
+                <div className="bg-[#FEE2E2] border border-[#E1192E]/30 p-4 rounded-2xl text-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-[#E1192E] text-white flex items-center justify-center mx-auto shadow-sm">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h4 className="font-bold text-sm text-[#0E8F52]">Sinyal Bahaya Terkirim!</h4>
-                  <p className="text-xs text-[#17211B]">
+                  <h4 className="font-bold text-sm text-[#E1192E]">Sinyal Bahaya Terkirim!</h4>
+                  <p className="text-xs text-[#0F172A]">
                     Satgas Keamanan Kawai 0511 dan Polresta Banjarmasin telah menerima sinyal lokasi darurat kamu. Petugas sedang menghubungi nomor kamu.
                   </p>
-                  <p className="text-[11px] font-mono text-[#0E8F52] bg-white py-1 px-2 rounded-xl border border-[#18B86A]/20">
+                  <p className="text-[11px] font-mono text-[#E1192E] bg-white py-1 px-2 rounded-xl border border-[#E1192E]/20">
                     Tiket Kasus: #SOS-0511-{Math.floor(1000 + Math.random() * 9000)}
                   </p>
                 </div>
@@ -123,31 +123,31 @@ export const SosModal: React.FC<SosModalProps> = ({
                   <button
                     type="button"
                     onClick={triggerSosBroadcast}
-                    className="w-full py-4 rounded-2xl bg-[#E5484D] hover:bg-rose-700 text-white font-black text-sm shadow-md shadow-red-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
+                    className="w-full py-4 rounded-2xl bg-[#E1192E] hover:bg-[#C81023] text-white font-black text-sm shadow-md shadow-red-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     <Siren className="w-5 h-5 animate-bounce" />
                     <span>TEKAN UNTUK SEBAR SINYAL SOS DARURAT</span>
                   </button>
-                  <p className="text-[11px] text-[#66736B]">
+                  <p className="text-[11px] text-[#64748B]">
                     Sinyal akan membunyikan alarm di Command Center Kawai 0511 dan membagikan titik koordinat GPS langsung.
                   </p>
                 </div>
               )}
 
               {/* Emergency Contacts */}
-              <div className="space-y-2 pt-1 border-t border-[#E4ECE7]">
-                <span className="text-xs font-bold text-[#17211B]">Panggilan Cepat Darurat Banjarmasin:</span>
+              <div className="space-y-2 pt-1 border-t border-[#E2E8F0]">
+                <span className="text-xs font-bold text-[#0F172A]">Panggilan Cepat Darurat Banjarmasin:</span>
 
                 <a
                   href="tel:0511-770-0511"
-                  className="flex items-center justify-between p-3 rounded-2xl border border-[#E4ECE7] hover:bg-[#F0F5F2] transition-colors text-xs"
+                  className="flex items-center justify-between p-3 rounded-2xl border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors text-xs"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-rose-50 text-[#E5484D] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-[#FEE2E2] text-[#E1192E] flex items-center justify-center">
                       <PhoneCall className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="font-bold text-[#17211B]">Satgas Siaga Kawai 0511</p>
+                      <p className="font-bold text-[#0F172A]">Satgas Siaga Kawai 0511</p>
                       <p className="text-[10px] text-[#66736B]">0511-770-0511 (Bebas Pulsa)</p>
                     </div>
                   </div>

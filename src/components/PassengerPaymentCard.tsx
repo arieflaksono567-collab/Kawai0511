@@ -316,7 +316,7 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
             <button
               onClick={handlePay}
               disabled={isProcessing}
-              className="w-full py-4 bg-[#18B86A] hover:bg-[#0E8F52] active:bg-[#0E8F52] disabled:opacity-50 text-white font-bold rounded-2xl text-sm tracking-wider uppercase transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 bg-[#E1192E] hover:bg-[#C81023] active:bg-[#B91223] disabled:opacity-50 text-white font-bold rounded-2xl text-sm tracking-wider uppercase transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
               {isProcessing ? (
                 <>
@@ -325,7 +325,7 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
                 </>
               ) : (
                 <>
-                  <span>[ BAYAR ]</span>
+                  <span>[ BAYAR SEKARANG ]</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -340,61 +340,61 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
           {paymentResult.payment?.status === 'PAID' ? (
             /* PAID RECEIPT */
             <div className="space-y-4 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#DDF8EA] border border-[#18B86A]/30 text-[#18B86A] mx-auto flex items-center justify-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-[#FEE2E2] border border-[#E1192E]/30 text-[#E1192E] mx-auto flex items-center justify-center shadow-xs">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
 
               <div>
-                <h3 className="text-base font-bold text-[#17211B]">Pembayaran Sukses!</h3>
-                <p className="text-xs text-[#66736B] mt-0.5">
+                <h3 className="text-base font-bold text-[#0F172A]">Pembayaran Sukses!</h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
                   Transaksi telah dicatat dan terverifikasi di Double-Entry Ledger.
                 </p>
               </div>
 
               {/* Receipt Breakdown Card */}
-              <div className="bg-[#F7FAF8] p-4 rounded-2xl border border-[#E4ECE7] text-xs space-y-2.5 text-left font-mono">
-                <div className="flex justify-between text-[#66736B]">
+              <div className="bg-[#F8FAFC] p-4 rounded-2xl border border-[#E2E8F0] text-xs space-y-2.5 text-left font-mono">
+                <div className="flex justify-between text-[#64748B]">
                   <span>Metode:</span>
-                  <span className="text-[#17211B] font-bold">{paymentResult.payment.method}</span>
+                  <span className="text-[#0F172A] font-bold">{paymentResult.payment.method}</span>
                 </div>
-                <div className="flex justify-between text-[#66736B]">
+                <div className="flex justify-between text-[#64748B]">
                   <span>Tarif Terbayar:</span>
-                  <span className="text-[#18B86A] font-bold">
+                  <span className="text-[#E1192E] font-bold">
                     Rp {paymentResult.payment.amount.toLocaleString('id-ID')}
                   </span>
                 </div>
-                <div className="flex justify-between text-[#66736B] pt-2 border-t border-[#E4ECE7]">
+                <div className="flex justify-between text-[#64748B] pt-2 border-t border-[#E2E8F0]">
                   <span>Mitra Driver (85%):</span>
-                  <span className="text-[#17211B] font-semibold">
+                  <span className="text-[#0F172A] font-semibold">
                     Rp {(paymentResult.payment.driverShareAmount || driverShare).toLocaleString('id-ID')}
                   </span>
                 </div>
-                <div className="flex justify-between text-[#66736B]">
+                <div className="flex justify-between text-[#64748B]">
                   <span>Platform Fee (15%):</span>
-                  <span className="text-[#17211B] font-semibold">
+                  <span className="text-[#0F172A] font-semibold">
                     Rp {(paymentResult.payment.platformFeeAmount || platformFee).toLocaleString('id-ID')}
                   </span>
                 </div>
-                <div className="pt-2 border-t border-[#E4ECE7] flex items-center justify-between text-[10px] text-[#66736B]">
+                <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-[10px] text-[#64748B]">
                   <span>Ledger Tx Ref:</span>
-                  <span className="text-[#18B86A] font-bold truncate max-w-[140px]">
+                  <span className="text-[#0F172A] font-bold truncate max-w-[140px]">
                     {paymentResult.payment.ledgerTransactionId || 'Balanced'}
                   </span>
                 </div>
               </div>
 
-              <div className="p-2.5 bg-[#DDF8EA] border border-[#18B86A]/20 rounded-xl flex items-center justify-between text-[11px] text-[#0E8F52]">
+              <div className="p-2.5 bg-[#F8FAFC] border border-[#CBD5E1]/60 rounded-xl flex items-center justify-between text-[11px] text-[#0F172A]">
                 <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#18B86A]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#E1192E]" />
                   <span>Double-Entry Balance:</span>
                 </div>
-                <span className="font-mono font-bold">DEBIT = KREDIT</span>
+                <span className="font-mono font-bold text-emerald-700">DEBIT = KREDIT</span>
               </div>
 
               {onResetOrder && (
                 <button
                   onClick={onResetOrder}
-                  className="w-full py-3 bg-white hover:bg-[#F0F5F2] text-[#18B86A] border border-[#D7E2DB] font-semibold rounded-xl text-xs transition uppercase tracking-wider"
+                  className="w-full py-3 bg-[#0F172A] hover:bg-black text-white font-semibold rounded-xl text-xs transition uppercase tracking-wider cursor-pointer"
                 >
                   Pesan Ojek Lagi
                 </button>
@@ -403,26 +403,26 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
           ) : (
             /* DIGITAL PENDING STATE */
             <div className="space-y-4 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-[#F5A623] mx-auto flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center">
                 <Clock className="w-6 h-6 animate-pulse" />
               </div>
 
               <div>
-                <h3 className="text-base font-bold text-[#17211B]">Menunggu Pembayaran</h3>
-                <p className="text-xs text-[#66736B] mt-0.5">
+                <h3 className="text-base font-bold text-[#0F172A]">Menunggu Pembayaran</h3>
+                <p className="text-xs text-[#64748B] mt-0.5">
                   Silakan selesaikan pembayaran digital via QRIS / Gateway.
                 </p>
               </div>
 
               {/* QRIS / Gateway Preview Box */}
-              <div className="bg-[#F7FAF8] p-4 rounded-2xl border border-[#E4ECE7] space-y-3">
-                <div className="w-32 h-32 mx-auto bg-white p-2 rounded-xl flex items-center justify-center shadow-xs border border-[#E4ECE7]">
-                  <QrCode className="w-28 h-28 text-[#17211B]" />
+              <div className="bg-[#F8FAFC] p-4 rounded-2xl border border-[#E2E8F0] space-y-3">
+                <div className="w-32 h-32 mx-auto bg-white p-2 rounded-xl flex items-center justify-center shadow-xs border border-[#E2E8F0]">
+                  <QrCode className="w-28 h-28 text-[#0F172A]" />
                 </div>
-                <div className="text-xs font-mono text-[#18B86A] font-bold">
+                <div className="text-xs font-mono text-[#E1192E] font-bold">
                   Rp {fareAmount.toLocaleString('id-ID')}
                 </div>
-                <p className="text-[10px] text-[#66736B]">
+                <p className="text-[10px] text-[#64748B]">
                   Scan QRIS menggunakan Mobile Banking atau Dompet Digital pilihan Anda.
                 </p>
               </div>
@@ -431,7 +431,7 @@ export const PassengerPaymentCard: React.FC<PassengerPaymentCardProps> = ({
               <button
                 onClick={handleSimulateWebhookDigitalSuccess}
                 disabled={isProcessing}
-                className="w-full py-3 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-[#E1192E] hover:bg-[#C81023] text-white font-bold rounded-xl text-xs transition uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isProcessing ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

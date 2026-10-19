@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'services/auth_service.dart';
+import 'services/driver_service.dart';
 
 void main() {
   runApp(const KawaiDriverApp());
@@ -33,12 +35,16 @@ class DriverHomeScreen extends StatefulWidget {
 }
 
 class _DriverHomeScreenState extends State<DriverHomeScreen> {
-  // Driver System State
-  String _verificationStatus = 'APPROVED'; // PENDING, UNDER_REVIEW, APPROVED, REJECTED, SUSPENDED
-  String _operationalStatus = 'OFFLINE';   // OFFLINE, ONLINE, SUSPENDED
+  final AuthService _auth = AuthService();
+  bool _isLoading = false;
+  String _phoneNumber = '';
+  String _otp = '';
+  bool _otpSent = false;
+  
+  String _verificationStatus = 'PENDING';
+  String _operationalStatus = 'OFFLINE';
   bool _isEligible = true;
 
-  // KYC Checklist State
   final Map<String, String> _kycStatus = {
     'KTP': 'APPROVED',
     'SIM_C': 'APPROVED',
@@ -46,6 +52,39 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
     'SKCK': 'APPROVED',
     'VEHICLE': 'APPROVED',
   };
+
+  Future<void> _fetchDriverData() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _driverService.getMyProfile();
+      setState(() {
+        _driverProfile = profile;
+        _verificationStatus = profile['verificationStatus'] ?? 'PENDING';
+        _operationalStatus = profile['operationalStatus'] ?? 'OFFLINE';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+    try {
+      if (!_otpSent) {
+        await _auth.requestOtp(_phoneNumber);
+        setState(() => _otpSent = true);
+      } else {
+        await _auth.verifyOtp(_phoneNumber, _otp);
+        await _fetchDriverData();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   void _toggleOnline() {
     if (_verificationStatus != 'APPROVED' || !_isEligible) {
@@ -73,6 +112,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -106,129 +147,164 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Status Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF334155)),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Status Operasional: $_operationalStatus',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: _operationalStatus == 'ONLINE' ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
-                    ),
+      body: AuthService.accessToken == null 
+        ? _buildLoginView()
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Status Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFF334155)),
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _verificationStatus == 'APPROVED' ? const Color(0xFF064E3B) : const Color(0xFF78350F),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Verifikasi: $_verificationStatus',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: _verificationStatus == 'APPROVED' ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Status Operasional: $_operationalStatus',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _operationalStatus == 'ONLINE' ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Online button (Only active if APPROVED)
-                  if (_verificationStatus == 'APPROVED')
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _toggleOnline,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _operationalStatus == 'ONLINE' ? const Color(0xFFDC2626) : const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _verificationStatus == 'APPROVED' ? const Color(0xFF064E3B) : const Color(0xFF78350F),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _operationalStatus == 'ONLINE' ? 'SET OFFLINE' : 'GO ONLINE',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+                          'Verifikasi: $_verificationStatus',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _verificationStatus == 'APPROVED' ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
+                          ),
                         ),
                       ),
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF450A0A),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Tombol Online terkunci: Anda belum dapat online hingga dokumen disetujui admin.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                      const SizedBox(height: 20),
 
-            const SizedBox(height: 20),
-
-            // Requirements Checklist (Section 28)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFF334155)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Daftar Kelengkapan Syarat Operasional', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 14),
-                  _buildChecklistItem('KTP (Kartu Tanda Penduduk)', _kycStatus['KTP']!),
-                  _buildChecklistItem('SIM C (Surat Izin Mengemudi C)', _kycStatus['SIM_C']!),
-                  _buildChecklistItem('STNK (Surat Tanda Nomor Kendaraan)', _kycStatus['STNK']!),
-                  _buildChecklistItem('SKCK (Surat Keterangan Catatan Kepolisian)', _kycStatus['SKCK']!),
-                  _buildChecklistItem('Kendaraan Aktif (Sepeda Motor)', _kycStatus['VEHICLE']!),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _openKycScreen(),
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Lengkapi / Periksa Dokumen'),
-                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF38BDF8)),
-                    ),
+                      // Online button (Only active if APPROVED)
+                      if (_verificationStatus == 'APPROVED')
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _toggleOnline,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _operationalStatus == 'ONLINE' ? const Color(0xFFDC2626) : const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: Text(
+                              _operationalStatus == 'ONLINE' ? 'SET OFFLINE' : 'GO ONLINE',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF450A0A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Tombol Online terkunci: Anda belum dapat online hingga dokumen disetujui admin.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Requirements Checklist (Section 28)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFF334155)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Daftar Kelengkapan Syarat Operasional', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 14),
+                      _buildChecklistItem('KTP (Kartu Tanda Penduduk)', _kycStatus['KTP']!),
+                      _buildChecklistItem('SIM C (Surat Izin Mengemudi C)', _kycStatus['SIM_C']!),
+                      _buildChecklistItem('STNK (Surat Tanda Nomor Kendaraan)', _kycStatus['STNK']!),
+                      _buildChecklistItem('SKCK (Surat Keterangan Catatan Kepolisian)', _kycStatus['SKCK']!),
+                      _buildChecklistItem('Kendaraan Aktif (Sepeda Motor)', _kycStatus['VEHICLE']!),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openKycScreen(),
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text('Lengkapi / Periksa Dokumen'),
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF38BDF8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+    );
+  }
+
+
+  Widget _buildLoginView() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('KAWAI Driver Login', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          TextField(
+            onChanged: (value) => _phoneNumber = value,
+            decoration: const InputDecoration(labelText: 'Nomor Telepon', filled: true, fillColor: Colors.white),
+            keyboardType: TextInputType.phone,
+          ),
+          if (_otpSent) ...[
+            const SizedBox(height: 10),
+            TextField(
+              onChanged: (value) => _otp = value,
+              decoration: const InputDecoration(labelText: 'OTP', filled: true, fillColor: Colors.white),
+              keyboardType: TextInputType.number,
             ),
           ],
-        ),
+          const SizedBox(height: 20),
+          _isLoading 
+            ? const CircularProgressIndicator()
+            : ElevatedButton(onPressed: _login, child: Text(_otpSent ? 'Verifikasi' : 'Minta OTP')),
+        ],
       ),
     );
   }
 
   Widget _buildChecklistItem(String title, String status) {
+
     final bool isOk = status == 'APPROVED';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.between,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13)),
           Row(
@@ -249,6 +325,22 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
   void _openVehicleScreen() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DriverVehicleScreen()));
+  }
+
+  void _openTripHistoryScreen() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TripHistoryScreen()));
+  }
+
+  void _openEarningsScreen() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EarningsScreen()));
+  }
+
+  void _openTripHistoryScreen() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TripHistoryScreen()));
+  }
+
+  void _openEarningsScreen() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EarningsScreen()));
   }
 }
 

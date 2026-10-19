@@ -195,11 +195,11 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
 
       {/* Floating Cart Indicator */}
       {cart.length > 0 && (
-        <div className="sticky bottom-3 z-30 bg-[#18B86A] text-white p-3 rounded-2xl shadow-md flex items-center justify-between animate-in slide-in-from-bottom-2">
+        <div className="sticky bottom-3 z-30 bg-[#E1192E] text-white p-3 rounded-2xl shadow-md flex items-center justify-between animate-in slide-in-from-bottom-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center relative">
               <ShoppingBag className="w-5 h-5 text-white" />
-              <span className="absolute -top-1 -right-1 bg-white text-[#0E8F52] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-white text-[#E1192E] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {cart.reduce((a, b) => a + b.quantity, 0)}
               </span>
             </div>
@@ -213,7 +213,7 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}
-            className="px-4 py-2 bg-white hover:bg-[#DDF8EA] text-[#0E8F52] rounded-xl text-xs font-bold transition-colors shadow-xs"
+            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#E1192E] rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
           >
             Lihat Keranjang
           </button>
@@ -451,18 +451,18 @@ export const ServiceFood: React.FC<ServiceFoodProps> = ({
                     <span className="font-mono">-Rp {discount.toLocaleString('id-ID')}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline pt-2 border-t border-[#E4ECE7] font-bold text-[#17211B] text-sm">
+                <div className="flex justify-between items-baseline pt-2 border-t border-[#E2E8F0] font-bold text-[#0F172A] text-sm">
                   <span>Total Pembayaran</span>
-                  <span className="text-[#18B86A] font-mono text-base">Rp {totalPay.toLocaleString('id-ID')}</span>
+                  <span className="text-[#E1192E] font-mono text-base">Rp {totalPay.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-[#E4ECE7] bg-white">
+            <div className="p-4 border-t border-[#E2E8F0] bg-white">
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="w-full h-12 rounded-2xl bg-[#18B86A] hover:bg-[#0E8F52] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                className="w-full h-12 rounded-2xl bg-[#E1192E] hover:bg-[#C81023] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
               >
                 <Utensils className="w-4 h-4" />
                 <span>Pesan Sekarang · Rp {totalPay.toLocaleString('id-ID')}</span>

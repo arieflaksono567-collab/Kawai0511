@@ -1,55 +1,72 @@
 /**
  * KAWAI 0511 - Centralized Color & Theme Design System
- * Bright Clean Mobility UI
+ * Berdasarkan Pedoman Gambar Referensi Resmi KAWAI 0511
  * 
- * Rules:
- * 1. Primary: KAWAI Green (#18B86A), Primary Dark (#0E8F52), Primary Light (#DDF8EA)
- * 2. Background: Main (#F7FAF8), Surface (#FFFFFF), Secondary Surface (#F0F5F2)
- * 3. Text: Primary (#17211B), Secondary (#66736B), Disabled (#A8B2AC)
- * 4. Status: Success (#18B86A), Warning (#F5A623), Danger/SOS (#E5484D), Info (#2F80ED)
- * 5. Borders: Card Border (#E4ECE7), Secondary Border (#D7E2DB)
+ * Palet Warna Resmi:
+ * 1. Merah KAWAI (Primary): #E1192E
+ * 2. Biru Navy (Secondary / Mitra Accent): #0E45C9 / #0F172A
+ * 3. Hijau (Online & Titip Belanja): #10B981
+ * 4. Oranye (Delivery & Kirim Paket): #F59E0B
+ * 5. Kuning/Amber (KawaiFood): #EAB308
+ * 6. Abu/Slate: #64748B / #E2E8F0 / #F8FAFC
+ * 7. Tipografi: Poppins
  */
 
 export const KAWAI_COLORS = {
   // 1. Warna Utama Brand
-  primary: '#18B86A',
-  primaryDark: '#0E8F52',
-  primaryLight: '#DDF8EA',
+  primary: '#E1192E',
+  primaryHover: '#C81023',
+  primaryDark: '#B91223',
+  primaryLight: '#FEE2E2',
 
-  // 2. Background
-  background: '#F7FAF8',
+  // 2. Aksen Navy & Mitra
+  navy: '#0E45C9',
+  navyDark: '#0F172A',
+  navyCard: '#0B192C',
+  navyLight: '#EFF6FF',
+
+  // 3. Layanan Kami (4 Menu Utama)
+  serviceRide: '#E1192E',       // Merah KAWAI (Motor & Car)
+  serviceDelivery: '#F59E0B',   // Oranye (Kirim Paket)
+  serviceFood: '#EAB308',       // Kuning Emas (Pesan Makanan / KawaiFood)
+  serviceMart: '#10B981',       // Hijau (Titip Belanja)
+
+  // 4. Background & Surface
+  background: '#F8FAFC',
   surface: '#FFFFFF',
-  secondarySurface: '#F0F5F2',
+  secondarySurface: '#F1F5F9',
 
-  // 3. Text
-  textPrimary: '#17211B',
-  textSecondary: '#66736B',
-  textDisabled: '#A8B2AC',
+  // 5. Typography Colors
+  textPrimary: '#0F172A',
+  textSecondary: '#64748B',
+  textDisabled: '#94A3B8',
+  textInverse: '#FFFFFF',
 
-  // 4. Status Colors
-  success: '#18B86A',
-  warning: '#F5A623',
-  danger: '#E5484D',
-  info: '#2F80ED',
+  // 6. Status Colors
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#E1192E',
+  info: '#0E45C9',
 
-  // 5. Borders & Dividers
-  border: '#E4ECE7',
-  borderSecondary: '#D7E2DB',
+  // 7. Borders & Dividers
+  border: '#E2E8F0',
+  borderSecondary: '#CBD5E1',
 
-  // 6. Map Specific Colors (Light & Clean Cartography)
+  // 8. Map Styling
   map: {
-    ground: '#F0F5F2',
+    ground: '#F8FAFC',
     water: '#C5E6F7',
     waterDeep: '#98D1F2',
     streetArtery: '#FFFFFF',
-    streetArteryBorder: '#D7E2DB',
-    streetLocal: '#EBF1ED',
+    streetArteryBorder: '#E2E8F0',
+    streetLocal: '#F1F5F9',
     bridge: '#94A3B8',
-    routePath: '#18B86A',
-    pickupMarker: '#18B86A',
-    destMarker: '#E5484D',
-    driverMarker: '#18B86A',
-    grid: '#E2EBE5',
+    routePath: '#0E45C9',
+    routePathAlt: '#E1192E',
+    pickupMarker: '#10B981',
+    destMarker: '#E1192E',
+    driverMarker: '#E1192E',
+    grid: '#E2E8F0',
   },
 } as const;
 

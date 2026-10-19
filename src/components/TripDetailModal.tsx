@@ -443,7 +443,7 @@ export const TripDetailModal: React.FC<TripDetailModalProps> = ({
                       {detail.status === 'COMPLETED' && (
                         <button
                           onClick={() => setIsRatingModalOpen(true)}
-                          className="w-full py-2.5 bg-[#18B86A] hover:bg-[#0E8F52] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                          className="w-full py-2.5 bg-[#E1192E] hover:bg-[#C81023] active:bg-[#B91223] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                         >
                           <Star className="w-3.5 h-3.5 fill-white" />
                           <span>
